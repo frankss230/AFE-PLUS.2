@@ -1,0 +1,352 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =====================Edit Database======================
+
+enum UserRole {
+    ADMIN
+    CAREGIVER
+    DEPENDENT
+}
+
+enum Gender {
+    MALE
+    FEMALE
+    UNSPECIFIED
+}
+
+enum MaritalStatus {
+    SINGLE
+    MARRIED
+    DIVORCED
+    WIDOWED
+    SEPARATED
+}
+
+enum AlertStatus {
+    DETECTED
+    ACKNOWLEDGED
+    RESOLVED
+}
+
+enum HelpType {
+    LINE_SOS
+    WATCH_SOS
+}
+
+enum BorrowStatus {
+    PENDING
+    APPROVED
+    REJECTED
+
+    RETURN_PENDING
+    RETURNED
+    RETURN_FAILED
+}
+
+enum ZoneStatus {
+    SAFE
+    WARNING
+    DANGER
+}
+
+enum HealthStatus {
+    NORMAL
+    ABNORMAL
+}
+
+// ======User (Core)======
+model User {
+    id Int @id @default(autoincrement())
+    username String @unique
+    password String
+    lineId String? @unique
+    token String?
+    role UserRole @default(CAREGIVER)
+    isActive Boolean @default(true)
+
+    // Relations: One to One
+    adminProfile AdminProfile?
+    caregiverProfile CaregiverProfile?
+    dependentProfile DependentProfile?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("users")
+}
+
+// ======Profiles======
+model AdminProfile {
+    id Int @id @default(autoincrement())
+    userId Int @unique
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    firstName String
+    lastName String
+    phone String?
+    position String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("admin_profiles")
+}
+
+model CaregiverProfile {
+    id Int @id @default(autoincrement())
+    userId Int @unique
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    firstName String
+    lastName String
+    gender Gender @default(UNSPECIFIED)
+    marital MaritalStatus @default(SINGLE)
+    phone String
+    birthday DateTime
+
+    houseNumber String @db.VarChar(10)
+    village String @db.VarChar(5)
+    road String? @db.VarChar(200)
+    subDistrict String @db.VarChar(100)
+    district String @db.VarChar(100)
+    province String @db.VarChar(100)
+    postalCode String @db.VarChar(5)
+
+    dependents DependentProfile[]
+    borrowRequests BorrowEquipment[]
+
+    reportedHelps ExtendedHelp[] @relation("HelpReporter")
+    isGpsAlertOn Boolean @default(true)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("caregiver_profiles")
+}
+
+model DependentProfile {
+    id Int @id @default(autoincrement())
+    userId Int @unique
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    firstName String
+    lastName String
+    gender Gender @default(UNSPECIFIED)
+    marital MaritalStatus @default(SINGLE)
+    phone String
+    birthday DateTime
+
+    diseases String?
+    medications String?
+
+    houseNumber String @db.VarChar(10)
+    village String @db.VarChar(5)
+    road String? @db.VarChar(200)
+    subDistrict String @db.VarChar(100)
+    district String @db.VarChar(100)
+    province String @db.VarChar(100)
+    postalCode String @db.VarChar(5)
+
+    // Many to One
+    caregiverId Int?
+    caregiver CaregiverProfile? @relation(fields: [caregiverId], references: [id])
+
+    pin String @default("1234") @db.VarChar(4)
+    borrowRequests BorrowEquipment[]
+    receivedHelp ExtendedHelp[] @relation("HelpSubject")
+
+    locations Location[]
+    heartRateRecords HeartRateRecord[]
+    temperatureRecords TemperatureRecord[]
+    fallRecords FallRecord[]
+
+    safeZones SafeZone[]
+    heartRateSetting HeartRateSettings?
+    tempSetting TemperatureSettings?
+
+    isGpsEnabled Boolean @default(true)
+
+    isSafezoneAlertSent Boolean @default(false)
+    isHeartRateAlertSent Boolean @default(false)
+    isTemperatureAlertSent Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("dependent_profiles")
+}
+
+// ======Data======
+model Location {
+    id Int @id @default(autoincrement())
+    dependentId Int
+    dependent DependentProfile @relation(fields: [dependentId], references: [id], onDelete: Cascade)
+
+    latitude Float
+    longitude Float
+    distance Int @default(0)
+    battery Int @default(0)
+    status ZoneStatus @default(SAFE)
+    timestamp DateTime @default(now())
+
+    @@index([dependentId])
+    @@map("locations")
+}
+
+model HeartRateRecord {
+    id Int @id @default(autoincrement())
+    dependentId Int
+    dependent DependentProfile @relation(fields: [dependentId], references: [id], onDelete: Cascade)
+
+    bpm Int
+    status HealthStatus @default(NORMAL)
+    timestamp DateTime @default(now())
+    recordDate DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date
+
+    @@index([dependentId])
+    @@map("heart_rate_records")
+}
+
+model TemperatureRecord {
+    id Int @id @default(autoincrement())
+    dependentId Int
+    dependent DependentProfile @relation(fields: [dependentId], references: [id], onDelete: Cascade)
+
+    value Float
+    status HealthStatus @default(NORMAL)
+    timestamp DateTime @default(now())
+    recordDate DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date
+
+    @@index([dependentId])
+    @@map("temperature_records")
+}
+
+model FallRecord {
+    id Int @id @default(autoincrement())
+    dependentId Int
+    dependent DependentProfile @relation(fields: [dependentId], references: [id], onDelete: Cascade)
+
+    latitude Float?
+    longitude Float?
+    xAxis Float?
+    yAxis Float?
+    zAxis Float?
+
+    status AlertStatus @default(DETECTED)
+    timestamp DateTime @default(now())
+
+    @@index([dependentId])
+    @@map("fall_records")
+}
+
+model ExtendedHelp {
+    id Int @id @default(autoincrement())
+
+    reporterId Int
+    reporter CaregiverProfile @relation("HelpReporter", fields: [reporterId], references: [id])
+
+    dependentId Int
+    dependent DependentProfile @relation("HelpSubject", fields: [dependentId], references: [id])
+
+    type HelpType @default(LINE_SOS)
+    status AlertStatus @default(DETECTED)
+
+    latitude Float?
+    longitude Float?
+  
+    details String? @db.Text
+
+    requestedAt DateTime  @default(now())
+    resolvedAt DateTime?
+
+  @@map("extended_help")
+}
+
+// ======Setting======
+model SafeZone {
+    id Int @id @default(autoincrement())
+    dependentId Int
+    dependent DependentProfile @relation(fields: [dependentId], references: [id], onDelete: Cascade)
+
+    latitude Float
+    longitude Float
+    radiusLv1 Int @default(100)
+    radiusLv2 Int @default(500)
+
+    @@map("safe_zones")
+}
+
+model HeartRateSettings {
+    id Int @id @default(autoincrement())
+    dependentId Int @unique
+    dependent DependentProfile @relation(fields: [dependentId], references: [id], onDelete: Cascade)
+
+    maxBpm Int @default(120)
+    minBpm Int @default(50)
+
+    @@map("heart_rate_settings")
+}
+
+model TemperatureSettings {
+    id Int @id @default(autoincrement())
+    dependentId Int @unique
+    dependent DependentProfile @relation(fields: [dependentId], references: [id], onDelete: Cascade)
+
+    maxTemperature Float @default(37.5)
+
+    @@map("temperature_settings")
+}
+
+// ======Equipment======
+model Equipment {
+    id Int @id @default(autoincrement())
+    name String
+    code String @unique
+    isActive Boolean @default(true)
+  
+    borrowItems BorrowEquipmentItem[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("equipment")
+}
+
+model BorrowEquipment {
+    id Int @id @default(autoincrement())
+
+    borrowerId Int
+    borrower CaregiverProfile @relation(fields: [borrowerId], references: [id])
+
+    dependentId Int
+    dependent DependentProfile @relation(fields: [dependentId], references: [id])
+
+    objective String?
+    borrowDate DateTime @default(now())
+    returnDate DateTime?
+    status BorrowStatus @default(PENDING)
+
+    items BorrowEquipmentItem[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("borrow_requests")
+}
+
+model BorrowEquipmentItem {
+  id Int @id @default(autoincrement())
+  borrowId Int
+  borrow BorrowEquipment @relation(fields: [borrowId], references: [id])
+  
+  equipmentId Int
+  equipment Equipment @relation(fields: [equipmentId], references: [id])
+
+  @@map("borrow_request_items")
+}
