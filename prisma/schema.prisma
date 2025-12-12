@@ -172,9 +172,12 @@ model DependentProfile {
 
     isGpsEnabled Boolean @default(true)
 
-    isSafezoneAlertSent Boolean @default(false)
     isHeartRateAlertSent Boolean @default(false)
     isTemperatureAlertSent Boolean @default(false)
+    // ✅ เพิ่ม 3 ทหารเสือ (Alert State Flags)
+    isAlertZone1Sent      Boolean @default(false) // แจ้งเตือนออกชั้น 1 (Warning)
+    isAlertNearZone2Sent  Boolean @default(false) // แจ้งเตือน 80% (Near Danger)
+    isAlertZone2Sent      Boolean @default(false) // แจ้งเตือนหลุดชั้น 2 (Danger SOS)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -256,6 +259,10 @@ model ExtendedHelp {
 
     type HelpType @default(LINE_SOS)
     status AlertStatus @default(DETECTED)
+
+    // ⭐ เพิ่มข้อมูลผู้ช่วยเหลือ (Rescuer)
+    rescuerName  String?
+    rescuerPhone String?
 
     latitude Float?
     longitude Float?
@@ -349,4 +356,14 @@ model BorrowEquipmentItem {
   equipment Equipment @relation(fields: [equipmentId], references: [id])
 
   @@map("borrow_request_items")
+}
+
+model RescueGroup {
+  id        Int      @id @default(autoincrement())
+  groupId   String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("rescue_groups")
 }

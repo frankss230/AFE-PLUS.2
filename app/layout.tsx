@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Toaster } from 'sonner';
 import { GlobalModal } from '@/components/ui/global-modal';
 import '../styles/globals.css';
-import AlertListener from '@/components/features/alerts/alert-listener';
 
 export const metadata: Metadata = {
   title: 'Smart Watch Monitoring System',
@@ -17,7 +16,6 @@ export default function RootLayout({
   return (
     <html lang="th" suppressHydrationWarning={true}>
       <body className="antialiased">
-        <AlertListener />
         {children}
         <Toaster position="top-right" richColors closeButton />
         <GlobalModal />

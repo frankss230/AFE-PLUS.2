@@ -1,28 +1,25 @@
 import { prisma } from '@/lib/db/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-// ✅ ตรวจสอบว่าไฟล์นี้มีอยู่จริงที่ path นี้
 import { CaregiverTable } from '@/components/features/caregivers/caregiver-table';
 
 export const dynamic = 'force-dynamic';
 
 async function getCaregivers() {
   const users = await prisma.user.findMany({
-    where: { role: 'CAREGIVER' }, // 1. เอาเฉพาะผู้ดูแล
+    where: { role: 'CAREGIVER' },
     include: {
       caregiverProfile: {
         include: {
-          dependents: true, // 2. ดึงรายการผู้สูงอายุที่ดูแล (เพื่อนับจำนวน)
+          dependents: true,
         }
       },
     },
     orderBy: { createdAt: 'desc' },
   });
 
-  // 3. แปลงข้อมูลให้ตรงกับ Interface CaregiverData
   return users.map((user) => {
     const profile = user.caregiverProfile;
     
-    // คำนวณอายุ
     let age: number | string = '-';
     if (profile?.birthday) {
         const today = new Date();
@@ -42,14 +39,13 @@ async function getCaregivers() {
       phone: profile?.phone || '-',
       age: age,
       gender: profile?.gender || 'UNSPECIFIED',
-      dependentCount: profile?.dependents.length || 0, // นับจำนวน
+      dependentCount: profile?.dependents.length || 0,
       isActive: user.isActive,
     };
   });
 }
 
 export default async function CaregiversPage() {
-  // ✅ ตั้งชื่อตัวแปรว่า caregivers
   const caregivers = await getCaregivers();
 
   return (
@@ -64,7 +60,6 @@ export default async function CaregiversPage() {
           <CardTitle>รายชื่อ ({caregivers.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* ✅ ส่งตัวแปร caregivers เข้าไป (ชื่อต้องตรงกัน) */}
           <CaregiverTable data={caregivers} />
         </CardContent>
       </Card>

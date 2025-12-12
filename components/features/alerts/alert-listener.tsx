@@ -25,12 +25,8 @@ export default function AlertListener() {
         if (audioRef.current) {
             audioRef.current.play().catch(e => console.log("Audio play failed (user interaction needed)"));
         }
-        toast.error(`⚠️ มีแจ้งเตือนฉุกเฉินใหม่ ${currentCount} รายการ!`, {
+        toast.error(`มีแจ้งเตือนฉุกเฉินใหม่ ${currentCount} รายการ!`, {
             duration: 5000,
-            action: {
-                label: 'ดูทันที',
-                onClick: () => window.location.href = '/admin/alerts'
-            }
         });
       }
 

@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { AlertTriangle, Clock, MapPin, User, CheckCircle2, Siren, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
-import { AlertsAutoRefresh } from '@/components/features/alerts/alerts-auto-refresh'; // ✅ Import ตัวช่วยรีเฟรช
+import { AlertsAutoRefresh } from '@/components/features/alerts/alerts-auto-refresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,14 +68,13 @@ export default async function AlertsPage() {
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col gap-6">
       
-      {/* ✅ ใส่ตัวช่วยรีเฟรชไว้ตรงนี้ (ทำงานเงียบๆ) */}
       <AlertsAutoRefresh />
 
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">ศูนย์แจ้งเตือนเหตุ</h1>
-          <p className="text-slate-500">รวมรายการ SOS และการล้ม (Real-time)</p>
+          <p className="text-slate-500">รวมรายการ SOS และการล้ม</p>
         </div>
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500 text-white shadow-lg shadow-red-500/30">
           <Siren className="h-6 w-6 animate-pulse" />

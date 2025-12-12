@@ -7,7 +7,7 @@ export function AlertsAutoRefresh() {
   const router = useRouter();
 
   useEffect(() => {
-    // ตั้งเวลาให้รีเฟรชหน้าจอทุกๆ 5 วินาที
+    // refresh every 5 seconds
     const interval = setInterval(() => {
       router.refresh();
     }, 5000);

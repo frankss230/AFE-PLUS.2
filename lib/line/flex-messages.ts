@@ -1,4 +1,4 @@
-import { Client, FlexBubble } from '@line/bot-sdk';
+import { Client, FlexBubble, FlexComponent } from '@line/bot-sdk';
 import { FallRecord, User, CaregiverProfile, DependentProfile, ExtendedHelp } from '@prisma/client';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
@@ -11,254 +11,174 @@ const config = {
 const lineClient = new Client(config);
 
 // =================================================================
-// 🚨 1. Alert Message (Fall & SOS) - ธีมฉุกเฉิน
+// 🚨 1. Alert Message (Fall & SOS & Health Critical & Zone SOS)
 // =================================================================
 export const createAlertFlexMessage = (
-    record: FallRecord | ExtendedHelp, 
+    record: any, 
     user: User, 
-    dependentProfile: DependentProfile 
+    dependentProfile: DependentProfile & { locations?: any[] },
+    alertType: 'FALL' | 'SOS' | 'HEALTH' | 'ZONE' = 'FALL'
 ): FlexBubble => {
     
-    const isSOS = 'type' in record;
-    const isFall = !isSOS;
-    
-    const startColor = isFall ? "#FF416C" : "#FF4B1F"; 
-    const endColor = isFall ? "#FF4B2B" : "#FF9068";   
-    const headerText = isFall ? "⚠️ ตรวจพบการล้ม" : "SOS ขอความช่วยเหลือ";
+    // 1. ธีมสี & หัวข้อ
+    let headerText = "แจ้งเตือน";
+    let startColor = "#FF416C"; 
+    let endColor = "#FF4B2B";
 
-    const eventTimeRaw = 'timestamp' in record ? record.timestamp : record.requestedAt;
+    if (alertType === 'FALL') {
+        headerText = "🚨 ตรวจพบการล้ม";
+        startColor = "#FF416C"; endColor = "#FF4B2B"; 
+    } else if (alertType === 'SOS') {
+        headerText = "🆘 ขอความช่วยเหลือ";
+        startColor = "#FF8008"; endColor = "#FFC837"; 
+    } else if (alertType === 'HEALTH') {
+        headerText = "💓 สุขภาพผิดปกติ";
+        startColor = "#F2994A"; endColor = "#F2C94C"; 
+    } else if (alertType === 'ZONE') {
+        // ✅ แก้ชื่อให้ชัดเจน: นี่คือระดับอันตรายสูงสุด (ชั้น 2)
+        headerText = "⛔ หลุดเขตอันตราย (ชั้น 2)"; 
+        startColor = "#D90429"; endColor = "#EF233C"; // แดงเข้ม
+    }
+
+    // 2. เวลา
+    const eventTimeRaw = record.timestamp || record.requestedAt || new Date();
     const time = format(new Date(eventTimeRaw), "HH:mm น.", { locale: th });
     const date = format(new Date(eventTimeRaw), "d MMM yyyy", { locale: th });
+    
+    // 3. พิกัด (Fallback Logic)
+    let lat = record.latitude ? parseFloat(record.latitude) : null;
+    let lng = record.longitude ? parseFloat(record.longitude) : null;
+    
+    // กันเหนียว: ถ้าพิกัดเป็น 0,0 ให้ถือว่าไม่มีพิกัด
+    if (lat === 0 && lng === 0) { lat = null; lng = null; }
 
-    const staticMapUrl = "https://cdn-icons-png.flaticon.com/512/854/854878.png"; 
+    const isFallbackLocation = (!lat || !lng);
+
+    if (isFallbackLocation && dependentProfile.locations && dependentProfile.locations.length > 0) {
+        lat = dependentProfile.locations[0].latitude;
+        lng = dependentProfile.locations[0].longitude;
+    }
+
+    const hasLocation = (lat && lng);
+    const mapKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAP; // เช็คชื่อ ENV ดีๆ นะ
+    const liffBaseUrl = process.env.LIFF_BASE_URL;
+
+    const mapImageUrl = (hasLocation && mapKey)
+        ? `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=16&size=800x400&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=${mapKey}`
+        : "https://cdn-icons-png.flaticon.com/512/10337/10337160.png";
+
+    const navigateUrl = (hasLocation && liffBaseUrl)
+        ? `${liffBaseUrl}/location?lat=${lat}&lng=${lng}&mode=navigate&id=${dependentProfile.id}`
+        : `http://maps.google.com/?q=${lat},${lng}`;
+
     const elderlyName = `คุณ${dependentProfile.firstName} ${dependentProfile.lastName}`;
 
-    const baseUrl = process.env.SERVER_URL || "https://chirpier-gannon-windier.ngrok-free.dev"; 
-    const acknowledgeUrl = `${baseUrl}/api/fall/acknowledge?recordId=${record.id}&type=${isFall ? 'fall' : 'sos'}`;
-    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${record.latitude},${record.longitude}`;
+    // 4. 🔥 จัดการปุ่ม
+    const buttonContents: any[] = [];
+
+    const broadcastUrl = `${process.env.LIFF_BASE_URL}/rescue/broadcast-trigger?id=${record.id || 0}`;
+
+    if (alertType !== 'SOS') {
+        buttonContents.push({
+            type: "button",
+            style: "primary",
+            color: "#EF4444", 
+            margin: "sm",
+            height: "md",
+            action: { type: "uri", label: "ขอความช่วยเหลือเพิ่มเติม", uri: broadcastUrl }
+        });
+    }
 
     return {
-        type: "bubble",
-        size: "mega",
+        type: "bubble", size: "mega",
         body: {
-            type: "box",
-            layout: "vertical",
-            spacing: "md",
-            paddingAll: "xl",
+            type: "box", layout: "vertical", spacing: "md", paddingAll: "xl",
             contents: [
-                // Header Box with Gradient
-                {
-                    type: "box",
-                    layout: "horizontal",
-                    paddingAll: "lg",
-                    background: {
-                        type: "linearGradient",
-                        angle: "135deg",
-                        startColor: startColor,
-                        endColor: endColor
-                    },
-                    cornerRadius: "xxl",
-                    contents: [
-                        {
-                            type: "text",
-                            text: headerText,
-                            weight: "bold",
-                            size: "xl",
-                            color: "#FFFFFF",
-                            align: "center",
-                            gravity: "center",
-                            wrap: true
-                        }
-                    ]
-                },
-                // Hero Image (Map)
-                {
-                    type: "box",
-                    layout: "vertical",
-                    cornerRadius: "xl",
-                    margin: "md",
-                    contents: [
-                        {
-                            type: "image",
-                            url: staticMapUrl,
-                            size: "full",
-                            aspectRatio: "20:13",
-                            aspectMode: "cover",
-                            action: { type: "uri", label: "View Map", uri: googleMapsUrl }
-                        }
-                    ]
-                },
-                // Elderly Name
-                {
-                    type: "box",
-                    layout: "vertical",
-                    spacing: "xs",
-                    margin: "lg",
-                    paddingAll: "sm",
-                    contents: [
-                        { type: "text", text: "ผู้ประสบเหตุ", color: "#94A3B8", size: "xs", weight: "bold" },
-                        { type: "text", text: elderlyName, color: "#1E293B", size: "xl", weight: "bold", wrap: true, margin: "xs" }
-                    ]
-                },
-                // Info Box with Gradient Background
-                {
-                    type: "box",
-                    layout: "vertical",
-                    background: {
-                        type: "linearGradient",
-                        angle: "180deg",
-                        startColor: "#F8FAFC",
-                        endColor: "#F1F5F9"
-                    },
-                    cornerRadius: "xl",
-                    paddingAll: "lg",
-                    spacing: "md",
-                    margin: "md",
-                    contents: [
-                        {
-                            type: "box", 
-                            layout: "horizontal", 
-                            contents: [
-                                { type: "text", text: "📅 วันที่", size: "sm", color: "#64748B", flex: 2 },
-                                { type: "text", text: date, size: "sm", color: "#334155", flex: 3, weight: "bold", align: "end" }
-                            ]
-                        },
-                        {
-                            type: "box", 
-                            layout: "horizontal", 
-                            contents: [
-                                { type: "text", text: "⏰ เวลา", size: "sm", color: "#64748B", flex: 2 },
-                                { type: "text", text: time, size: "sm", color: "#334155", flex: 3, weight: "bold", align: "end" }
-                            ]
-                        },
-                        { 
-                            type: "separator", 
-                            color: "#E2E8F0", 
-                            margin: "md" 
-                        },
-                        {
-                            type: "box", 
-                            layout: "horizontal", 
-                            margin: "md", 
-                            contents: [
-                                { type: "text", text: "📍 พิกัด", size: "sm", color: "#64748B", flex: 1 },
-                                { type: "text", text: `${record.latitude?.toFixed(5)}, ${record.longitude?.toFixed(5)}`, size: "xxs", color: "#111827", flex: 4, align: "end", wrap: true }
-                            ]
-                        }
-                    ]
-                },
-                // Acknowledge Button
-                {
-                    type: "box",
-                    layout: "vertical",
-                    spacing: "md",
-                    margin: "lg",
-                    contents: [
-                        {
-                            type: "button",
-                            style: "primary",
-                            color: "#2EA1FF",
-                            height: "md",
-                            action: { type: "uri", label: "รับทราบเหตุ", uri: acknowledgeUrl },
-                            adjustMode: "shrink-to-fit"
-                        },
-                        {
-                            type: "text",
-                            text: "กดปุ่มเมื่อตรวจสอบและช่วยเหลือแล้ว",
-                            size: "xxs",
-                            color: "#94A3B8",
-                            align: "center",
-                            margin: "sm"
-                        }
-                    ]
-                }
+                // Header
+                { type: "box", layout: "horizontal", paddingAll: "lg", background: { type: "linearGradient", angle: "135deg", startColor: startColor, endColor: endColor }, cornerRadius: "xxl", contents: [{ type: "text", text: headerText, weight: "bold", size: "xl", color: "#FFFFFF", align: "center", gravity: "center", wrap: true }] },
+                // Map Image
+                { type: "box", layout: "vertical", cornerRadius: "xl", margin: "md", contents: [{ type: "image", url: mapImageUrl, size: "full", aspectRatio: "20:13", aspectMode: "cover", action: { type: "uri", label: "นำทางไปช่วยเหลือ", uri: navigateUrl } }] },
+                // Name
+                { type: "box", layout: "vertical", spacing: "xs", margin: "lg", paddingAll: "sm", contents: [{ type: "text", text: "ผู้ประสบเหตุ", color: "#94A3B8", size: "xs", weight: "bold" }, { type: "text", text: elderlyName, color: "#1E293B", size: "xl", weight: "bold", wrap: true, margin: "xs" }] },
+                // Info
+                { type: "box", layout: "vertical", background: { type: "linearGradient", angle: "180deg", startColor: "#F8FAFC", endColor: "#F1F5F9" }, cornerRadius: "xl", paddingAll: "lg", spacing: "md", margin: "md", contents: [
+                    { type: "box", layout: "horizontal", contents: [{ type: "text", text: "📅 วันที่", size: "sm", color: "#64748B", flex: 2 }, { type: "text", text: date, size: "sm", color: "#334155", flex: 3, weight: "bold", align: "end" }] },
+                    { type: "box", layout: "horizontal", contents: [{ type: "text", text: "⏰ เวลา", size: "sm", color: "#64748B", flex: 2 }, { type: "text", text: time, size: "sm", color: "#334155", flex: 3, weight: "bold", align: "end" }] },
+                    { type: "separator", color: "#E2E8F0", margin: "md" },
+                    { type: "box", layout: "horizontal", margin: "md", contents: [{ type: "text", text: "📍 พิกัด", size: "sm", color: "#64748B", flex: 1 }, { type: "text", text: hasLocation ? `${lat?.toFixed(5)}, ${lng?.toFixed(5)}` : "ไม่พบ GPS", size: "xxs", color: hasLocation ? "#111827" : "#EF4444", flex: 4, align: "end", wrap: true, action: { type: "uri", label: "เปิดแผนที่", uri: navigateUrl } }] }
+                ]},
+                // Buttons
+                ...(buttonContents.length > 0 ? [{ type: "box", layout: "vertical", spacing: "md", margin: "lg", contents: buttonContents } as any] : [])
             ]
         }
     };
 };
 
-// ✅ ฟังก์ชันส่ง Alert
 export async function sendCriticalAlertFlexMessage(
     recipientLineId: string, 
-    record: FallRecord | ExtendedHelp, 
+    record: any, 
     user: User,
     caregiverPhone: string,
-    dependentProfile: DependentProfile
+    dependentProfile: DependentProfile,
+    alertType: 'FALL' | 'SOS' | 'HEALTH' | 'ZONE' = 'FALL'
 ) {
     if (!config.channelAccessToken) return;
-    
-    const flexMessageContent = createAlertFlexMessage(record, user, dependentProfile);
-
+    const flexMessageContent = createAlertFlexMessage(record, user, dependentProfile, alertType);
     try {
         await lineClient.pushMessage(recipientLineId, {
             type: 'flex',
-            altText: `🚨 แจ้งเตือนด่วน! จากคุณ ${dependentProfile.firstName}`,
+            altText: `🚨 แจ้งเตือนด่วน: ${alertType}`,
             contents: flexMessageContent, 
         });
-        console.log(`✅ LINE Alert sent to: ${recipientLineId}`);
+        console.log(`✅ LINE Alert sent to: ${recipientLineId} [Type: ${alertType}]`);
     } catch (error: any) {
         console.error('❌ Failed to send LINE message:', error.response?.data || error.message);
     }
 }
 
 // =================================================================
-// 🔔 2. General Alert (HR, Temp, Safezone)
+// 🔔 2. General Alert (Zone 1, Zone 80%, Back Safe) - สีเหลือง/ส้ม/เขียว
 // =================================================================
-export const createGeneralAlertBubble = (title: string, message: string, value: string, color: string = "#3B82F6"): FlexBubble => {
+export const createGeneralAlertBubble = (
+    title: string, 
+    message: string, 
+    value: string, 
+    color: string = "#3B82F6",
+    isEmergency: boolean = false
+): FlexBubble => {
+    
+    const buttonContents: any[] = [];
+
+    if (isEmergency) {
+        buttonContents.push({
+            type: "button",
+            style: "primary",
+            color: "#EF4444",
+            margin: "sm",
+            height: "md",
+            action: { type: "uri", label: "📞 ขอความช่วยเหลือ (1669)", uri: `tel:1669` }
+        });
+    }
+
     return {
-        type: "bubble", 
-        size: "mega",
+        type: "bubble", size: "mega",
         body: {
-            type: "box", 
-            layout: "vertical", 
-            paddingAll: "xl", 
-            spacing: "lg", 
+            type: "box", layout: "vertical", paddingAll: "xl", spacing: "lg", 
             contents: [
-                // Header with Gradient
-                {
-                    type: "box", 
-                    layout: "vertical", 
-                    paddingAll: "lg",
-                    background: { 
-                        type: "linearGradient", 
-                        angle: "135deg", 
-                        startColor: color, 
-                        endColor: "#1E293B" 
-                    },
-                    cornerRadius: "xl",
-                    contents: [
-                        { type: "text", text: "⚠️ แจ้งเตือนระบบ", weight: "bold", color: "#FFFFFFCC", size: "xs", align: "center" },
-                        { type: "text", text: title, weight: "bold", size: "lg", color: "#FFFFFF", margin: "xs", align: "center", wrap: true }
-                    ]
-                },
+                // Header
+                { type: "box", layout: "vertical", paddingAll: "lg", background: { type: "linearGradient", angle: "135deg", startColor: color, endColor: "#1E293B" }, cornerRadius: "xl", contents: [
+                    { type: "text", text: isEmergency ? "⚠️ แจ้งเตือนระบบ" : "✅ สถานะปลอดภัย", weight: "bold", color: "#FFFFFFCC", size: "xs", align: "center" },
+                    { type: "text", text: title, weight: "bold", size: "lg", color: "#FFFFFF", margin: "xs", align: "center", wrap: true }
+                ]},
                 // Message
-                { 
-                    type: "text", 
-                    text: message, 
-                    size: "sm", 
-                    color: "#475569", 
-                    wrap: true, 
-                    align: "center",
-                    margin: "lg"
-                },
-                // Value Box with Gradient
-                {
-                    type: "box", 
-                    layout: "vertical", 
-                    background: {
-                        type: "linearGradient",
-                        angle: "180deg",
-                        startColor: "#F8FAFC",
-                        endColor: "#F1F5F9"
-                    },
-                    cornerRadius: "xl", 
-                    paddingAll: "lg", 
-                    margin: "md",
-                    contents: [
-                        { type: "text", text: "ค่าที่วัดได้", size: "xs", color: "#94A3B8", align: "center" },
-                        { type: "text", text: value, size: "xxl", color: "#0F172A", align: "center", weight: "bold", margin: "sm" }
-                    ]
-                }
+                { type: "text", text: message, size: "sm", color: "#475569", wrap: true, align: "center", margin: "lg" },
+                // Value
+                { type: "box", layout: "vertical", background: { type: "linearGradient", angle: "180deg", startColor: "#F8FAFC", endColor: "#F1F5F9" }, cornerRadius: "xl", paddingAll: "lg", margin: "md", contents: [
+                    { type: "text", text: "สถานะ / ระยะทาง", size: "xs", color: "#94A3B8", align: "center" },
+                    { type: "text", text: value, size: "xl", color: "#0F172A", align: "center", weight: "bold", margin: "sm" }
+                ]},
+                // Buttons
+                ...(buttonContents.length > 0 ? [{ type: "box", layout: "vertical", spacing: "md", margin: "lg", contents: buttonContents } as any] : [])
             ]
         }
     };
@@ -269,16 +189,22 @@ export const createGeneralAlertBubble = (title: string, message: string, value: 
 // =================================================================
 export const createCurrentStatusBubble = (dependentProfile: DependentProfile, health: { bpm: number; temp: number; battery: number; updatedAt: Date; lat: number; lng: number }): FlexBubble => {
     const time = health.updatedAt ? format(new Date(health.updatedAt), "d MMM HH:mm น.", { locale: th }) : "-";
-    // const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${health.lat},${health.lng}&zoom=16&size=800x400&maptype=satellite&markers=color:red%7C${health.lat},${health.lng}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
-    const mapUrl = "https://cdn-icons-png.flaticon.com/512/235/235861.png";
-    const displayMapUrl = (health.lat && health.lng) ? mapUrl : "https://cdn-icons-png.flaticon.com/512/235/235861.png";
-    // const googleMapsUrl = (health.lat && health.lng) ? `https://www.google.com/maps/search/?api=1&query=${health.lat},${health.lng}` : "https://maps.google.com";
-    const destination = `${health.lat},${health.lng}`;
-
-    const googleMapsUrl = (health.lat && health.lng) 
-        ? `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`
-        : "https://maps.google.com";
     const elderlyName = `คุณ${dependentProfile.firstName} ${dependentProfile.lastName}`;
+
+    const liffBaseUrl = process.env.LIFF_BASE_URL;
+    const mapKey = process.env.NEXT_PUBLIC_GOOGLE_MAP;
+    
+    const mapImageUrl = (health.lat && health.lng && mapKey)
+        ? `https://maps.googleapis.com/maps/api/staticmap?center=${health.lat},${health.lng}&zoom=16&size=800x400&maptype=satellite&markers=color:red%7C${health.lat},${health.lng}&key=${mapKey}`
+        : "https://cdn-icons-png.flaticon.com/512/235/235861.png";
+
+    const viewPinUrl = (health.lat && health.lng && liffBaseUrl)
+        ? `${liffBaseUrl}/location?lat=${health.lat}&lng=${health.lng}&mode=pin&id=${dependentProfile.id}`
+        : `https://www.google.com/maps/search/?api=1&query=${health.lat},${health.lng}`;
+
+    const navigateUrl = (health.lat && health.lng && liffBaseUrl)
+        ? `${liffBaseUrl}/location?lat=${health.lat}&lng=${health.lng}&mode=navigate&id=${dependentProfile.id}`
+        : `https://www.google.com/maps/dir/?api=1&destination=${health.lat},${health.lng}`;
 
     return {
         type: "bubble", 
@@ -316,11 +242,11 @@ export const createCurrentStatusBubble = (dependentProfile: DependentProfile, he
                     contents: [
                         { 
                             type: "image", 
-                            url: displayMapUrl, 
+                            url: mapImageUrl, 
                             size: "full", 
                             aspectRatio: "20:13", 
                             aspectMode: "cover", 
-                            action: { type: "uri", label: "View Map", uri: googleMapsUrl } 
+                            action: { type: "uri", label: "View Map", uri: viewPinUrl } 
                         }
                     ]
                 },
@@ -399,7 +325,7 @@ export const createCurrentStatusBubble = (dependentProfile: DependentProfile, he
                     action: {
                         type: "uri",
                         label: "ดูตำแหน่งบนแผนที่",
-                        uri: googleMapsUrl 
+                        uri: navigateUrl 
                     }
                 }
             ]
@@ -721,3 +647,503 @@ export const createSafetySettingsBubble = (elderlyProfile: DependentProfile, set
         }
     };
 };
+
+// =================================================================
+// 🚑 8. Rescue Group Message (ส่งเข้ากลุ่มกู้ภัย/อาสา)
+// =================================================================
+function formatDate(date: Date) {
+  return new Date(date).toLocaleString('th-TH', {
+    timeZone: 'Asia/Bangkok',
+    hour: '2-digit',
+    minute: '2-digit',
+    day: 'numeric',
+    month: 'short',
+    year: '2-digit',
+  });
+}
+
+export function createRescueGroupFlexMessage(
+  alertId: number,
+  alertData: any,
+  dependentUser: any,
+  caregiverInfo: any,
+  dependentInfo: any,
+  title: string = "ออกนอกเขตปลอดภัย" 
+): FlexBubble {
+
+  const hasLocation = alertData.latitude && alertData.longitude;
+  
+  // ✅ 1. ดึงตัวแปร Env ตามที่นายน้อยใช้ในโค้ดตัวอย่าง
+  const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAP || "";
+  const liffBaseUrl = process.env.LIFF_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || ""; // กันเหนียวเผื่อลืมตั้ง LIFF_BASE_URL
+
+  // 2. สร้างลิงก์รูปภาพแผนที่ (Static Map)
+  let mapImageUrl = "https://cdn-icons-png.flaticon.com/512/854/854878.png";
+  if (hasLocation && GOOGLE_KEY) {
+      mapImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${alertData.latitude},${alertData.longitude}&zoom=16&size=400x260&maptype=roadmap&markers=color:red%7C${alertData.latitude},${alertData.longitude}&key=${GOOGLE_KEY}`;
+  }
+
+  // ✅ 3. แก้ตรงนี้! สร้างลิงก์นำทาง (Navigate URL) ให้ตรงกับ Format ของระบบนายน้อย
+  // รูปแบบ: /location?lat=xx&lng=xx&mode=navigate&id=xx
+  const navigationUrl = (hasLocation && liffBaseUrl)
+    ? `${liffBaseUrl}/location?lat=${alertData.latitude}&lng=${alertData.longitude}&mode=navigate&id=${dependentInfo.id}`
+    : `https://www.google.com/maps/search/?api=1&query=${alertData.latitude},${alertData.longitude}`; // Fallback ไป Google Maps ปกติถ้าไม่มี liffBaseUrl
+
+  const dependentPhone = dependentInfo?.phone || "-";
+  const caregiverPhone = caregiverInfo?.phone || "-";
+  const caregiverName = caregiverInfo ? `${caregiverInfo.firstName} ${caregiverInfo.lastName}` : "ไม่ระบุ";
+  const dependentName = dependentInfo ? `${dependentInfo.firstName} ${dependentInfo.lastName}` : dependentUser.username;
+  
+  // ✅ 4. แก้ตรงนี้! ให้ชี้ไปที่ /rescue/form (ตามชื่อไฟล์จริงของนายน้อย)
+  const acknowledgeUrl = liffBaseUrl
+    ? `${liffBaseUrl}/rescue/form?id=${alertId}`  // <--- แก้จาก acknowledge เป็น form
+    : `https://google.com?q=Error_No_LIFF_BASE_URL`;
+
+  // ฟอร์แมทวันที่และเวลา
+  const currentDate = new Date();
+  const thaiDate = currentDate.toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const thaiTime = currentDate.toLocaleTimeString('th-TH', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  return {
+    type: "bubble",
+    size: "mega",
+    body: {
+      type: "box",
+      layout: "vertical",
+      paddingAll: "xl",
+      spacing: "lg",
+      contents: [
+        // Header
+        {
+          type: "box",
+          layout: "vertical",
+          paddingAll: "xl",
+          background: {
+            type: "linearGradient",
+            angle: "135deg",
+            startColor: "#DC2626",
+            endColor: "#EF4444"
+          },
+          cornerRadius: "xxl",
+          contents: [
+            {
+              type: "text",
+              text: title,
+              weight: "bold",
+              size: "xl",
+              color: "#FFFFFF",
+              align: "center"
+            }
+          ]
+        },
+        // รูปแผนที่ (กดแล้วไปหน้า /location?mode=navigate)
+        ...(hasLocation ? [{
+          type: "box" as const,
+          layout: "vertical" as const,
+          cornerRadius: "xl" as const,
+          margin: "lg" as const,
+          contents: [
+            {
+              type: "image" as const,
+              url: mapImageUrl,
+              size: "full",
+              aspectRatio: "20:13",
+              aspectMode: "cover" as const,
+              action: {
+                type: "uri" as const,
+                label: "Open Navigation",
+                uri: navigationUrl // ✅ ใช้ลิงก์ที่แก้ใหม่ตรงนี้ครับ
+              }
+            }
+          ]
+        }] : []),
+        // ข้อมูลผู้ประสบเหตุ
+        {
+          type: "text",
+          text: "ผู้ประสบเหตุ",
+          weight: "bold",
+          size: "xs",
+          color: "#64748B",
+          margin: hasLocation ? "xl" : "lg"
+        },
+        {
+          type: "box",
+          layout: "horizontal",
+          margin: "sm",
+          contents: [
+            {
+              type: "box",
+              layout: "vertical",
+              flex: 1,
+              contents: [
+                {
+                  type: "text",
+                  text: dependentName,
+                  size: "xl",
+                  weight: "bold",
+                  color: "#000000"
+                },
+                {
+                  type: "text",
+                  text: dependentPhone,
+                  size: "sm",
+                  color: "#64748B",
+                  margin: "xs"
+                }
+              ]
+            },
+            {
+              type: "button",
+              style: "primary",
+              color: "#10B981",
+              height: "sm",
+              flex: 0,
+              action: {
+                type: "uri",
+                label: "โทร",
+                uri: `tel:${dependentPhone}`
+              }
+            }
+          ],
+          alignItems: "center"
+        },
+        { type: "separator", margin: "xl" },
+        // ข้อมูลผู้ดูแล
+        {
+          type: "text",
+          text: "ผู้ดูแล (ติดต่อฉุกเฉิน)",
+          weight: "bold",
+          size: "xs",
+          color: "#64748B",
+          margin: "lg"
+        },
+        {
+          type: "box",
+          layout: "horizontal",
+          margin: "sm",
+          contents: [
+            {
+              type: "box",
+              layout: "vertical",
+              flex: 1,
+              contents: [
+                {
+                  type: "text",
+                  text: caregiverName,
+                  size: "md",
+                  weight: "bold",
+                  color: "#000000"
+                },
+                {
+                  type: "text",
+                  text: caregiverPhone,
+                  size: "sm",
+                  color: "#64748B",
+                  margin: "xs"
+                }
+              ]
+            },
+            {
+              type: "button",
+              style: "primary",
+              color: "#10B981",
+              height: "sm",
+              flex: 0,
+              action: {
+                type: "uri",
+                label: "โทร",
+                uri: `tel:${caregiverPhone}`
+              }
+            }
+          ],
+          alignItems: "center"
+        },
+        { type: "separator", margin: "xl" },
+        // เวลา + พิกัด
+        {
+          type: "box",
+          layout: "horizontal",
+          margin: "lg",
+          contents: [
+            { type: "text", text: `📅 ${thaiDate}`, size: "sm", color: "#64748B", flex: 1 },
+            { type: "text", text: `⏰ ${thaiTime} น.`, size: "sm", color: "#64748B", align: "end", flex: 1 }
+          ]
+        },
+        {
+          type: "text",
+          text: hasLocation ? `${alertData.latitude}, ${alertData.longitude}` : "ไม่มีข้อมูลพิกัด",
+          size: "xs",
+          color: "#94A3B8",
+          align: "center",
+          margin: "sm",
+          wrap: true
+        },
+        // ปุ่มตอบรับ
+        {
+          type: "button",
+          style: "primary",
+          color: "#DC2626",
+          height: "md",
+          margin: "lg",
+          action: {
+            type: "uri",
+            label: "ตอบรับเหตุฉุกเฉิน",
+            uri: acknowledgeUrl
+          }
+        }
+      ]
+    }
+  };
+}
+
+// =================================================================
+// 🚨 9. Caregiver Alert (แจ้งเตือนผู้ดูแลเมื่อเกิดเหตุ)
+// =================================================================
+export function createCaregiverAlertBubble(
+    dependentName: string,
+    location: string,
+    mapUrl: string
+): FlexBubble {
+    return {
+        type: "bubble",
+        body: {
+            type: "box",
+            layout: "vertical",
+            paddingAll: "xl",
+            backgroundColor: "#FEF2F2", // แดงจางมาก
+            contents: [
+                {
+                    type: "text",
+                    text: "🚨 แจ้งเหตุฉุกเฉิน!",
+                    weight: "bold",
+                    size: "xl",
+                    color: "#DC2626", // แดงเข้ม
+                    align: "center"
+                },
+                {
+                    type: "text",
+                    text: `คุณ ${dependentName} ต้องการความช่วยเหลือ`,
+                    size: "md",
+                    align: "center",
+                    margin: "md",
+                    wrap: true
+                },
+                {
+                    type: "separator",
+                    margin: "lg",
+                    color: "#FECACA"
+                },
+                {
+                    type: "box",
+                    layout: "vertical",
+                    margin: "lg",
+                    contents: [
+                        {
+                            type: "text",
+                            text: "📍 พิกัดล่าสุด:",
+                            size: "sm",
+                            color: "#7F1D1D"
+                        },
+                        {
+                            type: "text",
+                            text: location,
+                            size: "xs",
+                            color: "#7F1D1D",
+                            wrap: true
+                        }
+                    ]
+                }
+            ]
+        },
+        footer: {
+            type: "box",
+            layout: "vertical",
+            contents: [
+                {
+                    type: "button",
+                    style: "primary",
+                    color: "#DC2626",
+                    action: {
+                        type: "uri",
+                        label: "ดูแผนที่ / ติดตาม",
+                        uri: mapUrl
+                    }
+                }
+            ]
+        }
+    };
+}
+
+// =================================================================
+// 🟡 10. Case Accepted (มีเจ้าหน้าที่รับเคสแล้ว)
+// =================================================================
+export function createCaseAcceptedBubble(
+    rescuerName: string,
+    rescuerPhone: string
+): FlexBubble {
+    return {
+        type: "bubble",
+        body: {
+            type: "box",
+            layout: "vertical",
+            backgroundColor: "#FFF7ED", // ส้มอ่อน
+            paddingAll: "xl",
+            contents: [
+                {
+                    type: "text",
+                    text: "🚑 เจ้าหน้าที่รับเคสแล้ว",
+                    weight: "bold",
+                    size: "lg",
+                    color: "#C2410C", // ส้มเข้ม
+                    align: "center"
+                },
+                { type: "separator", margin: "md", color: "#FFEDD5" },
+                {
+                    type: "box",
+                    layout: "vertical",
+                    margin: "lg",
+                    spacing: "sm",
+                    contents: [
+                        { type: "text", text: "กำลังเดินทางไปช่วยเหลือ...", size: "sm", color: "#9A3412", align: "center" },
+                        { type: "text", text: `จนท.: ${rescuerName}`, size: "md", weight: "bold", color: "#000000", align: "center", margin: "md" },
+                        { type: "text", text: `เบอร์: ${rescuerPhone}`, size: "sm", color: "#666666", align: "center" }
+                    ]
+                }
+            ]
+        }
+    };
+}
+
+// =================================================================
+// ✅ 11. Case Closed (ปิดเคสสมบูรณ์ + อาการ)
+// =================================================================
+export function createCaseClosedBubble(
+    rescuerName: string,
+    details: string, // อาการ
+    resolvedAt: Date
+): FlexBubble {
+    const timeStr = new Date(resolvedAt).toLocaleString('th-TH', { 
+        timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' 
+    });
+
+    return {
+        type: "bubble",
+        body: {
+            type: "box",
+            layout: "vertical",
+            backgroundColor: "#F0FDF4", // เขียวอ่อน
+            paddingAll: "xl",
+            contents: [
+                {
+                    type: "text",
+                    text: "✅ ปิดเคสเรียบร้อย",
+                    weight: "bold",
+                    size: "xl",
+                    color: "#15803D",
+                    align: "center"
+                },
+                { type: "separator", margin: "md", color: "#BBF7D0" },
+                
+                // ส่วนแสดงอาการ
+                {
+                    type: "box",
+                    layout: "vertical",
+                    margin: "lg",
+                    backgroundColor: "#DCFCE7",
+                    cornerRadius: "md",
+                    paddingAll: "md",
+                    contents: [
+                        { type: "text", text: "📝 รายละเอียด/อาการ:", size: "xs", color: "#166534", weight: "bold" },
+                        { type: "text", text: details || "-", size: "sm", color: "#14532D", wrap: true, margin: "sm" }
+                    ]
+                },
+
+                {
+                    type: "box",
+                    layout: "vertical",
+                    margin: "lg",
+                    spacing: "xs",
+                    contents: [
+                        { type: "text", text: `ผู้ช่วยเหลือ: ${rescuerName}`, size: "xs", color: "#166534", align: "center" },
+                        { type: "text", text: `เวลา: ${timeStr}`, size: "xxs", color: "#AAAAAA", align: "center" }
+                    ]
+                }
+            ]
+        }
+    };
+}
+
+// =================================================================
+// ✅ 12. Rescue Request Success (แจ้งกลับคนกดว่าส่งเรื่องแล้ว)
+// =================================================================
+export function createRescueSuccessBubble(): FlexBubble {
+    return {
+        type: "bubble",
+        body: {
+            type: "box",
+            layout: "vertical",
+            paddingAll: "xl",
+            backgroundColor: "#F0FDF4", // พื้นหลังเขียวอ่อนสบายตา
+            contents: [
+                {
+                    type: "image",
+                    url: "https://cdn-icons-png.flaticon.com/512/1032/1032989.png", // ไอคอนรถพยาบาล/SOS
+                    size: "sm",
+                    aspectMode: "fit",
+                    margin: "none"
+                },
+                {
+                    type: "text",
+                    text: "แจ้งเหตุสำเร็จ!",
+                    weight: "bold",
+                    size: "xl",
+                    color: "#15803D", // เขียวเข้ม
+                    align: "center",
+                    margin: "md"
+                },
+                {
+                    type: "text",
+                    text: "ระบบส่งข้อมูลไปยังศูนย์กู้ภัยแล้ว",
+                    size: "sm",
+                    color: "#4B5563",
+                    align: "center",
+                    margin: "sm"
+                },
+                {
+                    type: "separator",
+                    margin: "lg",
+                    color: "#BBF7D0"
+                },
+                {
+                    type: "box",
+                    layout: "vertical",
+                    margin: "lg",
+                    backgroundColor: "#FFFFFF",
+                    cornerRadius: "lg",
+                    paddingAll: "md",
+                    borderColor: "#BBF7D0",
+                    borderWidth: "1px",
+                    contents: [
+                        {
+                            type: "text",
+                            text: "🚑 เจ้าหน้าที่ได้รับข้อมูลพิกัดแล้ว และกำลังตรวจสอบเพื่อเข้าช่วยเหลือครับ",
+                            size: "xs",
+                            color: "#15803D",
+                            wrap: true,
+                            align: "center",
+                            weight: "bold"
+                        }
+                    ]
+                }
+            ]
+        }
+    };
+}

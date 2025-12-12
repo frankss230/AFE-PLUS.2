@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { sendCriticalAlertFlexMessage } from '@/lib/line/flex-messages';
-import { getCaregiverRecipientId } from '@/lib/utils/line-recipient';
 
 async function handleFall(request: Request) {
   try {
     const body = await request.json();
     
-    // รองรับ key ของเพื่อน (users_id, fall_status, x_axis...)
     const targetId = body.users_id || body.lineId;
     const fallStat = body.fall_status || body.status;
     const x = body.x_axis || body.xAxis || 0;
@@ -19,7 +17,14 @@ async function handleFall(request: Request) {
       where: { id: parseInt(targetId) },
       include: { 
         dependentProfile: {
-            include: { caregiver: { include: { user: true } } }
+            include: { 
+                caregiver: { include: { user: true } },
+                // ✅ เพิ่ม: ดึง Location ล่าสุดมาด้วย (เผื่อ GPS ใน body เป็น null)
+                locations: {
+                    take: 1,
+                    orderBy: { timestamp: 'desc' }
+                }
+            }
         }
       }
     });
@@ -29,7 +34,6 @@ async function handleFall(request: Request) {
     const dependent = user.dependentProfile;
     const caregiver = dependent.caregiver;
 
-    // บันทึก
     const fallRecord = await prisma.fallRecord.create({
       data: {
         dependentId: dependent.id,
@@ -43,28 +47,31 @@ async function handleFall(request: Request) {
       },
     });
 
-    // ถ้าล้มจริง (status 0)
     if (String(fallStat) === '0') {
-        // 1. บังคับเปิด GPS
+        // เปิด GPS
         await prisma.dependentProfile.update({
             where: { id: dependent.id },
             data: { isGpsEnabled: true }
         });
 
-        // 2. ส่ง LINE
+        // ส่ง LINE
         if (caregiver?.user.lineId) {
              await sendCriticalAlertFlexMessage(
                 caregiver.user.lineId,
                 fallRecord,
                 user,
                 caregiver.phone || '',
-                dependent as any
+                dependent as any,
+                'FALL' // ✅ ระบุ Type ว่าเป็น FALL (จะมีปุ่ม 1669)
             );
         }
     }
 
     return NextResponse.json({ success: true });
-  } catch (e) { return NextResponse.json({ error: 'Error' }, { status: 500 }); }
+  } catch (e) { 
+      console.error(e);
+      return NextResponse.json({ error: 'Error' }, { status: 500 }); 
+  }
 }
 
 export async function POST(req: Request) { return handleFall(req); }

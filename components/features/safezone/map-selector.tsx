@@ -1,33 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { MapContainer, TileLayer, Circle, Marker, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Fix Icon
-const icon = L.icon({
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-
-function LocationMarker({ position, setPosition }: { position: [number, number], setPosition: (pos: [number, number]) => void }) {
-  const map = useMapEvents({
-    click(e) {
-      setPosition([e.latlng.lat, e.latlng.lng]);
-      map.flyTo(e.latlng, map.getZoom());
-    },
-  });
-
-  return position === null ? null : (
-    <Marker position={position} icon={icon} />
-  );
-}
+import { useState, useCallback, useMemo, useRef } from 'react';
+import { GoogleMap, useJsApiLoader, Marker, Circle, Autocomplete } from '@react-google-maps/api';
+import { Loader2, Search } from 'lucide-react';
 
 interface MapSelectorProps {
+    apiKey: string;
     lat: number;
     lng: number;
     r1: number;
@@ -35,55 +13,129 @@ interface MapSelectorProps {
     onChange: (lat: number, lng: number) => void;
 }
 
-export default function MapSelector({ lat, lng, r1, r2, onChange }: MapSelectorProps) {
-  const [mapType, setMapType] = useState<'street' | 'satellite'>('satellite');
+const containerStyle = { width: '100%', height: '100%' };
+
+// ใช้ Type Library ที่ถูกต้อง (ลบ localContext ออก)
+type Library = "places" | "drawing" | "geometry" | "visualization";
+const libraries: Library[] = ["places"];
+
+export default function MapSelector({ apiKey, lat, lng, r1, r2, onChange }: MapSelectorProps) {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: apiKey,
+    language: 'th',
+    libraries: libraries,
+  });
+
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [mapType, setMapType] = useState<google.maps.MapTypeId>('roadmap' as unknown as google.maps.MapTypeId);
+  
+  const searchResultRef = useRef<google.maps.places.Autocomplete | null>(null);
+
+  const zone1Options = useMemo(() => ({
+    strokeColor: '#10B981', strokeOpacity: 0.8, strokeWeight: 2,
+    fillColor: '#10B981', fillOpacity: 0.2,
+    clickable: false, draggable: false, editable: false, visible: true, zIndex: 2
+  }), []);
+
+  const zone2Options = useMemo(() => ({
+    strokeColor: '#EF4444', strokeOpacity: 0.8, strokeWeight: 1,
+    fillColor: '#EF4444', fillOpacity: 0.1,
+    clickable: false, draggable: false, editable: false, visible: true, zIndex: 1
+  }), []);
+
+  const onLoad = useCallback((map: google.maps.Map) => setMap(map), []);
+  const onUnmount = useCallback(() => setMap(null), []);
+
+  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+        onChange(e.latLng.lat(), e.latLng.lng());
+    }
+  }, [onChange]);
+
+  // ✅ แก้ไข: เพิ่มการเช็คว่า place.geometry มีอยู่จริงไหม ก่อนดึงค่า lat/lng
+  const onPlaceChanged = () => {
+    if (searchResultRef.current) {
+        const place = searchResultRef.current.getPlace();
+        
+        // 🛡️ ดัก Error ตรงนี้
+        if (!place || !place.geometry || !place.geometry.location) {
+            console.log("สถานที่นี้ไม่มีพิกัด GPS หรือยังไม่ได้เลือกสถานที่");
+            return;
+        }
+
+        const newLat = place.geometry.location.lat();
+        const newLng = place.geometry.location.lng();
+        onChange(newLat, newLng);
+        map?.panTo({ lat: newLat, lng: newLng });
+        map?.setZoom(17);
+    }
+  };
+
+  const onLoadAutocomplete = (autocomplete: google.maps.places.Autocomplete) => {
+    searchResultRef.current = autocomplete;
+  };
+
+  if (!isLoaded) return <div className="w-full h-full flex items-center justify-center bg-slate-100"><Loader2 className="animate-spin" /></div>;
 
   return (
     <div className="relative w-full h-full">
+        <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={{ lat, lng }}
+            zoom={17}
+            onLoad={onLoad}
+            onUnmount={onUnmount}
+            onClick={handleMapClick}
+            options={{
+                mapTypeId: mapType,
+                disableDefaultUI: true,
+                zoomControl: false, 
+                clickableIcons: false,
+            }}
+        >
+            {/* Search Bar */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[20]">
+                <Autocomplete onLoad={onLoadAutocomplete} onPlaceChanged={onPlaceChanged}>
+                    <div className="relative shadow-xl rounded-full group">
+                        <input
+                            type="text"
+                            placeholder="ค้นหาสถานที่..."
+                            className="w-full h-12 pl-12 pr-4 rounded-full border-none outline-none text-gray-700 font-medium bg-white/95 backdrop-blur shadow-sm focus:ring-2 focus:ring-green-500 transition-all text-sm"
+                        />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-green-500 transition-colors" />
+                    </div>
+                </Autocomplete>
+            </div>
 
-        <div className="absolute top-20 right-4 z-[1000] flex bg-white/90 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-gray-100">
-            <button 
-                onClick={() => setMapType('street')}
-                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
-                    mapType === 'street' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-            >
-                แผนที่
-            </button>
-            <button 
-                onClick={() => setMapType('satellite')}
-                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
-                    mapType === 'satellite' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-            >
-                ดาวเทียม
-            </button>
-        </div>
+            {/* ✅ ปุ่มเปลี่ยนโหมดแผนที่ (แนวนอน ไม่มีขอบ ขนาดเล็ก พื้นหลังมัน) */}
+            <div className="absolute top-20 left-4 z-[10] flex flex-row gap-1.5 bg-white backdrop-blur-sm p-1.5 rounded-[50px] shadow-lg">
+                <button 
+                    onClick={() => setMapType('roadmap' as unknown as google.maps.MapTypeId)}
+                    className={`px-3 py-1.5 rounded-[50px] text-xs font-bold transition-all active:scale-95 ${
+                        mapType === 'roadmap' as any 
+                            ? 'bg-blue-600 text-white shadow-md' 
+                            : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                >
+                    แผนที่
+                </button>
+                <button 
+                    onClick={() => setMapType('hybrid' as unknown as google.maps.MapTypeId)}
+                    className={`px-3 py-1.5 rounded-[50px] text-xs font-bold transition-all active:scale-95 ${
+                        mapType === 'hybrid' as any 
+                            ? 'bg-blue-600 text-white shadow-md' 
+                            : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                >
+                    ดาวเทียม
+                </button>
+            </div>
 
-        <MapContainer center={[lat, lng]} zoom={16} style={{ height: '100%', width: '100%', zIndex: 0 }}>
-            
-            {mapType === 'satellite' ? (
-                <TileLayer
-                    attribution='Tiles &copy; Esri'
-                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    maxZoom={19}
-                />
-            ) : (
-                <TileLayer 
-                    attribution='&copy; OpenStreetMap'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
-                />
-            )}
-        
-            <Circle center={[lat, lng]} radius={r2} pathOptions={{ color: 'red', fillColor: 'red', fillOpacity: 0.08, weight: 1, dashArray: '5, 5' }} />
-            <Circle center={[lat, lng]} radius={r1} pathOptions={{ color: '#10B981', fillColor: '#10B981', fillOpacity: 0.15, weight: 2 }} />
-            
-            <LocationMarker position={[lat, lng]} setPosition={(pos) => onChange(pos[0], pos[1])} />
-        </MapContainer>
+            <Marker position={{ lat, lng }} animation={google.maps.Animation.DROP} />
+            <Circle center={{ lat, lng }} radius={r1} options={zone1Options} />
+            <Circle center={{ lat, lng }} radius={r2} options={zone2Options} />
+        </GoogleMap>
     </div>
   );
 }

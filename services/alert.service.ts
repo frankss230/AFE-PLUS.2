@@ -14,18 +14,17 @@ type AlertType = 'safezone' | 'heartrate' | 'temperature' | 'battery';
 // -----------------------------------------
 export async function createAlert(data: {
   type: AlertType;
-  dependentId: number; // เปลี่ยนจาก caregiverId เป็น dependentId ให้สื่อความหมาย
+  dependentId: number;
   message: string;
   valueString?: string;
   color?: string;
 }) {
   try {
-    // 1. ดึงข้อมูล Dependent -> Caregiver -> User (LineID)
     const dependent = await prisma.dependentProfile.findUnique({
       where: { id: data.dependentId },
       include: {
-        caregiver: { // ผู้ดูแล
-            include: { user: { select: { lineId: true } } } // เอา LineID จาก User ของผู้ดูแล
+        caregiver: {
+            include: { user: { select: { lineId: true } } }
         }
       }
     });

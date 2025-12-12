@@ -4,58 +4,44 @@ import { sendCriticalAlertFlexMessage } from '@/lib/line/flex-messages';
 
 export const dynamic = 'force-dynamic';
 
-// ฟังก์ชันหลักสำหรับจัดการ SOS
 async function handleSOS(request: Request) {
   try {
     const body = await request.json();
-    
-    // 1. ดึง ID (รองรับหลายชื่อตัวแปร)
     const targetId = body.uid || body.lineId || body.users_id;
     const { latitude, longitude } = body;
 
     console.log(`🚨 [SOS DEBUG] Received ID: ${targetId}`);
 
-    if (!targetId) {
-         return NextResponse.json({ error: 'Missing ID' }, { status: 400 });
-    }
+    if (!targetId) return NextResponse.json({ error: 'Missing ID' }, { status: 400 });
 
-    // 2. ค้นหา User -> DependentProfile -> Caregiver
     const user = await prisma.user.findUnique({
       where: { id: parseInt(targetId) },
       include: { 
         dependentProfile: {
             include: {
-                caregiver: { 
-                    include: { user: true } 
+                caregiver: { include: { user: true } },
+                // ✅ เพิ่ม: ดึง Location ล่าสุดมาด้วย
+                locations: {
+                    take: 1,
+                    orderBy: { timestamp: 'desc' }
                 }
             }
         }
       }
     });
 
-    // เช็คว่าเจอ User ไหม
-    if (!user) {
-        console.log(`❌ [SOS DEBUG] User ID ${targetId} not found in DB`);
-        return NextResponse.json({ success: false, message: `User ${targetId} not found` }, { status: 404 });
+    if (!user || !user.dependentProfile) {
+        return NextResponse.json({ success: false, message: `User not found` }, { status: 404 });
     }
 
-    // เช็คว่ามี Profile ไหม
-    if (!user.dependentProfile) {
-        console.log(`❌ [SOS DEBUG] User ${targetId} has no DependentProfile`);
-        return NextResponse.json({ success: false, message: 'Dependent Profile missing' }, { status: 400 });
-    }
-
-    // ✅ ประกาศตัวแปร dependent แค่ครั้งเดียวตรงนี้
     const dependent = user.dependentProfile;
     const caregiverProfile = dependent.caregiver;
 
-    // เช็คผู้ดูแล
     if (!caregiverProfile) {
-         console.log(`❌ [SOS DEBUG] Dependent ${dependent.id} has no Caregiver linked`);
          return NextResponse.json({ success: false, message: 'Caregiver not linked' }, { status: 400 });
     }
 
-    // 3. บันทึก SOS ลงตาราง ExtendedHelp
+    // บันทึก SOS
     const helpRequest = await prisma.extendedHelp.create({
       data: {
         dependentId: dependent.id,
@@ -68,7 +54,7 @@ async function handleSOS(request: Request) {
       },
     });
 
-    // 4. ส่ง LINE Alert
+    // ส่ง LINE Alert
     if (caregiverProfile.user.lineId) {
         const recipientId = caregiverProfile.user.lineId;
         const caregiverPhone = caregiverProfile.phone || '0000000000';
@@ -80,9 +66,8 @@ async function handleSOS(request: Request) {
             helpRequest, 
             user,
             caregiverPhone,
-            // ส่ง dependent ไปเป็น parameter ตัวสุดท้าย (เพื่อให้แสดงชื่อผู้สูงอายุ)
-            // cast as any เพื่อแก้ปัญหา Type Mismatch ชั่วคราว (เพราะ Model คนละชื่อแต่โครงสร้างเหมือนกัน)
-            dependent as any 
+            dependent as any,
+            'SOS' // ✅ ระบุ Type ว่าเป็น SOS (จะ *ไม่มี* ปุ่ม 1669)
         );
     }
 
@@ -94,6 +79,5 @@ async function handleSOS(request: Request) {
   }
 }
 
-// ✅ รองรับทั้ง POST และ PUT
 export async function POST(request: Request) { return handleSOS(request); }
 export async function PUT(request: Request) { return handleSOS(request); }
