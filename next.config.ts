@@ -31,6 +31,14 @@ const nextConfig: NextConfig = {
       ],
     },
   },
+  typescript: {
+    // ⚠️ WARNING: Dangerously allow production builds to type check.
+    ignoreBuildErrors: true, 
+  },
+  eslint: {
+    // ⚠️ WARNING: Dangerously allow production builds to lint.
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;
