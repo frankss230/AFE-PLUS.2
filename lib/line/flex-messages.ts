@@ -68,12 +68,8 @@ export const createAlertFlexMessage = (
         : "https://cdn-icons-png.flaticon.com/512/10337/10337160.png";
 
     const navigateUrl = (hasLocation && liffBaseUrl)
-        ? `/location?lat=${lat}&lng=${lng}&mode=navigate&id=${dependentProfile.id}`
+        ? `${liffBaseUrl}/location?lat=${lat}&lng=${lng}&mode=navigate&id=${dependentProfile.id}`
         : `http://maps.google.com/?q=${lat},${lng}`;
-        
-    // const navigateUrl = (hasLocation && liffBaseUrl)
-    //     ? `${liffBaseUrl}/location?lat=${lat}&lng=${lng}&mode=navigate&id=${dependentProfile.id}`
-    //     : `http://maps.google.com/?q=${lat},${lng}`;
 
     const elderlyName = `คุณ${dependentProfile.firstName} ${dependentProfile.lastName}`;
 
@@ -589,7 +585,7 @@ export const createBorrowReturnFlexMessage = (caregiverProfile: CaregiverProfile
 interface SettingsValues { safezoneLv1: number; safezoneLv2: number; maxTemp: number; maxBpm: number; }
 
 export const createSafetySettingsBubble = (elderlyProfile: DependentProfile, settings: SettingsValues): FlexBubble => {
-    // const liffBase = process.env.LIFF_BASE_URL || "https://liff.line.me/YOUR_LIFF_ID";
+    const liffBase = process.env.LIFF_BASE_URL || "https://smart-watch-project-zudy.vercel.app";
     const elderlyName = `คุณ${elderlyProfile.firstName} ${elderlyProfile.lastName}`;
 
     return {
@@ -642,12 +638,9 @@ export const createSafetySettingsBubble = (elderlyProfile: DependentProfile, set
                     spacing: "sm", 
                     margin: "xl",
                     contents: [
-                        // { type: "button", style: "primary", color: "#243B55", height: "sm", action: { type: "uri", label: "ตั้งค่าเขตปลอดภัย", uri: `${liffBase}/safety-settings/safezone` } },
-                        // { type: "button", style: "primary", color: "#243B55", height: "sm", action: { type: "uri", label: "ตั้งค่าอุณหภูมิ", uri: `${liffBase}/safety-settings/temperature` } },
-                        // { type: "button", style: "primary", color: "#243B55", height: "sm", action: { type: "uri", label: "ตั้งค่าชีพจร", uri: `${liffBase}/safety-settings/heartrate` } }
-                        { type: "button", style: "primary", color: "#243B55", height: "sm", action: { type: "uri", label: "ตั้งค่าเขตปลอดภัย", uri: `/safety-settings/safezone` } },
-                        { type: "button", style: "primary", color: "#243B55", height: "sm", action: { type: "uri", label: "ตั้งค่าอุณหภูมิ", uri: `/safety-settings/temperature` } },
-                        { type: "button", style: "primary", color: "#243B55", height: "sm", action: { type: "uri", label: "ตั้งค่าชีพจร", uri: `/safety-settings/heartrate` } }
+                        { type: "button", style: "primary", color: "#243B55", height: "sm", action: { type: "uri", label: "ตั้งค่าเขตปลอดภัย", uri: `${liffBase}/safety-settings/safezone` } },
+                        { type: "button", style: "primary", color: "#243B55", height: "sm", action: { type: "uri", label: "ตั้งค่าอุณหภูมิ", uri: `${liffBase}/safety-settings/temperature` } },
+                        { type: "button", style: "primary", color: "#243B55", height: "sm", action: { type: "uri", label: "ตั้งค่าชีพจร", uri: `${liffBase}/safety-settings/heartrate` } }
                     ]
                 }
             ]
