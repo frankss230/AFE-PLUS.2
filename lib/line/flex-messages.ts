@@ -420,7 +420,8 @@ export const createProfileFlexMessage = (caregiverProfile: CaregiverProfile, dep
                         { type: "box", layout: "baseline", contents: [{ type: "text", text: "จังหวัด:", color: "#94A3B8", size: "xs", flex: 2 }, { type: "text", text: val(dependentProfile.province), color: "#334155", size: "xs", flex: 4 } ] },
                         { type: "box", layout: "baseline", contents: [{ type: "text", text: "รหัสไปรษณีย์:", color: "#94A3B8", size: "xs", flex: 2 }, { type: "text", text: val(dependentProfile.postalCode), color: "#334155", size: "xs", flex: 4 } ] },
                         { type: "box", layout: "baseline", contents: [{ type: "text", text: "โรคประจำตัว:", color: "#94A3B8", size: "xs", flex: 2 }, { type: "text", text: dependentProfile ? val(dependentProfile.diseases) : "-", color: "#334155", size: "xs", flex: 4, wrap: true }] },
-                        { type: "box", layout: "baseline", contents: [{ type: "text", text: "เบอร์โทร:", color: "#94A3B8", size: "xs", flex: 2 }, { type: "text", text: val(dependentProfile.medications), color: "#334155", size: "xs", flex: 4 }] },
+                        // ✅ แก้จาก "เบอร์โทร" เป็น "ยาที่ใช้ประจำ"
+                        { type: "box", layout: "baseline", contents: [{ type: "text", text: "ยาที่ใช้ประจำ:", color: "#94A3B8", size: "xs", flex: 2 }, { type: "text", text: val(dependentProfile.medications), color: "#334155", size: "xs", flex: 4, wrap: true }] },
                         { type: "box", layout: "baseline", contents: [{ type: "text", text: "เบอร์โทร:", color: "#94A3B8", size: "xs", flex: 2 }, { type: "text", text: val(dependentProfile.phone), color: "#334155", size: "xs", flex: 4 }] },
                     ]
                 },
@@ -431,8 +432,9 @@ export const createProfileFlexMessage = (caregiverProfile: CaregiverProfile, dep
                     spacing: "sm", 
                     margin: "xl",
                     contents: [
-                        { type: "button", style: "secondary", height: "sm", action: { type: "uri", label: "แก้ไขข้อมูลผู้ดูแล", uri: `${liffUrl}/register/user` } },
-                        { type: "button", style: "secondary", height: "sm", action: { type: "uri", label: "แก้ไขข้อมูลผู้สูงอายุ", uri: `${liffUrl}/register/elderly` } }
+                        // ✅ แก้ลิงก์เป็นหน้า Edit
+                        { type: "button", style: "secondary", height: "sm", action: { type: "uri", label: "แก้ไขข้อมูลผู้ดูแล", uri: `${liffUrl}/edit-informations/caregiver` } },
+                        { type: "button", style: "secondary", height: "sm", action: { type: "uri", label: "แก้ไขข้อมูลผู้สูงอายุ", uri: `${liffUrl}/edit-informations/dependent` } }
                     ]
                 }
             ]

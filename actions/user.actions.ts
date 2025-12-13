@@ -77,7 +77,7 @@ export async function registerUser(data: CaregiverRegisterInput) {
   }
 }
 
-// 3. อัปเดตข้อมูล (Admin)
+// 3. อัปเดตข้อมูล (Admin ใช้งาน)
 export async function updateUser(userId: number, data: UserFormInput) {
   try {
     const validated = userFormSchema.parse(data);
@@ -116,7 +116,6 @@ export async function updateUser(userId: number, data: UserFormInput) {
                         firstName: validated.firstName,
                         lastName: validated.lastName,
                         phone: validated.phone || '',
-                        // ถ้าในหน้า Admin มีให้แก้ที่อยู่ด้วย ก็ต้อง map ตรงนี้เพิ่มครับ
                     }
                 }
             },
@@ -189,5 +188,76 @@ export async function createAdmin(data: any) {
       return { success: true };
     } catch (error) {
       return { success: false, error: 'สร้าง Admin ไม่สำเร็จ' };
+    }
+}
+
+// =================================================================
+// ✅ 6. ดึงข้อมูล Caregiver ด้วย LINE ID (สำหรับหน้าแก้ไข Profile)
+// =================================================================
+export async function getCaregiverByLineId(lineId: string) {
+    try {
+        const user = await prisma.user.findFirst({
+            where: { lineId: lineId },
+            include: {
+                caregiverProfile: true // ดึงข้อมูล Profile ทั้งหมด
+            }
+        });
+
+        if (!user || !user.caregiverProfile) {
+            return { success: false, error: 'ไม่พบข้อมูลผู้ใช้' };
+        }
+
+        return { success: true, data: user.caregiverProfile };
+
+    } catch (error) {
+        console.error('Get Caregiver Error:', error);
+        return { success: false, error: 'เกิดข้อผิดพลาดในการดึงข้อมูล' };
+    }
+}
+
+// =================================================================
+// ✅ 7. อัปเดตข้อมูล Caregiver Profile (สำหรับหน้าแก้ไข Profile)
+// =================================================================
+export async function updateCaregiverProfile(lineId: string, data: CaregiverRegisterInput) {
+    try {
+        // ตรวจสอบข้อมูลด้วย Schema
+        const validated = caregiverRegisterSchema.parse(data);
+
+        // หา User จาก Line ID เพื่อเอา ID
+        const user = await prisma.user.findFirst({
+            where: { lineId: lineId }
+        });
+
+        if (!user) {
+            return { success: false, error: 'ไม่พบผู้ใช้งาน' };
+        }
+
+        // อัปเดตข้อมูลในตาราง CaregiverProfile
+        await prisma.caregiverProfile.update({
+            where: { userId: user.id }, // ใช้ userId เป็นตัวเชื่อม
+            data: {
+                firstName: validated.firstName,
+                lastName: validated.lastName,
+                phone: validated.phone || '',
+                gender: validated.gender,
+                marital: validated.marital,
+                birthday: new Date(validated.birthday),
+
+                // ที่อยู่
+                houseNumber: validated.houseNumber || '',
+                village: validated.village || '',
+                road: validated.road || '',
+                subDistrict: validated.subDistrict || '',
+                district: validated.district || '',
+                province: validated.province || '',
+                postalCode: validated.postalCode || '',
+            }
+        });
+
+        return { success: true };
+
+    } catch (error) {
+        console.error('Update Caregiver Error:', error);
+        return { success: false, error: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' };
     }
 }

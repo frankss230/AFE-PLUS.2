@@ -8,6 +8,9 @@ import { UserRole } from '@prisma/client';
 // Import Schema
 import { dependentRegisterSchema, DependentRegisterInput } from '@/lib/validations/dependent-register.schema';
 
+// =================================================================
+// 1. ลงทะเบียนผู้สูงอายุ (Register) - *ของเดิมที่นายน้อยมี*
+// =================================================================
 export async function registerElderly(data: DependentRegisterInput) {
   try {
     const validated = dependentRegisterSchema.parse(data);
@@ -38,9 +41,7 @@ export async function registerElderly(data: DependentRegisterInput) {
                 firstName: validated.firstName,
                 lastName: validated.lastName,
                 gender: validated.gender,
-                
                 marital: validated.marital, 
-
                 birthday: new Date(validated.birthday),
                 phone: validated.phone || '',
                 diseases: validated.diseases || '',
@@ -79,4 +80,75 @@ export async function registerElderly(data: DependentRegisterInput) {
     console.error('Register Elderly Error:', error);
     return { success: false, error: 'เกิดข้อผิดพลาด' };
   }
+}
+
+// =================================================================
+// ✅ 2. ดึงข้อมูลผู้สูงอายุ (Get by Caregiver Line ID) - *เพิ่มใหม่*
+// =================================================================
+export async function getDependentsByCaregiverLineId(lineId: string) {
+    try {
+        const user = await prisma.user.findFirst({
+            where: { lineId: lineId },
+            include: {
+                caregiverProfile: {
+                    include: {
+                        dependents: true, // ดึงรายการผู้สูงอายุทุกคนที่ดูแลอยู่
+                    }
+                }
+            }
+        });
+
+        if (!user || !user.caregiverProfile || user.caregiverProfile.dependents.length === 0) {
+            return { success: false, error: 'ไม่พบข้อมูลผู้สูงอายุ' };
+        }
+
+        return { success: true, data: user.caregiverProfile.dependents };
+
+    } catch (error) {
+        console.error('Get Dependents Error:', error);
+        return { success: false, error: 'เกิดข้อผิดพลาดในการดึงข้อมูล' };
+    }
+}
+
+// =================================================================
+// ✅ 3. อัปเดตข้อมูลผู้สูงอายุ (Update) - *เพิ่มใหม่*
+// =================================================================
+export async function updateDependentProfile(dependentId: number, data: DependentRegisterInput) {
+    try {
+        // ตรวจสอบข้อมูลด้วย Schema
+        const validated = dependentRegisterSchema.parse(data);
+
+        await prisma.dependentProfile.update({
+            where: { id: dependentId },
+            data: {
+                firstName: validated.firstName,
+                lastName: validated.lastName,
+                pin: validated.pin, // อนุญาตให้แก้ PIN ได้
+                gender: validated.gender,
+                marital: validated.marital,
+                birthday: new Date(validated.birthday),
+                phone: validated.phone || '',
+                
+                // ข้อมูลสุขภาพ
+                diseases: validated.diseases || '',
+                medications: validated.medications || '',
+
+                // ที่อยู่
+                houseNumber: validated.houseNumber || '',
+                village: validated.village || '',
+                road: validated.road || '',
+                subDistrict: validated.subDistrict || '',
+                district: validated.district || '',
+                province: validated.province || '',
+                postalCode: validated.postalCode || '',
+            }
+        });
+        
+        revalidatePath('/admin/dependents'); // อัปเดตหน้า Admin ด้วยเผื่อ Admin ดูอยู่
+        return { success: true };
+
+    } catch (error) {
+        console.error('Update Dependent Error:', error);
+        return { success: false, error: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' };
+    }
 }
