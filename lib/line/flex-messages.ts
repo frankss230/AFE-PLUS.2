@@ -522,7 +522,7 @@ export const createWatchConnectionBubble = (caregiverProfile: CaregiverProfile, 
 };
 
 // =================================================================
-// 🤝 6. Borrow/Return - ดีไซน์เดิม (Classic Orange) - แก้ URL
+// 🤝 6. Borrow/Return - Blue Premium Theme
 // =================================================================
 export const createBorrowReturnFlexMessage = (caregiverProfile: any, activeBorrow: any): FlexBubble => {
 
@@ -544,7 +544,7 @@ export const createBorrowReturnFlexMessage = (caregiverProfile: any, activeBorro
             paddingAll: "xl", 
             spacing: "lg",
             contents: [
-                // Header with Orange Gradient
+                // Header with Blue Gradient
                 {
                     type: "box", 
                     layout: "vertical", 
@@ -552,30 +552,71 @@ export const createBorrowReturnFlexMessage = (caregiverProfile: any, activeBorro
                     background: { 
                         type: "linearGradient", 
                         angle: "135deg", 
-                        startColor: "#F97316", 
-                        endColor: "#FB923C" 
+                        startColor: "#3B82F6", 
+                        endColor: "#60A5FA" 
                     },
                     cornerRadius: "xxl",
+                    margin: "none",
                     contents: [
-                        { type: "text", text: "ยืม-คืนครุภัณฑ์", weight: "bold", size: "xl", color: "#FFFFFF", align: "center" },
-                        { type: "text", text: "ระบบจัดการอุปกรณ์", size: "xs", color: "#FFEDD5", align: "center", margin: "sm" }
+                        { 
+                            type: "text", 
+                            text: "ยืม-คืนครุภัณฑ์", 
+                            weight: "bold", 
+                            size: "xl", 
+                            color: "#FFFFFF", 
+                            align: "center" 
+                        },
+                        { 
+                            type: "text", 
+                            text: "ระบบจัดการอุปกรณ์", 
+                            size: "xs", 
+                            color: "#DBEAFE", 
+                            align: "center", 
+                            margin: "sm" 
+                        }
                     ]
                 },
                 // Status Box
                 {
                     type: "box", 
                     layout: "vertical", 
-                    backgroundColor: isBorrowing ? "#F0FDF4" : "#F8FAFC", 
+                    background: isBorrowing 
+                        ? { 
+                            type: "linearGradient", 
+                            angle: "90deg", 
+                            startColor: "#ECFDF5", 
+                            endColor: "#D1FAE5" 
+                        }
+                        : { 
+                            type: "linearGradient", 
+                            angle: "90deg", 
+                            startColor: "#F8FAFC", 
+                            endColor: "#F1F5F9" 
+                        }, 
                     cornerRadius: "xl", 
                     paddingAll: "xl", 
                     borderWidth: "2px", 
-                    borderColor: isBorrowing ? "#BBF7D0" : "#E2E8F0",
+                    borderColor: isBorrowing ? "#A7F3D0" : "#CBD5E1",
                     margin: "lg",
                     contents: [
-                        { type: "text", text: isBorrowing ? "🟢 กำลังยืมอุปกรณ์" : "⚪ ยังไม่มีรายการยืม", weight: "bold", color: isBorrowing ? "#166534" : "#64748B", align: "center", size: "md" },
+                        { 
+                            type: "text", 
+                            text: isBorrowing ? "🟢 กำลังยืมอุปกรณ์" : "⚪ ยังไม่มีรายการยืม", 
+                            weight: "bold", 
+                            color: isBorrowing ? "#065F46" : "#475569", 
+                            align: "center", 
+                            size: "md" 
+                        },
                         // เช็คว่ามี items ไหมก่อนดึงชื่อ กัน Error
                         ...(isBorrowing && activeBorrow.items && activeBorrow.items.length > 0
-                            ? [{ type: "text", text: activeBorrow.items[0]?.equipment?.name || "อุปกรณ์", size: "sm", color: "#15803D", align: "center", margin: "md" } as const] 
+                            ? [{ 
+                                type: "text", 
+                                text: activeBorrow.items[0]?.equipment?.name || "อุปกรณ์", 
+                                size: "sm", 
+                                color: "#047857", 
+                                align: "center", 
+                                margin: "md" 
+                            } as const] 
                             : [])
                     ]
                 },
@@ -591,17 +632,29 @@ export const createBorrowReturnFlexMessage = (caregiverProfile: any, activeBorro
                             style: "primary", 
                             color: "#10B981", 
                             height: "md", 
-                            action: { type: "uri", label: "ทำรายการยืม", uri: borrowUrl } 
+                            action: { 
+                                type: "uri", 
+                                label: "ทำรายการยืม", 
+                                uri: borrowUrl 
+                            } 
                         },
                         { 
                             type: "button", 
-                            style: "secondary", 
-                            color: isBorrowing ? "#3B82F6" : "#CBD5E1", 
+                            style: isBorrowing ? "primary" : "secondary", 
+                            color: isBorrowing ? "#3B82F6" : "#94A3B8", 
                             height: "md", 
                             // ถ้ามีของยืม ให้เป็นลิ้งค์คืน / ถ้าไม่มี ให้เป็นปุ่มหลอก (Postback)
                             action: isBorrowing 
-                                ? { type: "uri", label: "ทำรายการคืน", uri: returnUrl } 
-                                : { type: "postback", label: "ทำรายการคืน", data: "no_action" } 
+                                ? { 
+                                    type: "uri", 
+                                    label: "ทำรายการคืน", 
+                                    uri: returnUrl 
+                                } 
+                                : { 
+                                    type: "postback", 
+                                    label: "ทำรายการคืน", 
+                                    data: "no_action" 
+                                } 
                         }
                     ]
                 }
@@ -1178,3 +1231,163 @@ export function createRescueSuccessBubble(): FlexBubble {
         }
     };
 }
+
+// =================================================================
+// 📝 13. Borrow Request Receipt (ใบรับเรื่องการยืม - สีเขียว)
+// =================================================================
+export const createBorrowSuccessBubble = (
+    caregiverName: string,
+    dependentName: string,
+    equipmentNames: string,
+    borrowDate: Date
+): FlexBubble => {
+    return {
+        type: "bubble",
+        body: {
+            type: "box",
+            layout: "vertical",
+            paddingAll: "xl",
+            spacing: "md",
+            contents: [
+                // Header
+                {
+                    type: "box",
+                    layout: "horizontal",
+                    contents: [
+                        { type: "text", text: "✅", size: "xxl", flex: 1 },
+                        { 
+                            type: "text", 
+                            text: "ได้รับคำขอยืมแล้ว", 
+                            weight: "bold", 
+                            size: "lg", 
+                            color: "#15803D", // เขียวเข้ม
+                            flex: 5,
+                            align: "start",
+                            gravity: "center"
+                        }
+                    ]
+                },
+                { type: "separator", margin: "md" },
+                // Info
+                {
+                    type: "box",
+                    layout: "vertical",
+                    margin: "md",
+                    spacing: "sm",
+                    contents: [
+                        {
+                            type: "box", layout: "baseline",
+                            contents: [
+                                { type: "text", text: "ผู้ยืม:", color: "#94A3B8", size: "xs", flex: 2 },
+                                { type: "text", text: caregiverName, color: "#334155", size: "xs", flex: 4, wrap: true }
+                            ]
+                        },
+                        {
+                            type: "box", layout: "baseline",
+                            contents: [
+                                { type: "text", text: "ผู้สูงอายุ:", color: "#94A3B8", size: "xs", flex: 2 },
+                                { type: "text", text: dependentName, color: "#334155", size: "xs", flex: 4, wrap: true }
+                            ]
+                        },
+                        {
+                            type: "box", layout: "baseline",
+                            contents: [
+                                { type: "text", text: "อุปกรณ์:", color: "#94A3B8", size: "xs", flex: 2 },
+                                { type: "text", text: equipmentNames, color: "#166534", size: "xs", flex: 4, wrap: true, weight: "bold" } // เน้นสีเขียว
+                            ]
+                        },
+                        {
+                            type: "box", layout: "baseline",
+                            contents: [
+                                { type: "text", text: "วันที่เริ่ม:", color: "#94A3B8", size: "xs", flex: 2 },
+                                { type: "text", text: new Date(borrowDate).toLocaleDateString('th-TH'), color: "#334155", size: "xs", flex: 4 }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    type: "box",
+                    layout: "vertical",
+                    margin: "lg",
+                    backgroundColor: "#F0FDF4",
+                    cornerRadius: "md",
+                    paddingAll: "md",
+                    contents: [
+                        { type: "text", text: "กรุณารอเจ้าหน้าที่ตรวจสอบและอนุมัติ", size: "xxs", color: "#166534", align: "center" }
+                    ]
+                }
+            ]
+        }
+    };
+};
+
+// =================================================================
+// ↩️ 14. Return Request Receipt (ใบรับเรื่องการคืน - สีส้ม)
+// =================================================================
+export const createReturnSuccessBubble = (
+    equipmentName: string,
+    returnDate: Date
+): FlexBubble => {
+    return {
+        type: "bubble",
+        body: {
+            type: "box",
+            layout: "vertical",
+            paddingAll: "xl",
+            spacing: "md",
+            contents: [
+                {
+                    type: "box",
+                    layout: "horizontal",
+                    contents: [
+                        { type: "text", text: "📦", size: "xxl", flex: 1 },
+                        { 
+                            type: "text", 
+                            text: "แจ้งคืนอุปกรณ์แล้ว", 
+                            weight: "bold", 
+                            size: "lg", 
+                            color: "#C2410C", // ส้มเข้ม
+                            flex: 5,
+                            align: "start",
+                            gravity: "center"
+                        }
+                    ]
+                },
+                { type: "separator", margin: "md" },
+                {
+                    type: "box",
+                    layout: "vertical",
+                    margin: "md",
+                    spacing: "sm",
+                    contents: [
+                        {
+                            type: "box", layout: "baseline",
+                            contents: [
+                                { type: "text", text: "อุปกรณ์:", color: "#94A3B8", size: "xs", flex: 2 },
+                                { type: "text", text: equipmentName, color: "#C2410C", size: "xs", flex: 4, wrap: true, weight: "bold" }
+                            ]
+                        },
+                        {
+                            type: "box", layout: "baseline",
+                            contents: [
+                                { type: "text", text: "วันที่แจ้ง:", color: "#94A3B8", size: "xs", flex: 2 },
+                                { type: "text", text: new Date(returnDate).toLocaleDateString('th-TH'), color: "#334155", size: "xs", flex: 4 }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    type: "box",
+                    layout: "vertical",
+                    margin: "lg",
+                    backgroundColor: "#FFF7ED", // ส้มอ่อน
+                    cornerRadius: "md",
+                    paddingAll: "md",
+                    contents: [
+                        { type: "text", text: "กรุณานำอุปกรณ์มาคืนตามจุดที่กำหนด", size: "xxs", color: "#9A3412", align: "center" }
+                    ]
+                }
+            ]
+        }
+    };
+};

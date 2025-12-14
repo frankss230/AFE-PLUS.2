@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/db/prisma';
 import { messagingApi } from "@line/bot-sdk"; 
+// ✅ Import ฟังก์ชันสร้าง Flex Message ที่แยกไว้มาใช้ (สวยและดูแลง่าย)
+import { createBorrowSuccessBubble, createReturnSuccessBubble } from '@/lib/line/flex-messages';
 
 // =================================================================
 // 🔧 ส่วนจัดการอุปกรณ์ (Admin CRUD)
@@ -105,7 +107,7 @@ export async function createBorrowRequest(data: {
   equipmentIds: number[];
 }) {
   try {
-    // 6.1 เตรียมข้อมูลผู้ยืม
+    // 1. เตรียมข้อมูล
     const caregiverUser = await prisma.user.findFirst({
         where: { caregiverProfile: { id: data.caregiverId } },
         include: { caregiverProfile: true }
@@ -122,12 +124,11 @@ export async function createBorrowRequest(data: {
 
     if (!caregiverUser) return { success: false, error: 'ไม่พบข้อมูลผู้ยืม' };
 
-    // 6.2 บันทึกลง DB (ใช้ชื่อ Model ตาม Schema นายน้อย)
+    // 2. บันทึกลง DB (Transaction)
     await prisma.$transaction(async (tx) => {
-      // ✅ แก้จาก tx.borrowRequest -> tx.borrowEquipment
       const request = await tx.borrowEquipment.create({
         data: {
-          borrowerId: data.caregiverId, // ✅ map caregiverId เข้า borrowerId
+          borrowerId: data.caregiverId,
           dependentId: data.dependentId,
           objective: data.objective,
           borrowDate: data.borrowDate,
@@ -136,81 +137,44 @@ export async function createBorrowRequest(data: {
       });
 
       for (const eqId of data.equipmentIds) {
-        // ✅ แก้จาก tx.borrowRequestItem -> tx.borrowEquipmentItem
         await tx.borrowEquipmentItem.create({
           data: {
-            borrowId: request.id, // ✅ map request.id เข้า borrowId
+            borrowId: request.id,
             equipmentId: eqId,
           },
         });
       }
     });
 
-    // 6.3 ส่ง Flex Message
-    const { MessagingApiClient } = messagingApi;
-    const client = new MessagingApiClient({
-        channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN || '',
-    });
-
-    // ✅ เช็ค lineId ให้ชัวร์ว่าเป็น string ไม่ใช่ null
-    const lineIdToSend = caregiverUser.lineId || '';
+    // 3. ส่ง Flex Message แจ้งเตือนผู้ยืม
+    // (แยก Try-Catch เพื่อให้ Database ไม่ Rollback ถ้า LINE Error)
+    const lineIdToSend = caregiverUser.lineId;
 
     if (lineIdToSend) {
-        const flexMsg: any = {
-            type: "flex",
-            altText: "ได้รับคำขอยืมอุปกรณ์แล้ว",
-            contents: {
-              type: "bubble",
-              body: {
-                type: "box",
-                layout: "vertical",
-                contents: [
-                  { type: "text", text: "ได้รับคำขอยืมแล้ว", weight: "bold", color: "#1DB446", size: "sm" },
-                  { type: "text", text: "ยืมอุปกรณ์ครุภัณฑ์", weight: "bold", size: "xl", margin: "md" },
-                  { type: "text", text: "กรุณารอเจ้าหน้าที่ตรวจสอบและอนุมัติ", size: "xs", color: "#aaaaaa", wrap: true },
-                  { type: "separator", margin: "xxl" },
-                  {
-                    type: "box", layout: "vertical", margin: "xxl", spacing: "sm",
-                    contents: [
-                      {
-                        type: "box", layout: "baseline",
-                        contents: [
-                          { type: "text", text: "ผู้ยืม", color: "#aaaaaa", size: "sm", flex: 2 },
-                          { type: "text", text: `${caregiverUser.caregiverProfile?.firstName} ${caregiverUser.caregiverProfile?.lastName}`, wrap: true, color: "#666666", size: "sm", flex: 4 }
-                        ]
-                      },
-                      {
-                        type: "box", layout: "baseline",
-                        contents: [
-                          { type: "text", text: "ผู้สูงอายุ", color: "#aaaaaa", size: "sm", flex: 2 },
-                          { type: "text", text: `${dependentProfile?.firstName} ${dependentProfile?.lastName}`, wrap: true, color: "#666666", size: "sm", flex: 4 }
-                        ]
-                      },
-                      {
-                        type: "box", layout: "baseline",
-                        contents: [
-                          { type: "text", text: "อุปกรณ์", color: "#aaaaaa", size: "sm", flex: 2 },
-                          { type: "text", text: equipmentNames, wrap: true, color: "#666666", size: "sm", flex: 4 }
-                        ]
-                      },
-                      {
-                          type: "box", layout: "baseline",
-                          contents: [
-                            { type: "text", text: "วันที่ยืม", color: "#aaaaaa", size: "sm", flex: 2 },
-                            { type: "text", text: new Date(data.borrowDate).toLocaleDateString('th-TH'), wrap: true, color: "#666666", size: "sm", flex: 4 }
-                          ]
-                        }
-                    ]
-                  }
-                ]
-              }
-            }
-          };
-      
-          await client.pushMessage({
-              to: lineIdToSend, // ✅ หายแดงแล้ว
-              messages: [flexMsg]
-          });
+        try {
+            const { MessagingApiClient } = messagingApi;
+            // ใช้ Env ได้ทั้ง 2 แบบ กันพลาด
+            const client = new MessagingApiClient({
+                channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || process.env.CHANNEL_ACCESS_TOKEN || '',
+            });
+
+            // สร้าง Flex Message จากไฟล์ที่แยกไว้
+            const flexMsg = createBorrowSuccessBubble(
+                `${caregiverUser.caregiverProfile?.firstName} ${caregiverUser.caregiverProfile?.lastName}`,
+                dependentProfile ? `${dependentProfile.firstName} ${dependentProfile.lastName}` : "-",
+                equipmentNames,
+                data.borrowDate
+            );
+        
+            await client.pushMessage({
+                to: lineIdToSend,
+                messages: [{ type: "flex", altText: "ได้รับคำขอยืมแล้ว", contents: flexMsg as any }]
+            });
+            
+            console.log("✅ ส่ง LINE แจ้งยืมสำเร็จ");
+        } catch (lineError) {
+            console.error("⚠️ บันทึกสำเร็จ แต่ส่ง LINE ไม่ผ่าน:", lineError);
+        }
     }
 
     revalidatePath('/admin/borrow-requests');
@@ -239,7 +203,7 @@ export async function getMyBorrowedEquipments(lineId: string) {
     const borrows = await prisma.borrowEquipment.findMany({
         where: {
             borrowerId: user.caregiverProfile.id,
-            status: { in: ['APPROVED', 'RETURN_PENDING'] } // ✅ เอาเฉพาะที่ยังไม่คืน
+            status: { in: ['APPROVED', 'RETURN_PENDING'] } // เอาเฉพาะที่ยังไม่คืน
         },
         include: {
             dependent: true, // เอาชื่อผู้สูงอายุมาโชว์
@@ -261,16 +225,52 @@ export async function getMyBorrowedEquipments(lineId: string) {
 // 8. แจ้งคืนอุปกรณ์ (เปลี่ยนสถานะเป็น RETURN_PENDING)
 export async function createReturnRequest(borrowId: number) {
     try {
-        await prisma.borrowEquipment.update({
+        // 1. อัปเดตสถานะใน DB และดึงข้อมูลมาด้วยเพื่อส่ง LINE
+        const updatedBorrow = await prisma.borrowEquipment.update({
             where: { id: borrowId },
-            data: { status: 'RETURN_PENDING' } // 🟡 รอเจ้าหน้าที่ตรวจสอบของจริง
+            data: { status: 'RETURN_PENDING' }, // สถานะรอเจ้าหน้าที่ตรวจสอบของจริง
+            include: {
+                borrower: {
+                    include: { user: true } // เพื่อเอา Line ID
+                },
+                items: {
+                    include: { equipment: true } // เพื่อเอาชื่ออุปกรณ์
+                }
+            }
         });
 
-        // (Optional) อาจจะส่ง Flex Message แจ้ง Admin ว่ามีการแจ้งคืน
+        // 2. ส่ง Flex Message แจ้งผู้ยืมว่า "ได้รับแจ้งคืนแล้ว"
+        const lineId = updatedBorrow.borrower?.user?.lineId;
+        // ดึงชื่ออุปกรณ์ตัวแรกมาแสดง (ถ้ามีหลายชิ้นก็โชว์ตัวแรก + ฯลฯ ก็ได้ แต่นี้เอาตัวแรกไปก่อน)
+        const equipmentName = updatedBorrow.items.length > 0 
+            ? updatedBorrow.items[0].equipment.name 
+            : "อุปกรณ์";
+
+        if (lineId) {
+            try {
+                const { MessagingApiClient } = messagingApi;
+                const client = new MessagingApiClient({
+                    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || process.env.CHANNEL_ACCESS_TOKEN || '',
+                });
+
+                // สร้าง Flex Message ใบรับเรื่องคืน
+                const flexMsg = createReturnSuccessBubble(equipmentName, new Date());
+
+                await client.pushMessage({
+                    to: lineId,
+                    messages: [{ type: "flex", altText: "แจ้งคืนอุปกรณ์เรียบร้อย", contents: flexMsg as any }]
+                });
+                
+                console.log("✅ ส่ง LINE แจ้งคืนสำเร็จ");
+            } catch (err) {
+                console.error("⚠️ แจ้งคืนสำเร็จ แต่ส่ง LINE ไม่ผ่าน:", err);
+            }
+        }
 
         revalidatePath('/admin/borrow-requests');
         return { success: true };
     } catch (error) {
+        console.error("Return Request Error:", error);
         return { success: false, error: 'ทำรายการไม่สำเร็จ' };
     }
 }
