@@ -1,4 +1,3 @@
-// app/(dashboard)/admin/monitoring/page.tsx
 import { prisma } from '@/lib/db/prisma';
 import MonitoringView from '@/components/features/monitoring/monitoring-view';
 
@@ -18,12 +17,12 @@ export default async function MonitoringPage() {
       heartRateRecords: { orderBy: { timestamp: 'desc' }, take: 1 },
       temperatureRecords: { orderBy: { recordDate: 'desc' }, take: 1 },
 
-      // 🚨 เช็ค Alert ค้าง และดึง "คนรับเคส" (reporter) มาด้วย
+      // 🚨 เช็ค Alert ค้าง
       fallRecords: { where: { status: 'DETECTED' }, take: 1 },
       receivedHelp: { 
-          where: { status: { in: ['DETECTED', 'ACKNOWLEDGED'] } }, // เอาทั้งรอและรับแล้ว
+          // ดึงเฉพาะที่ยังไม่จบ (DETECTED หรือ ACKNOWLEDGED)
+          where: { status: { in: ['DETECTED', 'ACKNOWLEDGED'] } }, 
           take: 1,
-          include: { reporter: true } // ✅ ดึงข้อมูลคนรับเคส
       }
     }
   });
@@ -36,16 +35,17 @@ export default async function MonitoringPage() {
 
     const latestLoc = dep.locations[0];
 
-    // ✅ จำลองตำแหน่งผู้ช่วยเหลือ (Rescuer)
-    // ในสถานการณ์จริง นายน้อยอาจต้องดึง Location ล่าสุดของ Reporter จากตาราง Location ของเขา
-    // แต่อันนี้เค้าดึงข้อมูลพื้นฐานมาก่อน
-    const rescuer = sosRecord?.reporter ? {
-        id: sosRecord.reporter.id,
-        name: `${sosRecord.reporter.firstName} ${sosRecord.reporter.lastName}`,
-        // ⚠️ หมายเหตุ: ตรงนี้ต้องแก้เป็นพิกัดจริงของ จนท. (สมมติว่าอยู่ใกล้ๆ ไปก่อนเพื่อโชว์เส้น)
-        lat: (latestLoc?.latitude || 13.75) + 0.005, 
-        lng: (latestLoc?.longitude || 100.50) + 0.005,
-    } : null;
+    // ✅ แก้ไข: ดึงตำแหน่งและชื่อ "ผู้ช่วยเหลือ" จาก Field จริงใน ExtendedHelp
+    // ไม่ใช้ reporter แล้ว เพราะเราบันทึก rescuerName/Lat/Lng แยกต่างหาก
+    let rescuer = null;
+    if (hasSOS && sosRecord.status === 'ACKNOWLEDGED' && sosRecord.rescuerLat && sosRecord.rescuerLng) {
+        rescuer = {
+            name: sosRecord.rescuerName || 'เจ้าหน้าที่',
+            phone: sosRecord.rescuerPhone || '',
+            lat: sosRecord.rescuerLat,
+            lng: sosRecord.rescuerLng
+        };
+    }
 
     return {
         id: dep.user.id,
@@ -65,7 +65,7 @@ export default async function MonitoringPage() {
             updatedAt: latestLoc.timestamp
         } : null,
         
-        rescuer: rescuer, // ✅ ส่งข้อมูลผู้ช่วยเหลือไป
+        rescuer: rescuer, // ส่งข้อมูลผู้ช่วยเหลือจริง
 
         caregiver: dep.caregiver ? {
             firstName: dep.caregiver.firstName,
@@ -80,12 +80,12 @@ export default async function MonitoringPage() {
     };
   });
 
+  // เรียงลำดับ: เอาคนที่มี Emergency ขึ้นก่อน
   formattedUsers.sort((a, b) => (b.isEmergency ? 1 : 0) - (a.isEmergency ? 1 : 0));
 
   return (
     <div className="h-full flex flex-col space-y-3">
-        <h1 className="text-3xl font-bold text-slate-900 ml-6 mt-4">ศูนย์บัญชาการ (War Room)</h1>
-        {/* ส่งข้อมูลเข้า View */}
+        <h1 className="text-3xl font-bold text-slate-900">ติดตามผู้ที่มีภาวะพึ่งพิง</h1>
         <MonitoringView users={formattedUsers} />
     </div>
   );
