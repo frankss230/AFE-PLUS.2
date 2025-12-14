@@ -1,7 +1,7 @@
 import prisma from '@/lib/db/prisma';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { AlertTriangle, Clock, MapPin, User, CheckCircle2, Siren, ChevronRight } from 'lucide-react';
+import { Clock, User, CheckCircle2, Siren, ChevronRight, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { AlertsAutoRefresh } from '@/components/features/alerts/alerts-auto-refresh';
@@ -9,19 +9,7 @@ import { AlertsAutoRefresh } from '@/components/features/alerts/alerts-auto-refr
 export const dynamic = 'force-dynamic';
 
 async function getAlerts() {
-  const falls = await prisma.fallRecord.findMany({
-    orderBy: { timestamp: 'desc' },
-    include: { 
-      dependent: { 
-        include: { 
-            caregiver: true,
-            user: { select: { id: true } } 
-        } 
-      } 
-    },
-    take: 50,
-  });
-
+  // ✅ 1. ดึงเฉพาะ SOS (ExtendedHelp) เท่านั้น ตัดการล้มออกตามคำสั่งนายน้อย
   const soss = await prisma.extendedHelp.findMany({
     orderBy: { requestedAt: 'desc' },
     include: { 
@@ -31,33 +19,22 @@ async function getAlerts() {
             user: { select: { id: true } }
         }
       },
-      reporter: true 
+      reporter: true // คนแจ้ง (ถ้ามี)
     },
     take: 50,
   });
 
-  const combined = [
-    ...falls.map(f => ({
-      id: `fall-${f.id}`,
-      type: 'FALL',
-      victimName: f.dependent ? `${f.dependent.firstName} ${f.dependent.lastName}` : 'ไม่ระบุชื่อ',
-      userId: f.dependent?.user?.id,
-      time: f.timestamp,
-      lat: f.latitude || 0,
-      lng: f.longitude || 0,
-      isActive: f.status === 'DETECTED'
-    })),
-    ...soss.map(s => ({
+  // 2. แปลงข้อมูล
+  const combined = soss.map(s => ({
       id: `sos-${s.id}`,
       type: 'SOS',
+      status: s.status, // DETECTED, ACKNOWLEDGED, RESOLVED
       victimName: s.dependent ? `${s.dependent.firstName} ${s.dependent.lastName}` : 'ไม่ระบุชื่อ',
       userId: s.dependent?.user?.id,
       time: s.requestedAt,
       lat: s.latitude || 0,
       lng: s.longitude || 0,
-      isActive: s.status === 'DETECTED'
-    }))
-  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  })).sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
   return combined;
 }
@@ -74,7 +51,8 @@ export default async function AlertsPage() {
       <div className="flex shrink-0 items-center justify-between">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">ศูนย์แจ้งเตือนเหตุ</h1>
-          <p className="text-slate-500">รวมรายการ SOS และการล้ม</p>
+          {/* แก้คำอธิบายให้ตรง */}
+          <p className="text-slate-500">รายการขอความช่วยเหลือฉุกเฉิน (SOS)</p>
         </div>
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500 text-white shadow-lg shadow-red-500/30">
           <Siren className="h-6 w-6 animate-pulse" />
@@ -97,15 +75,56 @@ export default async function AlertsPage() {
           {alerts.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-slate-400">
                <CheckCircle2 className="mb-2 h-10 w-10 text-slate-200" />
-               <p>เหตุการณ์ปกติ</p>
+               <p>ไม่มีรายการแจ้งเตือน SOS</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
               {alerts.map((alert) => {
-                const isDanger = alert.isActive;
                 
-                // ✅ FIX: สร้าง Link เสมอถ้ามี userId (แม้พิกัดจะเป็น 0 ก็ตาม)
-                // ถ้าไม่มีพิกัด หน้า Monitoring จะจัดการเอง (เช่น ไม่โชว์แมพ หรือโชว์พิกัดล่าสุดแทน)
+                // 🧠 Logic สี 3 ระดับ (แดง / เหลือง / เขียว)
+                let statusConfig = {
+                    color: 'text-slate-500',
+                    bg: 'bg-white',
+                    border: 'border-l-slate-300',
+                    iconBg: 'bg-slate-100',
+                    label: 'จบงานแล้ว',
+                    active: false
+                };
+
+                // 🔴 แดง: SOS มาใหม่ (DETECTED)
+                if (alert.status === 'DETECTED') {
+                    statusConfig = {
+                        color: 'text-red-700',
+                        bg: 'bg-red-50/30',
+                        border: 'border-l-red-500',
+                        iconBg: 'bg-red-100 text-red-600',
+                        label: 'แจ้งเตือนใหม่ (รอรับเรื่อง)',
+                        active: true
+                    };
+                }
+                // 🟡 เหลือง: รับเรื่องแล้ว (ACKNOWLEDGED)
+                else if (alert.status === 'ACKNOWLEDGED') {
+                    statusConfig = {
+                        color: 'text-amber-700', // สีเหลืองเข้ม/ส้ม
+                        bg: 'bg-amber-50/30',
+                        border: 'border-l-amber-500',
+                        iconBg: 'bg-amber-100 text-amber-600',
+                        label: 'จนท. รับเรื่องแล้ว',
+                        active: true
+                    };
+                }
+                // 🟢/⚪ เขียว/เทา: จบงาน (RESOLVED, FALSE_ALARM)
+                else {
+                    statusConfig = {
+                        color: 'text-slate-500',
+                        bg: 'bg-white hover:bg-slate-50',
+                        border: 'border-l-green-500', // เขียวบอกว่าจบสวย
+                        iconBg: 'bg-green-100 text-green-600',
+                        label: 'ปิดเคสเรียบร้อย',
+                        active: false
+                    };
+                }
+
                 const linkUrl = alert.userId 
                     ? `/admin/monitoring?focusUser=${alert.userId}&lat=${alert.lat}&lng=${alert.lng}`
                     : '#';
@@ -114,31 +133,23 @@ export default async function AlertsPage() {
                   <Link 
                     href={linkUrl}
                     key={alert.id} 
-                    className={`group flex flex-col gap-4 p-4 transition-all hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between border-l-4 cursor-pointer ${
-                        isDanger ? 'border-l-red-500 bg-red-50/10' : 'border-l-green-500 bg-white'
-                    }`}
+                    className={`group flex flex-col gap-4 p-4 transition-all sm:flex-row sm:items-center sm:justify-between border-l-4 cursor-pointer ${statusConfig.border} ${statusConfig.bg}`}
                   >
                     
                     <div className="flex items-start gap-4">
-                      {/* Icon */}
-                      <div className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                          isDanger ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        {alert.type === 'SOS' 
-                            ? <Siren className="h-5 w-5" /> 
-                            : (isDanger ? <AlertTriangle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />)
-                        }
+                      {/* Icon Box */}
+                      <div className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${statusConfig.iconBg}`}>
+                        <Siren className={`h-5 w-5 ${alert.status === 'DETECTED' ? 'animate-pulse' : ''}`} /> 
                       </div>
 
                       <div>
-                        <h3 className={`font-bold text-base flex items-center gap-2 ${isDanger ? 'text-red-700' : 'text-slate-700'}`}>
-                          {alert.type === 'SOS' 
-                            ? (isDanger ? 'SOS: ขอความช่วยเหลือ!' : 'SOS: จบงานแล้ว') 
-                            : (isDanger ? 'ตรวจพบการล้ม! (Fall)' : 'การล้ม: ปลอดภัยแล้ว')
-                          }
+                        {/* Title */}
+                        <h3 className={`font-bold text-base flex items-center gap-2 ${statusConfig.color}`}>
+                          SOS: ขอความช่วยเหลือ!
                           <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400" />
                         </h3>
                         
+                        {/* Details */}
                         <div className="mt-1 flex flex-wrap gap-3 text-sm text-slate-500">
                           <div className="flex items-center gap-1 font-medium text-slate-600">
                             <User className="h-3.5 w-3.5" />
@@ -153,13 +164,18 @@ export default async function AlertsPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* Status Label */}
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            isDanger 
-                            ? 'bg-red-100 text-red-700' 
-                            : 'bg-slate-100 text-slate-500'
+                        {/* Status Badge */}
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${
+                            alert.status === 'DETECTED' ? 'bg-red-100 text-red-700 border-red-200' :
+                            alert.status === 'ACKNOWLEDGED' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                            'bg-slate-100 text-slate-500 border-slate-200'
                         }`}>
-                            {isDanger ? 'Active' : 'Resolved'}
+                            {/* Icon สถานะเล็กๆ ใน Badge */}
+                            {alert.status === 'DETECTED' && <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}
+                            {alert.status === 'ACKNOWLEDGED' && <Loader2 className="h-3 w-3 animate-spin" />}
+                            {alert.status === 'RESOLVED' && <CheckCircle2 className="h-3 w-3" />}
+                            
+                            {statusConfig.label}
                         </span>
                     </div>
 

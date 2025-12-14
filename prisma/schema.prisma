@@ -267,14 +267,17 @@ model ExtendedHelp {
     type HelpType @default(LINE_SOS)
     status AlertStatus @default(DETECTED)
 
-    // ⭐ เพิ่มข้อมูลผู้ช่วยเหลือ (Rescuer)
-    rescuerName  String?
-    rescuerPhone String?
-
     latitude Float?
     longitude Float?
   
     details String? @db.Text
+    
+    // ⭐ เพิ่มข้อมูลผู้ช่วยเหลือ (Rescuer)
+    rescuerName  String?
+    rescuerPhone String?
+    // ✅ เพิ่ม 2 ตัวนี้ครับ เอาไว้เก็บพิกัดคนรับเคส
+    rescuerLat  Float?   
+    rescuerLng  Float?
 
     requestedAt DateTime  @default(now())
     resolvedAt DateTime?
