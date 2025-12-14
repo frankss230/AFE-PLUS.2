@@ -1,22 +1,34 @@
 'use client';
 
 import { useAuthStore, useAlertStore, useModalStore } from '@/store/store';
-import { Bell, Menu, User, LogOut, ChevronDown } from 'lucide-react'; // เพิ่ม ChevronDown
+import { Bell, Menu, User, LogOut, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
-// ✅ Import Dialog ที่สร้าง
 import { ProfileDialog } from '@/components/features/admins/profile-dialog';
+import { useState, useEffect } from 'react';
+import { getAdminProfile } from '@/actions/admin.actions';
 
 interface HeaderProps {
   onMenuClick: () => void;
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
-  const { user, logout, setUser } = useAuthStore(); // ✅ ดึง setUser มาด้วยเพื่ออัปเดตชื่อทันที
+  const { user, logout, setUser } = useAuthStore();
   const { unreadCount } = useAlertStore();
   const { openModal } = useModalStore();
 
+  // State พิเศษสำหรับเก็บรูปภาพใน Header เพื่อให้เปลี่ยนทันทีที่อัปโหลด
+  const [headerImage, setHeaderImage] = useState<string | null>(null);
+
+  // โหลดรูปครั้งแรกตอนเข้าเว็บ (เพราะใน authStore อาจจะไม่มีรูปเก็บไว้)
+  useEffect(() => {
+    if (user?.id) {
+        getAdminProfile(user.id).then(res => {
+            if (res?.image) setHeaderImage(res.image);
+        });
+    }
+  }, [user?.id]);
+
   const performLogout = async () => {
-    // ... (Logout Logic เดิม) ...
     try {
         await fetch('/api/auth/logout', { method: 'POST' });
         logout();
@@ -33,7 +45,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   const handleLogoutClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // กันไม่ให้ Dialog เด้งตอนกด Logout
+    e.stopPropagation();
     openModal({
       type: 'confirm',
       title: 'ยืนยันการออกจากระบบ',
@@ -68,13 +80,16 @@ export function Header({ onMenuClick }: HeaderProps) {
         </button>
 
         {/* ✅ User Menu & Profile Edit */}
-        {/* ใช้ ProfileDialog ครอบส่วนนี้เพื่อให้กดแล้วเด้งหน้าแก้ไข */}
         <ProfileDialog 
             userId={user?.id || 0}
-            onUpdateSuccess={(newData : any) => {
-                // อัปเดตชื่อในหน้าจอทันทีโดยไม่ต้องรีเฟรช
+            onUpdateSuccess={(newData) => {
+                // 1. อัปเดตชื่อใน Store
                 if (user) {
                     setUser({ ...user, firstName: newData.firstName, lastName: newData.lastName });
+                }
+                // 2. ✅ อัปเดตรูปใน Header ทันที (ถ้ามีการส่งรูปกลับมา)
+                if (newData.image) {
+                    setHeaderImage(newData.image);
                 }
             }}
             trigger={
@@ -84,22 +99,25 @@ export function Header({ onMenuClick }: HeaderProps) {
                             {user?.firstName} {user?.lastName}
                         </p>
                         <p className="text-xs text-gray-500">
-                            {/* แสดงตำแหน่ง ถ้าไม่มีใช้คำว่า ผู้ดูแลระบบ */}
                             ผู้ดูแลระบบ
                         </p>
                     </div>
                     
                     <div className="relative">
-                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center ring-2 ring-white shadow-sm group-hover:ring-blue-100">
-                            <User className="w-6 h-6 text-white" />
+                        {/* ✅ 3. เช็คว่ามีรูปไหม ถ้ามีให้โชว์รูป ถ้าไม่มีโชว์ไอคอนเดิม */}
+                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center ring-2 ring-white shadow-sm group-hover:ring-blue-100 overflow-hidden">
+                            {headerImage ? (
+                                <img src={headerImage} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="w-6 h-6 text-white" />
+                            )}
                         </div>
-                        {/* ไอคอนแก้ไขเล็กๆ */}
+                        
                         <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
                             <ChevronDown className="w-3 h-3 text-gray-500" />
                         </div>
                     </div>
                     
-                    {/* ปุ่ม Logout (แยกออกมาเพื่อไม่ให้กดโดนแล้วเด้ง Dialog แก้ไข) */}
                     <button
                         onClick={handleLogoutClick}
                         className="p-2 ml-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600 transition-colors border border-transparent hover:border-red-100"

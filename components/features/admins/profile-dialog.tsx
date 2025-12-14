@@ -1,14 +1,52 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Slider } from "@/components/ui/slider"; // ใช้ Slider ของ shadcn
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Lock, Save, Loader2, Camera } from 'lucide-react';
+import { User, Lock, Save, Loader2, Camera, Check, X, ZoomIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateAdminProfile, getAdminProfile } from '@/actions/admin.actions';
+import Cropper from 'react-easy-crop'; // ✅ Import ตัวตัดรูป
+import { Area } from 'react-easy-crop';
+
+// --- Utility Functions สำหรับตัดรูป (ไว้ในไฟล์เดียวกันเลยจะได้ก๊อปง่ายๆ) ---
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', (error) => reject(error));
+    image.src = url;
+  });
+
+async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) return '';
+
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  return canvas.toDataURL('image/jpeg', 0.9); // คืนค่าเป็น Base64 Quality 90%
+}
+// -------------------------------------------------------------------
 
 export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: number, trigger: React.ReactNode, onUpdateSuccess: (newData: any) => void }) {
   const [open, setOpen] = useState(false);
@@ -18,10 +56,15 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
   });
   const [passwords, setPasswords] = useState({ newPassword: '', confirmPassword: '' });
   
-  // ✅ 1. เพิ่ม Ref เพื่อไปสั่งกด Input ที่ซ่อนอยู่
+  // State สำหรับ Cropper
+  const [imageSrc, setImageSrc] = useState<string | null>(null); // รูปต้นฉบับก่อนตัด
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [isCropping, setIsCropping] = useState(false); // ควบคุมหน้าจอตัดรูป
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // โหลดข้อมูลล่าสุดเมื่อเปิด Dialog
   useEffect(() => {
       if (open && userId) {
           getAdminProfile(userId).then(res => {
@@ -37,32 +80,45 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
       }
   }, [open, userId]);
 
-  // ✅ 2. ฟังก์ชันจัดการเมื่อเลือกไฟล์รูป
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // เช็คขนาดไฟล์ (กันไฟล์ใหญ่เกิน 2MB เดี๋ยว Database บวม)
-      if (file.size > 2 * 1024 * 1024) {
-          return toast.error("ขนาดไฟล์รูปภาพต้องไม่เกิน 2MB");
-      }
+  const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
       const reader = new FileReader();
-      reader.onloadend = () => {
-        // แปลงเป็น Base64 แล้วเซ็ตลง State เพื่อโชว์และบันทึก
-        setData(prev => ({ ...prev, image: reader.result as string }));
-      };
+      reader.addEventListener('load', () => {
+        setImageSrc(reader.result?.toString() || '');
+        setIsCropping(true); // เปิดโหมดตัดรูป
+      });
       reader.readAsDataURL(file);
+    }
+    // Reset value เพื่อให้เลือกรูปเดิมซ้ำได้ถ้าต้องการ
+    e.target.value = ''; 
+  };
+
+  const showCroppedImage = async () => {
+    if (imageSrc && croppedAreaPixels) {
+        try {
+            const croppedImageBase64 = await getCroppedImg(imageSrc, croppedAreaPixels);
+            setData({ ...data, image: croppedImageBase64 }); // บันทึกรูปที่ตัดแล้วลง State
+            setIsCropping(false); // ปิดหน้าตัดรูป
+            setImageSrc(null); // เคลียร์รูปต้นฉบับ
+        } catch (e) {
+            console.error(e);
+            toast.error("เกิดข้อผิดพลาดในการตัดรูป");
+        }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (passwords.newPassword && passwords.newPassword !== passwords.confirmPassword) {
         return toast.error("รหัสผ่านใหม่ไม่ตรงกัน");
     }
-
     setLoading(true);
+    // ส่งข้อมูลรวมถึง image (base64) ไปบันทึก
     const res = await updateAdminProfile(userId, { ...data, newPassword: passwords.newPassword });
 
     if (res.success) {
@@ -83,9 +139,51 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>แก้ไขข้อมูลส่วนตัว</DialogTitle>
+          <DialogTitle>{isCropping ? 'ปรับแต่งรูปโปรไฟล์' : 'แก้ไขข้อมูลส่วนตัว'}</DialogTitle>
         </DialogHeader>
         
+        {/* --- ✂️ หน้าจอสำหรับ Crop รูป --- */}
+        {isCropping ? (
+            <div className="space-y-4">
+                <div className="relative w-full h-[300px] bg-black rounded-xl overflow-hidden">
+                    <Cropper
+                        image={imageSrc || ''}
+                        crop={crop}
+                        zoom={zoom}
+                        aspect={1} // สัดส่วน 1:1 (สี่เหลี่ยมจัตุรัส)
+                        onCropChange={setCrop}
+                        onCropComplete={onCropComplete}
+                        onZoomChange={setZoom}
+                        cropShape="round" // ตัดเป็นวงกลมให้เห็นภาพจริง
+                        showGrid={false}
+                    />
+                </div>
+                
+                <div className="space-y-2 px-2">
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>Zoom</span>
+                        <span>{zoom.toFixed(1)}x</span>
+                    </div>
+                    <Slider 
+                        value={[zoom]} 
+                        min={1} 
+                        max={3} 
+                        step={0.1} 
+                        onValueChange={(value: number[]) => setZoom(value[0])}
+                    />
+                </div>
+
+                <div className="flex justify-between pt-2">
+                    <Button variant="outline" onClick={() => { setIsCropping(false); setImageSrc(null); }}>
+                        <X className="w-4 h-4 mr-2" /> ยกเลิก
+                    </Button>
+                    <Button onClick={showCroppedImage} className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Check className="w-4 h-4 mr-2" /> ใช้รูปนี้
+                    </Button>
+                </div>
+            </div>
+        ) : (
+        /* --- 📝 หน้าฟอร์มปกติ --- */
         <form onSubmit={handleSubmit}>
             <Tabs defaultValue="general" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -93,37 +191,31 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
                     <TabsTrigger value="security">ความปลอดภัย</TabsTrigger>
                 </TabsList>
 
-                {/* --- Tab 1: ข้อมูลทั่วไป --- */}
                 <TabsContent value="general" className="space-y-4">
-                    {/* Profile Image Section */}
-                    <div className="flex flex-col items-center gap-2 mb-4">
+                    {/* Profile Image Preview */}
+                    <div className="flex flex-col items-center gap-3 mb-4">
                         <div 
-                            // ✅ 3. สั่งให้คลิก div นี้แล้วไปกระตุ้น input
                             onClick={() => fileInputRef.current?.click()}
-                            className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center relative overflow-hidden group cursor-pointer border-4 border-white shadow-md hover:shadow-lg transition-all"
+                            className="w-28 h-28 bg-slate-100 rounded-full flex items-center justify-center relative overflow-hidden group cursor-pointer border-4 border-white shadow-md hover:shadow-lg transition-all"
                         >
-                            {/* แสดงรูป (ถ้ามี) หรือ Default Icon */}
                             {data.image ? (
                                 <img src={data.image} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
-                                <User className="w-10 h-10 text-slate-400" />
+                                <User className="w-12 h-12 text-slate-400" />
                             )}
-
-                            {/* Overlay ตอนเอาเมาส์ชี้ */}
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Camera className="w-6 h-6 text-white" />
+                                <Camera className="w-8 h-8 text-white" />
                             </div>
                         </div>
-                        
-                        <span className="text-xs text-gray-400">คลิกที่รูปเพื่อเปลี่ยนแปลง</span>
-                        
-                        {/* ✅ 4. Input File ที่ซ่อนไว้ */}
+                        <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                            เปลี่ยนรูปโปรไฟล์
+                        </Button>
                         <input 
                             type="file" 
                             ref={fileInputRef} 
                             className="hidden" 
                             accept="image/*" 
-                            onChange={handleImageChange}
+                            onChange={handleFileChange}
                         />
                     </div>
 
@@ -137,29 +229,24 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
                             <Input value={data.lastName} onChange={e => setData({...data, lastName: e.target.value})} required />
                         </div>
                     </div>
-
                     <div className="space-y-2">
                         <Label>ตำแหน่งงาน</Label>
-                        <Input value={data.position} placeholder="เช่น ผู้ดูแลระบบ, เจ้าหน้าที่ IT" onChange={e => setData({...data, position: e.target.value})} />
+                        <Input value={data.position} placeholder="เช่น ผู้ดูแลระบบ" onChange={e => setData({...data, position: e.target.value})} />
                     </div>
-
                     <div className="space-y-2">
                         <Label>เบอร์โทรศัพท์</Label>
                         <Input value={data.phone} placeholder="08xxxxxxxx" onChange={e => setData({...data, phone: e.target.value})} />
                     </div>
                 </TabsContent>
 
-                {/* --- Tab 2: ความปลอดภัย --- */}
                 <TabsContent value="security" className="space-y-4">
                     <div className="p-3 bg-yellow-50 text-yellow-700 text-xs rounded-lg border border-yellow-200 mb-2">
                         ⚠️ ปล่อยว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน
                     </div>
-
                     <div className="space-y-2">
                         <Label>Username</Label>
                         <Input value={data.username} onChange={e => setData({...data, username: e.target.value})} required />
                     </div>
-
                     <div className="space-y-2 relative">
                         <Label>รหัสผ่านใหม่</Label>
                         <div className="relative">
@@ -167,7 +254,6 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
                             <Input type="password" className="pl-9" placeholder="••••••••" value={passwords.newPassword} onChange={e => setPasswords({...passwords, newPassword: e.target.value})} />
                         </div>
                     </div>
-
                     <div className="space-y-2 relative">
                         <Label>ยืนยันรหัสผ่านใหม่</Label>
                         <div className="relative">
@@ -186,6 +272,7 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
                 </Button>
             </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );
