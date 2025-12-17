@@ -17,7 +17,6 @@ export default function ViewSwitcher({ currentView }: ViewSwitcherProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("view", view);
     
-    // ✅ ไม่ต้องใช้ startTransition แล้ว สั่งเปลี่ยนเลย เดี๋ยว Suspense ที่หน้า Page จะทำงานเอง
     router.push(`?${params.toString()}`);
   };
 
