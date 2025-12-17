@@ -1,47 +1,69 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, OverlayView, DirectionsRenderer } from '@react-google-maps/api';
 import { Card } from '@/components/ui/card';
 import { Heart, Thermometer, Battery, Map as MapIcon, Satellite, ShieldCheck, User } from 'lucide-react';
 import { useRouter } from "next/navigation";
 
-const containerStyle = { width: '100%', height: '100%', borderRadius: '1.5rem' }; // มนกว่าเดิม
+const containerStyle = { width: '100%', height: '100%', borderRadius: '1.5rem' };
 const centerDefault = { lat: 13.7563, lng: 100.5018 };
 
 export default function MonitoringView({ users }: { users: any[] }) {
     const router = useRouter();
+    const mapRef = useRef<google.maps.Map | null>(null);
 
-    // ✅ เพิ่ม useEffect เพื่อทำ Auto Refresh
+    // ✅ 1. State สำหรับ Auto Refresh & Selection
+    const [selectedUser, setSelectedUser] = useState<any>(users[0] || null);
+
+    // ✅ 2. Ref เพื่อเช็คว่าเราต้องขยับกล้องหรือไม่
+    // เก็บ ID ของคนที่เราเพิ่ง Pan กล้องไปล่าสุด
+    const lastPannedUserId = useRef<number | null>(null); 
+
+    // ✅ Auto Refresh Logic
     useEffect(() => {
-        // ตั้งเวลาให้ Refresh ทุกๆ 5 วินาที (ปรับเลข 5000 เป็นอย่างอื่นได้ตามใจชอบ)
         const interval = setInterval(() => {
-            // โดยที่หน้าเว็บ "ไม่กระพริบ" (Soft Refresh)
             router.refresh();
-            console.log("🔄 Updating data...");
         }, 5000);
-
-        // ล้างตัวจับเวลาเมื่อปิดหน้านี้ (กัน Memory Leak)
         return () => clearInterval(interval);
     }, [router]);
 
+    useEffect(() => {
+        if (selectedUser) {
+            const updatedUser = users.find(u => u.id === selectedUser.id);
+            if (updatedUser) {
+                setSelectedUser(updatedUser);
+            }
+        } else if (users.length > 0) {
+            setSelectedUser(users[0]);
+        }
+    }, [users]); // Dependency คือ users ที่เปลี่ยนทุก 5 วิ
+
+    // ✅ Map Logic
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAP || ''
     });
 
-    const [selectedUser, setSelectedUser] = useState<any>(users[0] || null);
     const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
     const [directionsResponse, setDirectionsResponse] = useState<any>(null);
 
-    // Auto Select Emergency
+    // ✅ Effect สำหรับขยับกล้อง (PanTo) แยกออกมา
+    // จะทำงานก็ต่อเมื่อ "เปลี่ยนคน" หรือ "คนเดิมย้ายที่ไกลๆ" เท่านั้น
     useEffect(() => {
-        const emergencyUser = users.find(u => u.isEmergency);
-        if (emergencyUser) setSelectedUser(emergencyUser);
-        else if (!selectedUser && users.length > 0) setSelectedUser(users[0]);
-    }, [users]);
+        if (isLoaded && mapRef.current && selectedUser?.location) {
+            
+            // เช็คว่า "เราเคย Pan ไปหาคนนี้แล้วหรือยัง?"
+            // ถ้าเป็นคนเดิม (ID เดิม) -> ไม่ต้อง Pan ซ้ำ (Map จะได้ไม่กระตุก)
+            // ยกเว้นว่าอยากให้ตามติดตลอดเวลาก็เอาเงื่อนไขนี้ออกได้ แต่จะกระตุกนิดนึง
+            if (lastPannedUserId.current !== selectedUser.id) {
+                mapRef.current.panTo({ lat: selectedUser.location.lat, lng: selectedUser.location.lng });
+                lastPannedUserId.current = selectedUser.id; // จำไว้ว่าไปหาคนนี้แล้ว
+            }
+        }
+    }, [selectedUser, isLoaded]); // Effect นี้จะทำงานเมื่อ selectedUser เปลี่ยน
 
-    // Routing
+    // Routing Logic (เหมือนเดิม)
     useEffect(() => {
         if (isLoaded && selectedUser?.isEmergency && selectedUser?.rescuer) {
             const directionsService = new google.maps.DirectionsService();
@@ -59,6 +81,12 @@ export default function MonitoringView({ users }: { users: any[] }) {
         }
     }, [isLoaded, selectedUser]);
 
+    // ฟังก์ชันเมื่อกดเลือก User จาก Sidebar
+    const handleUserClick = (user: any) => {
+        setSelectedUser(user);
+        lastPannedUserId.current = null; // Reset เพื่อให้ Map ยอม Pan ไปหาคนใหม่ทันที
+    };
+
     if (!isLoaded) return <div className="h-full flex items-center justify-center">Loading Operations Map...</div>;
 
     return (
@@ -71,7 +99,7 @@ export default function MonitoringView({ users }: { users: any[] }) {
                     {users.map(user => (
                         <div
                             key={user.id}
-                            onClick={() => setSelectedUser(user)}
+                            onClick={() => handleUserClick(user)} // ✅ ใช้ฟังก์ชันใหม่
                             className={`p-3 rounded-lg cursor-pointer border transition-all flex items-center justify-between ${selectedUser?.id === user.id
                                 ? 'bg-blue-50 border-blue-500 shadow-md'
                                 : 'hover:bg-slate-50 border-transparent'
@@ -110,7 +138,7 @@ export default function MonitoringView({ users }: { users: any[] }) {
                         </div>
                     ) : (
                         <>
-                            {/* ปุ่มเปลี่ยนโหมดแผนที่ (ลอยอยู่มุมขวาบน แบบมนๆ) */}
+                            {/* ปุ่มเปลี่ยนโหมดแผนที่ */}
                             <div className="absolute top-4 right-4 z-10 flex gap-2 bg-white/90 p-1.5 rounded-full shadow-lg backdrop-blur border border-slate-100">
                                 <button
                                     onClick={() => setMapType('roadmap')}
@@ -128,9 +156,11 @@ export default function MonitoringView({ users }: { users: any[] }) {
 
                             <GoogleMap
                                 mapContainerStyle={containerStyle}
-                                center={selectedUser?.location ? { lat: selectedUser.location.lat, lng: selectedUser.location.lng } : centerDefault}
+                                // เอา center ออกจาก prop เพื่อให้ panTo ทำงานแทน
+                                // center={selectedUser?.location ? { lat: selectedUser.location.lat, lng: selectedUser.location.lng } : centerDefault}
                                 zoom={16}
                                 mapTypeId={mapType}
+                                onLoad={(map) => { mapRef.current = map; }} // ✅ เก็บ Map Instance ไว้
                                 options={{ disableDefaultUI: true, zoomControl: true }}
                             >
                                 {/* จุดผู้ประสบเหตุ */}
@@ -164,10 +194,9 @@ export default function MonitoringView({ users }: { users: any[] }) {
                     )}
                 </Card>
 
-                {/* 2. Status Panel (ย้ายมาไว้ข้างล่าง Map) */}
+                {/* 2. Status Panel */}
                 {selectedUser && (
                     <Card className="p-4 flex items-center justify-between bg-white border-slate-200 shadow-sm">
-
                         {/* ข้อมูลสุขภาพ */}
                         <div className="flex gap-6">
                             <div className="flex items-center gap-3">
@@ -201,7 +230,7 @@ export default function MonitoringView({ users }: { users: any[] }) {
                             </div>
                         </div>
 
-                        {/* ปุ่มรับเคส / สถานะ (ขวาสุด) */}
+                        {/* ปุ่มรับเคส / สถานะ */}
                         <div>
                             {selectedUser.isEmergency ? (
                                 selectedUser.status === 'ACKNOWLEDGED' ? (
@@ -225,4 +254,4 @@ export default function MonitoringView({ users }: { users: any[] }) {
             </div>
         </div>
     );
-}
+}   
