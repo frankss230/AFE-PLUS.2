@@ -132,7 +132,7 @@ export function DependentTable({ data }: { data: DependentData[] }) {
                   <div className="flex items-center justify-end gap-1">
                     
                     {/* 🗺️ ปุ่มพิเศษสำหรับ Dependent: ดูแผนที่ */}
-                    <Link href={`/admin/dashboard/monitoring?focusUser=${item.id}`}>
+                    <Link href={`/admin/monitoring?focusUser=${item.id}`}>
                       <Button variant="ghost" size="icon" className="text-blue-600 hover:bg-blue-50" title="ดูตำแหน่ง">
                         <MapPin className="w-4 h-4" />
                       </Button>

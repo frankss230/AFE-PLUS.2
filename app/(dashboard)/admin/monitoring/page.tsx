@@ -3,7 +3,14 @@ import MonitoringView from '@/components/features/monitoring/monitoring-view';
 
 export const dynamic = 'force-dynamic';
 
-export default async function MonitoringPage() {
+interface MonitoringPageProps {
+  // ✅ Next.js 15: searchParams เป็น Promise
+  searchParams: Promise<{ focusUser?: string }>; 
+}
+
+export default async function MonitoringPage({ searchParams }: MonitoringPageProps) {
+  // 1. แกะกล่อง searchParams ดูว่ามีคนส่ง focusUser มาไหม
+  const { focusUser } = await searchParams; 
   
   const dependents = await prisma.dependentProfile.findMany({
     where: { 
@@ -17,10 +24,8 @@ export default async function MonitoringPage() {
       heartRateRecords: { orderBy: { timestamp: 'desc' }, take: 1 },
       temperatureRecords: { orderBy: { recordDate: 'desc' }, take: 1 },
 
-      // 🚨 เช็ค Alert ค้าง
       fallRecords: { where: { status: 'DETECTED' }, take: 1 },
       receivedHelp: { 
-          // ดึงเฉพาะที่ยังไม่จบ (DETECTED หรือ ACKNOWLEDGED)
           where: { status: { in: ['DETECTED', 'ACKNOWLEDGED'] } }, 
           take: 1,
       }
@@ -29,14 +34,12 @@ export default async function MonitoringPage() {
 
   const formattedUsers = dependents.map(dep => {
     const hasFall = dep.fallRecords.length > 0;
-    const sosRecord = dep.receivedHelp[0]; // ดึง SOS ใบแรก
+    const sosRecord = dep.receivedHelp[0]; 
     const hasSOS = !!sosRecord;
     const isEmergency = hasFall || hasSOS;
 
     const latestLoc = dep.locations[0];
 
-    // ✅ แก้ไข: ดึงตำแหน่งและชื่อ "ผู้ช่วยเหลือ" จาก Field จริงใน ExtendedHelp
-    // ไม่ใช้ reporter แล้ว เพราะเราบันทึก rescuerName/Lat/Lng แยกต่างหาก
     let rescuer = null;
     if (hasSOS && sosRecord.status === 'ACKNOWLEDGED' && sosRecord.rescuerLat && sosRecord.rescuerLng) {
         rescuer = {
@@ -54,7 +57,6 @@ export default async function MonitoringPage() {
         lineId: dep.user.lineId,
         
         isEmergency: isEmergency,
-        // ถ้า status เป็น ACKNOWLEDGED แสดงว่ามีคนรับเคสแล้ว
         status: sosRecord?.status || (hasFall ? 'DETECTED' : 'NORMAL'), 
         emergencyType: hasFall ? 'FALL' : (hasSOS ? 'SOS' : null),
 
@@ -65,7 +67,7 @@ export default async function MonitoringPage() {
             updatedAt: latestLoc.timestamp
         } : null,
         
-        rescuer: rescuer, // ส่งข้อมูลผู้ช่วยเหลือจริง
+        rescuer: rescuer,
 
         caregiver: dep.caregiver ? {
             firstName: dep.caregiver.firstName,
@@ -80,13 +82,16 @@ export default async function MonitoringPage() {
     };
   });
 
-  // เรียงลำดับ: เอาคนที่มี Emergency ขึ้นก่อน
   formattedUsers.sort((a, b) => (b.isEmergency ? 1 : 0) - (a.isEmergency ? 1 : 0));
 
   return (
     <div className="h-full flex flex-col space-y-3">
         <h1 className="text-3xl font-bold text-slate-900">ติดตามผู้ที่มีภาวะพึ่งพิง</h1>
-        <MonitoringView users={formattedUsers} />
+        {/* ✅ ส่งค่า initialFocusId ไปให้ Client Component จัดการต่อ */}
+        <MonitoringView 
+            users={formattedUsers} 
+            initialFocusId={focusUser ? parseInt(focusUser) : undefined} 
+        />
     </div>
   );
 }

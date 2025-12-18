@@ -1,33 +1,75 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { LucideIcon } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { LucideIcon } from "lucide-react";
 
 interface StatsCardProps {
   title: string;
   value: string | number;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   change?: string;
-  trend?: 'up' | 'down';
+  trend?: "up" | "down" | "neutral";
+  subtext?: string;
+  color?: "blue" | "orange" | "purple" | "pink" | "emerald";
 }
 
-export function StatsCard({ title, value, icon: Icon, change, trend }: StatsCardProps) {
+export default function StatsCard({
+  title,
+  value,
+  icon: Icon,
+  change,
+  trend,
+  subtext,
+  color = "blue",
+}: StatsCardProps) {
+  
+  const colorStyles = {
+    blue: { bg: "bg-blue-50", text: "text-blue-600" },
+    orange: { bg: "bg-orange-50", text: "text-orange-600" },
+    purple: { bg: "bg-purple-50", text: "text-purple-600" },
+    pink: { bg: "bg-pink-50", text: "text-pink-600" },
+    emerald: { bg: "bg-emerald-50", text: "text-emerald-600" },
+  };
+
+  const currentStyle = colorStyles[color] || colorStyles.blue;
+
   return (
-    <Card>
-      <CardContent className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
-          {change && (
-            <p
-              className={`text-sm mt-1 ${
-                trend === 'up' ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
-              {change}
-            </p>
-          )}
-        </div>
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-          <Icon className="w-8 h-8 text-blue-600" />
+    <Card className="h-full rounded-2xl shadow-sm border border-slate-100 flex items-center overflow-hidden">
+      <CardContent className="p-4 w-full flex items-center gap-3">
+        
+        {/* Icon */}
+        {Icon && (
+          <div
+            className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-colors ${currentStyle.bg}`}
+          >
+            <Icon className={`w-5 h-5 ${currentStyle.text}`} />
+          </div>
+        )}
+
+        {/* Text Area */}
+        <div className="flex flex-col min-w-0">
+          {/* ✅ leading-none -> leading-tight (เผื่อสระลอย) */}
+          <p className="text-2xl font-bold text-slate-800 tracking-tight leading-tight">
+            {value}
+          </p>
+          
+          <p className="text-xs font-medium text-slate-500 truncate mt-0.5">
+            {title}
+          </p>
+
+          <div className="flex items-center gap-2 mt-0.5">
+            {change && (
+              <span
+                className={`text-[10px] font-bold flex items-center ${
+                  trend === "up"
+                    ? "text-emerald-600"
+                    : trend === "down"
+                    ? "text-rose-600"
+                    : "text-slate-400"
+                }`}
+              >
+                {trend === "up" ? "↑" : trend === "down" ? "↓" : ""} {change}
+              </span>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

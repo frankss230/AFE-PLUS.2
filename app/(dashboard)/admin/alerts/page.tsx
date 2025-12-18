@@ -43,7 +43,7 @@ export default async function AlertsPage() {
   const alerts = await getAlerts();
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col gap-6">
+    <div className="flex h-[calc(100vh-8.7rem)] flex-col gap-6">
       
       <AlertsAutoRefresh />
 
@@ -52,7 +52,7 @@ export default async function AlertsPage() {
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">ศูนย์แจ้งเตือนเหตุ</h1>
           {/* แก้คำอธิบายให้ตรง */}
-          <p className="text-slate-500">รายการขอความช่วยเหลือฉุกเฉิน (SOS)</p>
+          <p className="text-slate-500">รายการขอความช่วยเหลือฉุกเฉิน</p>
         </div>
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500 text-white shadow-lg shadow-red-500/30">
           <Siren className="h-6 w-6 animate-pulse" />

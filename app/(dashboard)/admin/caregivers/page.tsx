@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CaregiverTable } from '@/components/features/caregivers/caregiver-table';
+import CaregiverPageClient from '@/components/features/caregivers/caregiver-page-client'; // เรียกตัวใหม่มาใช้
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +45,7 @@ async function getCaregivers() {
 }
 
 export default async function CaregiversPage() {
+  // ดึงข้อมูลครั้งแรกจาก Server
   const caregivers = await getCaregivers();
 
   return (
@@ -55,14 +55,8 @@ export default async function CaregiversPage() {
         <p className="text-gray-600 mt-1">รายชื่อญาติหรือผู้ดูแลทั้งหมดในระบบ</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>รายชื่อ ({caregivers.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CaregiverTable data={caregivers} />
-        </CardContent>
-      </Card>
+      {/* ส่งข้อมูลไปให้ Client Component จัดการต่อ */}
+      <CaregiverPageClient initialData={caregivers} />
     </div>
   );
 }

@@ -66,7 +66,7 @@ export function CaregiverTable({ data }: { data: CaregiverData[] }) {
               <th className="px-6 py-3">ชื่อ-นามสกุล</th>
               <th className="px-6 py-3">อายุ / เพศ</th>
               <th className="px-6 py-3">เบอร์โทร</th>
-              <th className="px-6 py-3">ดูแล (คน)</th>
+              <th className="px-6 py-3">ผู้ที่มีภาวะพึ่งพิงในความดูแล</th>
               <th className="px-6 py-3 text-right">จัดการ</th>
             </tr>
           </thead>
@@ -108,10 +108,6 @@ export function CaregiverTable({ data }: { data: CaregiverData[] }) {
                     <Link href={`/admin/caregivers/${item.id}`}>
                         <Button variant="ghost" size="icon" className="text-slate-400 hover:text-blue-600"><Eye className="w-4 h-4" /></Button>
                     </Link>
-                    <Link href={`/admin/caregivers/${item.id}/edit`}>
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-orange-600"><Edit className="w-4 h-4" /></Button>
-                    </Link>
-                    
                     {/* 🗑️ ปุ่มลบ: เรียกฟังก์ชันใหม่ของเรา */}
                     <Button 
                         variant="ghost" size="icon" 
@@ -135,7 +131,7 @@ export function CaregiverTable({ data }: { data: CaregiverData[] }) {
                 <AlertDialogTitle>ยืนยันการลบ?</AlertDialogTitle>
                 <AlertDialogDescription>
                     คุณต้องการลบข้อมูลผู้ดูแล <b>"{targetDelete?.name}"</b> ใช่หรือไม่? <br/>
-                    <span className="text-red-500 text-xs mt-2 block">* บัญชีผู้ใช้งาน (User) และข้อมูลส่วนตัวทั้งหมดจะถูกลบถาวร</span>
+                    <span className="text-red-500 text-xs mt-2 block">* บัญชีผู้ใช้งาน และข้อมูลส่วนตัวทั้งหมดจะถูกลบถาวร</span>
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
