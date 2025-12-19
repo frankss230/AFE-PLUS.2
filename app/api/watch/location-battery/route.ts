@@ -73,13 +73,14 @@ async function handleRequest(request: Request) {
     let shouldSendLine = false;
     let alertType = "NONE";
 
-    // ✅ FIX 1: ดักจับ Manual SOS
+    // ✅ FIX 1: ดักจับ Manual SOS (กดปุ่มที่นาฬิกาเท่านั้น!)
     const isManualSOS = statusInt === 2; 
 
     if (isManualSOS) {
         console.log("🚨 Manual SOS Detected from Watch!");
         currentDBStatus = "DANGER";
 
+        // เฉพาะกดปุ่มเท่านั้นที่จะส่งแบบ Critical SOS
         if (caregiver?.user.lineId) {
              await sendCriticalAlertFlexMessage(
               caregiver.user.lineId,
@@ -92,7 +93,7 @@ async function handleRequest(request: Request) {
             );
         }
     } 
-    // ✅ FIX 2: Logic โซน (ทำงานแยกอิสระจากการล้ม)
+    // ✅ FIX 2: Logic โซน (แยกออกจากปุ่มกดชัดเจน)
     else {
       let currentStatus = 0; // Default SAFE
 
@@ -107,47 +108,47 @@ async function handleRequest(request: Request) {
         else currentStatus = 2;                       // DANGER (ZONE 2)
       }
 
-      // --- Logic แจ้งเตือนตามระยะ (เพิ่มขาเข้า 80%) ---
+      // --- Logic แจ้งเตือนตามระยะ ---
       
       // 🟢 อยู่ใน Safe Zone
       if (currentStatus === 0) {
         currentDBStatus = "SAFE";
+        // ต้องกลับถึงบ้านจริงๆ ถึงจะยอมรีเซ็ตค่า (แก้ปัญหา Spam)
         if (isAlertZone1Sent || isAlertNearZone2Sent || isAlertZone2Sent) {
           shouldSendLine = true; alertType = "BACK_SAFE";
-          isAlertZone1Sent = false; isAlertNearZone2Sent = false; isAlertZone2Sent = false;
+          isAlertZone1Sent = false; 
+          isAlertNearZone2Sent = false; 
+          isAlertZone2Sent = false;
         }
       } 
       // 🟡 อยู่ใน Zone 1 (Warning)
       else if (currentStatus === 1) {
         currentDBStatus = "WARNING";
         if (!isAlertZone1Sent) { 
-            // ขาออก: เพิ่งหลุด Safe -> Zone 1
             shouldSendLine = true; alertType = "ZONE_1"; isAlertZone1Sent = true; 
         }
         else if (isAlertZone2Sent || isAlertNearZone2Sent) {
-          // ขาเข้า: กลับมาจาก Zone 2 หรือ 80% -> Zone 1
           shouldSendLine = true; alertType = "BACK_TO_ZONE_1";
-          isAlertZone2Sent = false; isAlertNearZone2Sent = false;
+          isAlertNearZone2Sent = false;
+          // ❌ ลบ isAlertZone2Sent = false ออก เพื่อไม่ให้แจ้งเตือนโซน 2 ซ้ำหากยังไม่กลับบ้าน
         }
       } 
       // 🟠 อยู่ในระยะ 80% (Near Zone 2)
       else if (currentStatus === 3) {
         currentDBStatus = "DANGER";
         if (!isAlertNearZone2Sent) {
-          // ขาออก: จาก Zone 1 -> 80%
           shouldSendLine = true; alertType = "NEAR_ZONE_2";
           isAlertNearZone2Sent = true; isAlertZone1Sent = true;
         } else if (isAlertZone2Sent) { 
-          // ✅ ขาเข้า (NEW): กลับมาจาก Zone 2 -> 80%
-          shouldSendLine = true; alertType = "BACK_TO_NEAR_ZONE_2"; // แจ้งเตือนจุดนี้เพิ่ม
-          isAlertZone2Sent = false; 
+          shouldSendLine = true; alertType = "BACK_TO_NEAR_ZONE_2";
+          // ❌ ห้ามรีเซ็ต isAlertZone2Sent ตรงนี้เด็ดขาด
         }
       } 
-      // 🔴 อยู่ใน Zone 2 (Danger)
+      // 🔴 อยู่ใน Zone 2 (Danger - ออกนอกพื้นที่)
       else if (currentStatus === 2) {
         currentDBStatus = "DANGER";
-        if (!isAlertZone2Sent) {
-          shouldSendLine = true; alertType = "ZONE_2_SOS";
+        if (!isAlertZone2Sent) { 
+          shouldSendLine = true; alertType = "ZONE_2_DANGER"; // เปลี่ยนชื่อ Type ไม่ให้สับสน
           isAlertZone2Sent = true; isAlertNearZone2Sent = true; isAlertZone1Sent = true;
         }
       }
@@ -170,18 +171,24 @@ async function handleRequest(request: Request) {
        } else if (alertType === "NEAR_ZONE_2") {
            const msg = createGeneralAlertBubble("ใกล้หลุดเขตปลอดภัย", `ระยะ ${distText}`, distText, "#F97316", false);
            await lineClient.pushMessage(lineId, { type: "flex", altText: "เตือนระยะ 80%", contents: msg });
-       } 
-       // ✅ เพิ่มเงื่อนไขแจ้งเตือนขาเข้า 80%
-       else if (alertType === "BACK_TO_NEAR_ZONE_2") {
-           const msg = createGeneralAlertBubble("กลับเข้าสู่ระยะเฝ้าระวัง (80%)", `ระยะ ${distText}`, distText, "#FB923C", false); // สีส้มอ่อน
+       } else if (alertType === "BACK_TO_NEAR_ZONE_2") {
+           const msg = createGeneralAlertBubble("กลับเข้าสู่ระยะเฝ้าระวัง (80%)", `ระยะ ${distText}`, distText, "#FB923C", false);
            await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าสู่ระยะ 80%", contents: msg });
        }
-       else if (alertType === "ZONE_2_SOS") {
-           await sendCriticalAlertFlexMessage(
-              lineId, { latitude: lat, longitude: lng, timestamp: new Date(), id: 0 },
-              user, caregiver.phone || "", dependent as any, "ZONE",
-              `แจ้งเตือน: ${dependent.firstName} ออกนอกเขตพื้นที่!`
-            );
+       // ✅ FIX 3: เปลี่ยนจาก SOS เป็น Card สีแดงธรรมดา
+       else if (alertType === "ZONE_2_DANGER") {
+           const msg = createGeneralAlertBubble(
+               "⚠️ ออกนอกเขตปลอดภัย!",   // หัวข้อ
+               `ผู้ป่วยออกนอกระยะที่กำหนด (${distText})`, // เนื้อหา
+               "อันตราย",               // สถานะมุมขวาบน
+               "#DC2626",              // สีแดง (Red-600)
+               false                   // ไม่ใช่สถานะปลอดภัย
+           );
+           await lineClient.pushMessage(lineId, { 
+               type: "flex", 
+               altText: "🔴 แจ้งเตือนออกนอกเขต", 
+               contents: msg 
+           });
        }
     }
 

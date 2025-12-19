@@ -543,7 +543,7 @@ async function handleBorrowReturnRequest(lineId: string, replyToken: string) {
 function createWaitingGpsBubble() {
   return {
     "type": "bubble",
-    "size": "kilo", // ขนาดกำลังดี ไม่ใหญ่เทอะทะ
+    "size": "mega", // ขนาดกำลังดี ไม่ใหญ่เทอะทะ
     "body": {
       "type": "box",
       "layout": "vertical",
@@ -578,7 +578,7 @@ function createWaitingGpsBubble() {
         },
         {
           "type": "text",
-          "text": "ระบบกำลังสั่งเปิด GPS และค้นหาตำแหน่งล่าสุด กรุณารอสักครู่ (ประมาณ 1-2 นาที)",
+          "text": "ระบบกำลังสั่งเปิด GPS และค้นหาตำแหน่งล่าสุด กรุณารอสักครู่",
           "wrap": true,
           "color": "#64748B", // สีเทาอ่านง่าย
           "size": "sm",
@@ -595,7 +595,7 @@ function createWaitingGpsBubble() {
           "contents": [
             {
               "type": "text",
-              "text": "⏳ รอแจ้งเตือน...",
+              "text": "รอแจ้งเตือน",
               "size": "xs",
               "color": "#94A3B8",
               "align": "center"
