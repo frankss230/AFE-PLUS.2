@@ -92,7 +92,7 @@ async function handleRequest(request: Request) {
               `🆘 แจ้งเตือน: ${dependent.firstName} กดปุ่มขอความช่วยเหลือ!`
             );
         }
-    } 
+    }
     // ✅ FIX 2: Logic โซน (แยกออกจากปุ่มกดชัดเจน)
     else {
       let currentStatus = 0; // Default SAFE

@@ -20,11 +20,7 @@ async function handleSOS(request: Request) {
         dependentProfile: {
             include: {
                 caregiver: { include: { user: true } },
-                // ✅ เพิ่ม: ดึง Location ล่าสุดมาด้วย
-                locations: {
-                    take: 1,
-                    orderBy: { timestamp: 'desc' }
-                }
+                locations: { take: 1, orderBy: { timestamp: 'desc' } }
             }
         }
       }
@@ -41,37 +37,34 @@ async function handleSOS(request: Request) {
          return NextResponse.json({ success: false, message: 'Caregiver not linked' }, { status: 400 });
     }
 
-    // บันทึก SOS
-    const helpRequest = await prisma.extendedHelp.create({
-      data: {
-        dependentId: dependent.id,
-        reporterId: caregiverProfile.id,
+    // ❌ [ลบออก] ไม่บันทึกเข้าหน้า Admin (ExtendedHelp) ตรงนี้
+    // ✅ [สร้างข้อมูลจำลอง] เพื่อเอาไปใช้ส่ง Flex Message ในไลน์เท่านั้น
+    const temporaryHelpData = {
+        id: 0, // ใส่ 0 ไว้เพราะไม่มีในฐานข้อมูล
         latitude: parseFloat(latitude || 0),
         longitude: parseFloat(longitude || 0),
-        type: 'WATCH_SOS', 
-        status: 'DETECTED',
-        requestedAt: new Date(),
-      },
-    });
+        timestamp: new Date()
+    };
 
-    // ส่ง LINE Alert
+    // ส่ง LINE Alert ไปหาผู้ดูแลคนเดียวพอ
     if (caregiverProfile.user.lineId) {
         const recipientId = caregiverProfile.user.lineId;
         const caregiverPhone = caregiverProfile.phone || '0000000000';
 
-        console.log(`✅ Sending SOS Alert to: ${recipientId}`);
+        console.log(`✅ Sending SOS Alert (Private) to: ${recipientId}`);
 
         await sendCriticalAlertFlexMessage(
             recipientId,
-            helpRequest, 
+            temporaryHelpData as any, // ใช้ข้อมูลจำลองส่งไป
             user,
             caregiverPhone,
             dependent as any,
-            'SOS' // ✅ ระบุ Type ว่าเป็น SOS (จะ *ไม่มี* ปุ่ม 1669)
+            'SOS',
+            `🚨 แจ้งเตือน: คุณ ${dependent.firstName} กดปุ่ม SOS จากนาฬิกา!`
         );
     }
 
-    return NextResponse.json({ success: true, data: helpRequest });
+    return NextResponse.json({ success: true, message: 'Alert sent to caregiver' });
 
   } catch (error) {
     console.error("SOS Error:", error);
