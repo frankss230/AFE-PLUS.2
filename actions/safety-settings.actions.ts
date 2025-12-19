@@ -26,7 +26,7 @@ export async function getElderlySafetySettings(lineId: string) {
     });
 
     if (!caregiverUser || !caregiverUser.caregiverProfile || caregiverUser.caregiverProfile.dependents.length === 0) {
-        return { success: false, error: 'ไม่พบข้อมูลผู้สูงอายุ' };
+        return { success: false, error: 'ไม่พบข้อมูลผู้ที่มีภาวะพึ่งพิง' };
     }
 
     const dependent = caregiverUser.caregiverProfile.dependents[0];
@@ -69,15 +69,10 @@ export async function updateSafezone(
         
         const dependentId = caregiverUser.caregiverProfile.dependents[0].id;
 
-        // 1. อัปเดต GPS และ ✅ รีเซ็ตค่าการแจ้งเตือน (สำคัญมาก!)
-        // เพราะถ้าเปลี่ยนรัศมี สถานะ Safe/Danger จะเปลี่ยนทันที เราต้องเคลียร์ความจำเก่าออก
         await prisma.dependentProfile.update({
             where: { id: dependentId },
             data: { 
                 isGpsEnabled: isGpsOn,
-                isAlertZone1Sent: false,      // รีเซ็ต
-                isAlertNearZone2Sent: false,  // รีเซ็ต
-                isAlertZone2Sent: false       // รีเซ็ต
             }
         });
 
@@ -171,16 +166,7 @@ export async function toggleGpsMode(lineId: string, isEnabled: boolean) {
         }
 
         // *********** FIX ***********
-        // เพิ่มการรีเซ็ตสถานะการแจ้งเตือนเมื่อปิด GPS
-        // *********************************
         const updateData: any = { isGpsEnabled: isEnabled };
-        
-        // ถ้าปิด GPS หรือเปิดใหม่ ก็ควรเคลียร์สถานะเก่าทิ้งเหมือนกัน เพื่อความชัวร์
-        // หรือจะเอาแค่ตอนปิดก็ได้ แต่แนะนำให้เคลียร์ทุกครั้งที่มีการสับสวิตช์ครับ
-        updateData.isAlertZone1Sent = false;
-        updateData.isAlertNearZone2Sent = false;
-        updateData.isAlertZone2Sent = false;
-        
         // *********************************
 
         await prisma.dependentProfile.update({
