@@ -20,7 +20,6 @@ async function handleFall(request: Request) {
         dependentProfile: {
             include: { 
                 caregiver: { include: { user: true } },
-                // ไม่ต้องดึง locations มาเช็คโซน (แยกกันทำงาน)
             }
         }
       }
@@ -70,7 +69,7 @@ async function handleFall(request: Request) {
             user,
             caregiver.phone || "",
             dependent as any,
-            specificAlertType as any, // ส่ง Type ใหม่ไป
+            specificAlertType as any,
             notiText
         );
     }

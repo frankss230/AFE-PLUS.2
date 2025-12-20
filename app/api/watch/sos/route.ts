@@ -60,7 +60,7 @@ async function handleSOS(request: Request) {
             caregiverPhone,
             dependent as any,
             'SOS',
-            `🚨 แจ้งเตือน: คุณ ${dependent.firstName} กดปุ่ม SOS จากนาฬิกา!`
+            `แจ้งเตือน: คุณ ${dependent.firstName} กดปุ่ม SOS จากนาฬิกา!`
         );
     }
 

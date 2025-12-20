@@ -76,6 +76,14 @@ async function handleRequest(request: Request) {
     let shouldSendLine = false;
     let alertType = "NONE";
 
+    // 🕒 TIME LOCK (กัน LINE Error 429)
+    const lastLocation = dependent.locations[0];
+    const now = new Date();
+    let timeDiffSec = 9999; 
+    if (lastLocation) {
+        timeDiffSec = (now.getTime() - new Date(lastLocation.timestamp).getTime()) / 1000;
+    }
+
     // ==========================================
     // 🚨 CASE 1: MANUAL SOS (กดปุ่ม)
     // ==========================================
@@ -96,7 +104,7 @@ async function handleRequest(request: Request) {
         }
     }
     // ==========================================
-    // 🌍 CASE 2: ZONE LOGIC (แก้ไขใหม่ หายรัว 100%)
+    // 🌍 CASE 2: ZONE LOGIC
     // ==========================================
     else {
       let currentStatus = 0; 
@@ -113,15 +121,15 @@ async function handleRequest(request: Request) {
       // 🟢 SAFE (0)
       if (currentStatus === 0) {
         currentDBStatus = "SAFE";
-        // ต้องเข้ามาลึกกว่าขอบ Buffer ถึงจะถือว่ากลับบ้าน
         if (distInt <= (r1 - buffer)) {
-            // ถ้าเคยแจ้งเตือนโซนไหนสักโซนมาก่อน ให้บอกว่ากลับมาแล้ว
+            // เช็ค Time Lock > 10 วิ ค่อยแจ้งกลับบ้าน
             if (isAlertZone1Sent || isAlertNearZone2Sent || isAlertZone2Sent) {
-                shouldSendLine = true; alertType = "BACK_SAFE";
-                // ✅ RESET ALL FLAGS (จบข่าว)
-                isAlertZone1Sent = false; 
-                isAlertNearZone2Sent = false; 
-                isAlertZone2Sent = false;
+                if (timeDiffSec > 10) { 
+                    shouldSendLine = true; alertType = "BACK_SAFE";
+                    isAlertZone1Sent = false; 
+                    isAlertNearZone2Sent = false; 
+                    isAlertZone2Sent = false;
+                }
             }
         }
       } 
@@ -129,21 +137,19 @@ async function handleRequest(request: Request) {
       else if (currentStatus === 1) {
         currentDBStatus = "WARNING";
         
-        // ขาออก: ยังไม่เคยแจ้ง -> แจ้ง
+        // ขาออก
         if (!isAlertZone1Sent) { 
-            shouldSendLine = true; alertType = "ZONE_1"; 
-            isAlertZone1Sent = true; 
+            shouldSendLine = true; alertType = "ZONE_1"; isAlertZone1Sent = true; 
         }
-        // ขาเข้า: กลับมาจาก Zone 2 หรือ Near Zone 2
+        // ขาเข้า (จาก Zone 2/Near)
         else if (isAlertZone2Sent || isAlertNearZone2Sent) {
-            // ต้องเข้ามาลึกกว่าขอบ NearR2
             if (distInt <= (Math.floor(r2 * 0.8) - buffer)) {
-                shouldSendLine = true; alertType = "BACK_TO_ZONE_1";
-                
-                // ✅ FIX SPAM: ลดระดับ Flag ลงทันที
-                isAlertZone2Sent = false;     // ปิด Flag โซนแดง
-                isAlertNearZone2Sent = false; // ปิด Flag โซนส้มเข้ม
-                // (แต่ isAlertZone1Sent ยังคง true ไว้นะ เพราะยังอยู่ในโซน 1)
+                if (timeDiffSec > 30) {
+                    shouldSendLine = true; alertType = "BACK_TO_ZONE_1";
+                    // ✅ ต้องปิด Flag สูงกว่าทิ้ง ไม่งั้นจะรัว
+                    isAlertZone2Sent = false;
+                    isAlertNearZone2Sent = false;
+                }
             }
         }
       } 
@@ -151,38 +157,44 @@ async function handleRequest(request: Request) {
       else if (currentStatus === 3) {
           currentDBStatus = "DANGER";
 
-          // ขาออก: ยังไม่เคยแจ้ง -> แจ้ง
+          // ขาออก
           if (!isAlertNearZone2Sent) {
               shouldSendLine = true; alertType = "NEAR_ZONE_2";
-              isAlertNearZone2Sent = true; 
-              isAlertZone1Sent = true; // ถือว่าผ่านโซน 1 มาแล้ว
+              isAlertNearZone2Sent = true; isAlertZone1Sent = true; 
           }
-          // ขาเข้า: กลับมาจาก Zone 2 (แก้ให้แจ้งเตือนแล้ว!)
+          // ขาเข้า (จาก Zone 2)
           else if (isAlertZone2Sent) {
-             // ต้องเข้ามาลึกกว่าขอบ R2
              if (distInt <= (r2 - buffer)) {
-                 shouldSendLine = true; alertType = "BACK_TO_NEAR_ZONE_2";
-                 
-                 // ✅ FIX SPAM: ลดระดับ Flag ลง
-                 isAlertZone2Sent = false; // ปิด Flag โซนแดง (เพื่อให้รู้ว่าหลุดโซนแดงแล้ว)
+                 if (timeDiffSec > 30) {
+                     shouldSendLine = true; alertType = "BACK_TO_NEAR_ZONE_2";
+                     // ✅ ต้องปิด Flag แดงทิ้ง ไม่งั้นจะรัว
+                     isAlertZone2Sent = false;
+                 }
              }
           }
       }
       // 🔴 ZONE 2 DANGER (2)
       else if (currentStatus === 2) {
         currentDBStatus = "DANGER";
-        
-        // ขาออก: แจ้งเตือน (ตัดเงื่อนไข alreadyInDanger ออกเพื่อให้แจ้งชัวร์ๆ)
         if (!isAlertZone2Sent) { 
           shouldSendLine = true; 
           alertType = "ZONE_2_DANGER"; 
-          
-          // ล็อคทุก Flag
-          isAlertZone2Sent = true; 
-          isAlertNearZone2Sent = true; 
-          isAlertZone1Sent = true;
+          isAlertZone2Sent = true; isAlertNearZone2Sent = true; isAlertZone1Sent = true;
         }
       }
+    }
+
+    // ==========================================
+    // 🛡️ FINAL SPAM FILTER (ด่านสุดท้าย)
+    // ==========================================
+    // ถ้าสถานะไม่เปลี่ยน และเพิ่งส่งไปไม่ถึง 60 วิ -> ห้ามส่ง
+    if (shouldSendLine && !isManualSOS) {
+        if (lastLocation && lastLocation.status === currentDBStatus) {
+            if (timeDiffSec < 60) {
+                console.log(`⏳ Spam Filter: Blocked repeated alert`);
+                shouldSendLine = false; 
+            }
+        }
     }
 
     // ==========================================
@@ -192,38 +204,40 @@ async function handleRequest(request: Request) {
        const lineId = caregiver.user.lineId;
        const distText = `${distInt} ม.`;
        
-       if (alertType === "BACK_SAFE") {
-           const msg = createGeneralAlertBubble("กลับเข้าสู่พื้นที่ปลอดภัย", "ผู้ป่วยกลับเข้ามาในเขตบ้านเรียบร้อยแล้ว", "ปลอดภัย", "#10B981", false);
-           await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าพื้นที่", contents: msg });
-       } 
-       else if (alertType === "ZONE_2_DANGER") {
-           // 🚨 CRITICAL ALERT (สีแดง + ปุ่ม)
-           await sendCriticalAlertFlexMessage(
-              lineId,
-              { latitude: lat, longitude: lng, timestamp: new Date(), id: 0 },
-              user,
-              caregiver.phone || "",
-              dependent as any,
-              "ZONE", 
-              `⚠️ แจ้งเตือน: ${dependent.firstName} ออกนอกเขตปลอดภัย! (ระยะ ${distText})`
-           );
-       }
-       else if (alertType === "ZONE_1") {
-           const msg = createGeneralAlertBubble("ออกนอกพื้นที่ชั้นใน", `ระยะ ${distText}`, distText, "#F59E0B", false);
-           await lineClient.pushMessage(lineId, { type: "flex", altText: "เตือนโซน 1", contents: msg });
-       } 
-       else if (alertType === "BACK_TO_ZONE_1") {
-           const msg = createGeneralAlertBubble("กลับเข้าสู่เขตชั้น 1", `ระยะ ${distText}`, distText, "#FBBF24", false);
-           await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าโซน 1", contents: msg });
-       } 
-       else if (alertType === "NEAR_ZONE_2") {
-           const msg = createGeneralAlertBubble("ใกล้หลุดเขตปลอดภัย", `ระยะ ${distText}`, distText, "#F97316", false);
-           await lineClient.pushMessage(lineId, { type: "flex", altText: "เตือนระยะ 80%", contents: msg });
-       }
-       else if (alertType === "BACK_TO_NEAR_ZONE_2") {
-           // ✅ เพิ่มข้อความขากลับ 80% ให้แล้วครับ
-           const msg = createGeneralAlertBubble("กลับเข้าสู่ระยะเฝ้าระวัง (80%)", `ระยะ ${distText}`, distText, "#FB923C", false);
-           await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าสู่ระยะ 80%", contents: msg });
+       try {
+           if (alertType === "BACK_SAFE") {
+               const msg = createGeneralAlertBubble("กลับเข้าสู่พื้นที่ปลอดภัย", "ผู้ป่วยกลับเข้ามาในเขตบ้านเรียบร้อยแล้ว", "ปลอดภัย", "#10B981", false);
+               await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าพื้นที่", contents: msg });
+           } 
+           else if (alertType === "ZONE_2_DANGER") {
+               // ✅ ใช้การ์ดสีแดง + ปุ่ม SOS (Critical Alert)
+               await sendCriticalAlertFlexMessage(
+                  lineId,
+                  { latitude: lat, longitude: lng, timestamp: new Date(), id: 0 },
+                  user, caregiver.phone || "", dependent as any, 
+                  "ZONE", 
+                  `⚠️ แจ้งเตือน: ${dependent.firstName} ออกนอกเขตปลอดภัย! (ระยะ ${distText})`
+               );
+           }
+           // ... (Type อื่นๆ เหมือนเดิม) ...
+           else if (alertType === "ZONE_1") {
+               const msg = createGeneralAlertBubble("ออกนอกพื้นที่ชั้นใน", `ระยะ ${distText}`, distText, "#F59E0B", false);
+               await lineClient.pushMessage(lineId, { type: "flex", altText: "เตือนโซน 1", contents: msg });
+           } 
+           else if (alertType === "BACK_TO_ZONE_1") {
+               const msg = createGeneralAlertBubble("กลับเข้าสู่เขตชั้น 1", `ระยะ ${distText}`, distText, "#FBBF24", false);
+               await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าโซน 1", contents: msg });
+           } 
+           else if (alertType === "NEAR_ZONE_2") {
+               const msg = createGeneralAlertBubble("ใกล้หลุดเขตปลอดภัย", `ระยะ ${distText}`, distText, "#F97316", false);
+               await lineClient.pushMessage(lineId, { type: "flex", altText: "เตือนระยะ 80%", contents: msg });
+           }
+           else if (alertType === "BACK_TO_NEAR_ZONE_2") {
+               const msg = createGeneralAlertBubble("กลับเข้าสู่ระยะเฝ้าระวัง (80%)", `ระยะ ${distText}`, distText, "#FB923C", false);
+               await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าสู่ระยะ 80%", contents: msg });
+           }
+       } catch (lineError: any) {
+           console.error("❌ LINE Send Error:", lineError.statusCode);
        }
     }
 
@@ -234,13 +248,11 @@ async function handleRequest(request: Request) {
     });
 
     // บันทึกพิกัด
-    const lastLocation = dependent.locations[0];
     let shouldSave = false;
     if (!lastLocation) shouldSave = true;
     else {
         const statusChanged = lastLocation.status !== currentDBStatus;
-        const minutesPassed = (new Date().getTime() - new Date(lastLocation.timestamp).getTime()) / 60000;
-        if (statusChanged || minutesPassed >= 5 || isManualSOS) shouldSave = true; 
+        if (statusChanged || timeDiffSec >= 300 || isManualSOS) shouldSave = true; 
     }
 
     if (shouldSave) {

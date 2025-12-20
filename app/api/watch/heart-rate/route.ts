@@ -16,9 +16,9 @@ async function handleRequest(request: Request) {
 
     if (!targetId) return NextResponse.json({ error: 'Missing ID' }, { status: 400 });
 
-    // 🛑 กฏเหล็ก: ถ้าค่าเป็น 0 หรือน้อยกว่า (Sensor ยังไม่ทำงาน) -> จบเลย
-    if (bpm <= 0) {
-        return NextResponse.json({ success: true, message: "Ignored 0 bpm" });
+    // 🛑 กฏเหล็ก: ถ้าค่าเป็น 0 หรือน้อยกว่า (Sensor ยังไม่ทำงาน) หรือค่าหลุดโลก (เกิน 250) -> จบเลย
+    if (bpm <= 0 || bpm > 250) {
+        return NextResponse.json({ success: true, message: "Ignored invalid bpm" });
     }
 
     // 1. ดึงข้อมูล User
@@ -29,7 +29,8 @@ async function handleRequest(request: Request) {
               include: {
                   caregiver: { include: { user: true } },
                   heartRateSetting: true,
-                  // ✅ ดึง Location ล่าสุดมาด้วย เพื่อใช้ทำ Map ใน Flex Message
+                  // ✅ ดึง Record ล่าสุดมาเช็คเวลา (Time Lock)
+                  heartRateRecords: { take: 1, orderBy: { timestamp: 'desc' } },
                   locations: { take: 1, orderBy: { timestamp: 'desc' } } 
               }
           } 
@@ -46,32 +47,51 @@ async function handleRequest(request: Request) {
     const minVal = settings?.minBpm || 60;
     const maxVal = settings?.maxBpm || 100;
 
-    // 2. Logic Alert
-    const isAbnormal = (bpm < minVal || bpm > maxVal);
+    // 2. Logic Alert with Buffer (ป้องกันการแกว่ง) 🛡️
+    // ต้องให้หัวใจกลับมาปกติเกิน 5 BPM ถึงจะยอมให้สถานะหาย (Hysteresis)
+    const buffer = 5; 
     const isAlertSent = dependent.isHeartRateAlertSent; 
+    let isAbnormal = false;
 
-    // ⭐ ย้ายการบันทึก Record มาไว้ตรงนี้ (ก่อนส่ง LINE) ⭐
-    // เพื่อให้เรามี record.id ไปแปะในปุ่ม SOS
-    const record = await prisma.heartRateRecord.create({
-        data: {
-          dependentId: dependent.id,
-          bpm: bpm,
-          status: isAbnormal ? 'ABNORMAL' : 'NORMAL',
-          timestamp: new Date(),
-        },
-    });
+    if (isAlertSent) {
+        // ถ้าแจ้งเตือนอยู่... จะหายได้ต้องกลับมาอยู่ในโซนปลอดภัยจริงๆ
+        // คือต้องมากกว่า (Min + 5) และ น้อยกว่า (Max - 5)
+        const isRecovered = (bpm > (minVal + buffer)) && (bpm < (maxVal - buffer));
+        isAbnormal = !isRecovered;
+    } else {
+        // ถ้าปกติอยู่... จะแจ้งเตือนเมื่อหลุดเกณฑ์
+        isAbnormal = (bpm < minVal || bpm > maxVal);
+    }
 
+    const statusString = isAbnormal ? 'ABNORMAL' : 'NORMAL';
+
+    // 3. ตัดสินใจว่าจะส่ง LINE ไหม?
     let shouldSendLine = false;
     let newAlertStatus = isAlertSent;
     let messageType = 'NONE';
 
+    // เช็ค Time Lock (กัน Spam)
+    const lastRecord = dependent.heartRateRecords[0];
+    const now = new Date();
+    let timeDiffSec = 9999;
+    if (lastRecord) {
+        timeDiffSec = (now.getTime() - new Date(lastRecord.timestamp).getTime()) / 1000;
+    }
+
     if (isAbnormal) {
+        // ขาขึ้น: ยังไม่เคยแจ้ง -> แจ้ง
         if (!isAlertSent) {
             shouldSendLine = true;
             newAlertStatus = true;
             messageType = 'CRITICAL';
         }
+        // หรือแจ้งไปแล้ว แต่นานเกิน 30 นาทีแล้ว (Remind)
+        else if (timeDiffSec > 1800) {
+            shouldSendLine = true;
+            messageType = 'CRITICAL';
+        }
     } else {
+        // ขาลง: กลับมาปกติ
         if (isAlertSent) {
             shouldSendLine = true;
             newAlertStatus = false;
@@ -79,33 +99,54 @@ async function handleRequest(request: Request) {
         }
     }
 
-    // 3. ส่ง LINE
+    // 4. บันทึก Record (Optimization) 💾
+    // บันทึกเมื่อ: สถานะเปลี่ยน OR ส่งไลน์ OR นานๆที (ทุก 10 นาที)
+    let record = null;
+    let shouldSave = shouldSendLine || (timeDiffSec > 600);
+
+    if (shouldSave) {
+        record = await prisma.heartRateRecord.create({
+            data: {
+              dependentId: dependent.id,
+              bpm: bpm,
+              status: statusString,
+              timestamp: new Date(),
+            },
+        });
+    } else {
+        record = lastRecord; // ใช้ตัวเก่าแทนถ้าไม่ได้สร้างใหม่
+    }
+
+    // 5. ส่ง LINE
     if (shouldSendLine && dependent.caregiver?.user.lineId) {
         const lineId = dependent.caregiver.user.lineId;
         console.log(`💓 HeartRate Alert: ${messageType} (${bpm} bpm)`);
 
-        if (messageType === 'CRITICAL') {
-            // ✅ ใช้ sendCriticalAlertFlexMessage แทน เพื่อให้ได้ปุ่ม SOS ที่สมบูรณ์
-            // และส่ง type = 'HEALTH'
-            await sendCriticalAlertFlexMessage(
-                lineId,
-                record, // ส่ง record ที่เพิ่งสร้าง (มี ID แล้ว)
-                user,
-                dependent.caregiver.phone || '',
-                dependent as any,
-                'HEART' // 👈 พระเอกของเรา: ระบุว่าเป็น HEALTH
-            );
-        } 
-        else if (messageType === 'RECOVERY') {
-            // ส่วน Recovery ใช้แบบเดิมได้ เพราะไม่ต้องมีปุ่ม SOS
-            const msg = createGeneralAlertBubble(
-                "✅ อัตราการเต้นหัวใจปกติ",
-                `ค่ากลับมาอยู่ในเกณฑ์ปกติแล้ว (${minVal}-${maxVal})`,
-                `${bpm} bpm`,
-                "#10B981", 
-                false
-            );
-            await lineClient.pushMessage(lineId, { type: 'flex', altText: 'หัวใจปกติแล้ว', contents: msg });
+        try {
+            if (messageType === 'CRITICAL') {
+                // ✅ ใส่ Argument ให้ครบ (เพิ่ม notiText)
+                await sendCriticalAlertFlexMessage(
+                    lineId,
+                    record || { id: 0, timestamp: new Date() }, // กันเหนียว
+                    user,
+                    dependent.caregiver.phone || '',
+                    dependent as any,
+                    'HEART', 
+                    `⚠️ แจ้งเตือน: ชีพจรผิดปกติ (${bpm} bpm)` // ✅ ใส่ข้อความแจ้งเตือนตรงนี้
+                );
+            } 
+            else if (messageType === 'RECOVERY') {
+                const msg = createGeneralAlertBubble(
+                    "✅ อัตราการเต้นหัวใจปกติ",
+                    `ค่ากลับมาอยู่ในเกณฑ์ปกติแล้ว (${minVal}-${maxVal})`,
+                    `${bpm} bpm`,
+                    "#10B981", 
+                    false
+                );
+                await lineClient.pushMessage(lineId, { type: 'flex', altText: 'หัวใจปกติแล้ว', contents: msg });
+            }
+        } catch (err) {
+            console.error("LINE Send Error:", err);
         }
     }
 
