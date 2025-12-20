@@ -91,6 +91,7 @@ export const createAlertFlexMessage = (
   const hasLocation = lat && lng;
   const mapKey = process.env.NEXT_PUBLIC_GOOGLE_MAP;
   const liffBaseUrl = process.env.LIFF_BASE_URL;
+  const liffUrlBaseTrigger = process.env.LIFF_BASE_URL_TRIGGER || "";
 
   const mapImageUrl = hasLocation && mapKey
       ? `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=16&size=800x400&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=${mapKey}`
@@ -105,6 +106,8 @@ export const createAlertFlexMessage = (
   // 4. 🔥 จัดการปุ่ม
   const buttonContents: any[] = [];
 
+  const triggerUrl = `${liffUrlBaseTrigger}?id=${record.id || 0}&type=${alertType}`;
+
   // ปุ่มขอความช่วยเหลือ (แสดงเสมอ)
   buttonContents.push({
     type: "button",
@@ -113,9 +116,9 @@ export const createAlertFlexMessage = (
     margin: "sm",
     height: "md",
     action: {
-      type: "postback",
+      type: "uri",
       label: "ขอความช่วยเหลือเพิ่มเติม",
-      data: `action=trigger_sos&id=${record.id || 0}`,
+      uri: triggerUrl,
       displayText: "ขอความช่วยเหลือเพิ่มเติมด่วน!",
     },
   });
@@ -293,7 +296,7 @@ export async function sendCriticalAlertFlexMessage(
   caregiverPhone: string,
   dependentProfile: DependentProfile,
   alertType: "FALL" | "FALL_SOS" | "FALL_UNCONSCIOUS" | "SOS" | "HEALTH" | "ZONE" | "HEART" | "TEMP", 
-  notiText: string 
+  notiText?: string 
 ) {
   if (!config.channelAccessToken) return;
   
