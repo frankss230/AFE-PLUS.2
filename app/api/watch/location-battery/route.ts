@@ -274,7 +274,7 @@ async function handleRequest(request: Request) {
 
     return NextResponse.json({
       success: true,
-      command_tracking: dependent.isGpsEnabled,
+      command_tracking: dependent.isGpsEnabled, // ส่งคำสั่งเปิด GPS
       request_location: !!activeAlert,
       stop_emergency: stop_em,
       sync_settings: {
@@ -283,6 +283,13 @@ async function handleRequest(request: Request) {
         lat: safeZoneData?.latitude || 0.0,
         lng: safeZoneData?.longitude || 0.0,
       },
+    }, { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
     });
 
   } catch (error) {
