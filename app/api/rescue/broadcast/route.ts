@@ -87,7 +87,12 @@ export async function POST(request: Request) {
         const newAlert = await prisma.extendedHelp.create({
             data: {
                 status: AlertStatus.DETECTED,
-                type: HelpType.LINE_SOS,      
+                // type: HelpType.LINE_SOS,
+                type: alertType === 'FALL_CONSCIOUS' ? HelpType.FALL_CONSCIOUS :
+                      alertType === 'FALL_UNCONSCIOUS' ? HelpType.FALL_UNCONSCIOUS :
+                      alertType === 'HEART_RATE' ? HelpType.HEART_RATE :
+                      alertType === 'ZONE' ? HelpType.ZONE :
+                      alertType === 'TEMPERATURE' ? HelpType.TEMPERATURE : null,
                 dependentId: dependentId!,
                 reporterId: reporterId!,          
                 latitude: finalLat || null,   
@@ -102,7 +107,7 @@ export async function POST(request: Request) {
 
         // --- Step 5: 🔄 อัปเดตสถานะ Record ต้นทาง (ถ้ามี) ---
         // เช่น ถ้าแจ้งว่า "ล้ม" ให้ไปอัปเดตตาราง FallRecord ว่า "รับทราบแล้ว" (ACKNOWLEDGED)
-        if (recordId && alertType === 'FALL') {
+        if (recordId && alertType === 'FALL_CONSCIOUS' || alertType === 'FALL_UNCONSCIOUS') {
             try {
                 await prisma.fallRecord.update({
                     where: { id: parseInt(recordId) },
@@ -124,7 +129,8 @@ export async function POST(request: Request) {
         if (targetGroupId && dependentInfo) {
             // ปรับหัวข้อตามประเภทแจ้งเตือน
             let alertTitle = message || "🆘 ขอความช่วยเหลือด่วน";
-            if (alertType === 'FALL') alertTitle = "🚨 ยืนยันเหตุการล้ม";
+            if (alertType === 'FALL_CONSCIOUS') alertTitle = "🚨 ยืนยันเหตุการล้ม";
+            else if (alertType === 'FALL_UNCONSCIOUS') alertTitle = "🚨 ยืนยันเหตุการณ์ SOS";
             else if (alertType === 'HEALTH') alertTitle = "🚨 สัญญาณชีพผิดปกติ";
             else if (alertType === 'ZONE') alertTitle = "🚨 แจ้งเตือนออกนอกพื้นที่";
             

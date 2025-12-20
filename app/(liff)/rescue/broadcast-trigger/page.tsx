@@ -62,6 +62,8 @@ function TriggerContent() {
     let messageText = "เหตุฉุกเฉินเพิ่มเติม"
     
     if (type === 'FALL') messageText = "ยืนยันเหตุการล้ม (ต้องการความช่วยเหลือ)"
+    else if (type === 'FALL_CONSCIOUS') messageText = "ยืนยันเหตุการล้ม (กดขอความช่วยเหลือ)"
+    else if (type === 'FALL_UNCONSCIOUS') messageText = "ยืนยันเหตุการล้ม (หมดสติ/ไม่ตอบสนอง)"
     else if (type === 'ZONE') messageText = "ออกนอกพื้นที่ปลอดภัย (ต้องการความช่วยเหลือ)"
     else if (type === 'HEART') messageText = "ชีพจรผิดปกติวิกฤต (ต้องการความช่วยเหลือ)"
     else if (type === 'TEMP') messageText = "อุณหภูมิร่างกายสูงวิกฤต (ต้องการความช่วยเหลือ)"

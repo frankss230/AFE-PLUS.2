@@ -36,7 +36,12 @@ enum AlertStatus {
 
 enum HelpType {
     LINE_SOS
-    WATCH_SOS
+    // WATCH_SOS
+    FALL_CONSCIOUS
+    FALL_UNCONSCIOUS
+    HEART_RATE
+    TEMPERATURE
+    ZONE
 }
 
 // ✅ เพิ่ม Enum
@@ -279,7 +284,7 @@ model ExtendedHelp {
     dependentId Int
     dependent DependentProfile @relation("HelpSubject", fields: [dependentId], references: [id])
 
-    type HelpType @default(LINE_SOS)
+    type HelpType?
     status AlertStatus @default(DETECTED)
 
     latitude Float?

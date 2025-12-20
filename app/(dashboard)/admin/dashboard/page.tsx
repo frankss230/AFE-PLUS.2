@@ -26,32 +26,33 @@ async function getAdminProfile(session: any) {
     : null;
 }
 
-// 🧠 ฟังก์ชันช่วยนับเหตุการณ์ (จับกลุ่มเวลาถ้าห่างกันไม่เกิน 20 นาที)
-// ใช้สำหรับกรองข้อมูลที่ส่งมาถี่ๆ ให้นับเป็น 1 เหตุการณ์
+// 🧠 ฟังก์ชันช่วยนับเหตุการณ์
+// (แก้ไข: นับทั้งหมด ไม่ต้องกรอง 20 นาที)
 const countDistinctEvents = (records: any[]) => {
     if (!records || records.length === 0) return 0;
-    
+    return records.length;
+    // เผื่ออยากกรอง 20 นาทีในอนาคต
     // 1. เรียงข้อมูลตามเวลา
-    const sorted = [...records].sort((a, b) => {
-        const timeA = new Date(a.timestamp || a.requestedAt).getTime();
-        const timeB = new Date(b.timestamp || b.requestedAt).getTime();
-        return timeA - timeB;
-    });
+    // const sorted = [...records].sort((a, b) => {
+    //     const timeA = new Date(a.timestamp || a.requestedAt).getTime();
+    //     const timeB = new Date(b.timestamp || b.requestedAt).getTime();
+    //     return timeA - timeB;
+    // });
 
-    let eventCount = 1;
-    let lastTime = new Date(sorted[0].timestamp || sorted[0].requestedAt).getTime();
+    // let eventCount = 1;
+    // let lastTime = new Date(sorted[0].timestamp || sorted[0].requestedAt).getTime();
 
-    for (let i = 1; i < sorted.length; i++) {
-        const currentTime = new Date(sorted[i].timestamp || sorted[i].requestedAt).getTime();
-        const diffMinutes = (currentTime - lastTime) / (1000 * 60);
+    // for (let i = 1; i < sorted.length; i++) {
+    //     const currentTime = new Date(sorted[i].timestamp || sorted[i].requestedAt).getTime();
+    //     const diffMinutes = (currentTime - lastTime) / (1000 * 60);
 
-        // 2. ถ้าห่างกันเกิน 20 นาที -> นับเป็นเหตุการณ์ใหม่
-        if (diffMinutes > 20) {
-            eventCount++;
-            lastTime = currentTime;
-        }
-    }
-    return eventCount;
+    //     // 2. ถ้าห่างกันเกิน 20 นาที -> นับเป็นเหตุการณ์ใหม่
+    //     if (diffMinutes > 20) {
+    //         eventCount++;
+    //         lastTime = currentTime;
+    //     }
+    // }
+    // return eventCount;
 };
 
 // --- Data Fetching ---
@@ -63,14 +64,10 @@ async function getChartData() {
   const startOfThisWeek = startOfWeek(now, { weekStartsOn: 1 });
   const fetchStartDate = startOfThisMonth < startOfThisWeek ? startOfThisMonth : startOfThisWeek;
 
-  const [falls, sos, heartRaw, tempRaw, zoneRaw] = await Promise.all([
+  const [falls, heartRaw, tempRaw, zoneRaw] = await Promise.all([
     prisma.fallRecord.findMany({ 
         where: { timestamp: { gte: fetchStartDate } }, 
         select: { timestamp: true } 
-    }),
-    prisma.extendedHelp.findMany({ 
-        where: { requestedAt: { gte: fetchStartDate } }, 
-        select: { requestedAt: true } 
     }),
     prisma.heartRateRecord.findMany({ 
         where: { timestamp: { gte: fetchStartDate }, status: 'ABNORMAL' }, 
@@ -93,7 +90,8 @@ async function getChartData() {
   // (เพื่อให้กราฟเส้นไม่โดดสูงเกินจริง)
   const groupAndCount = (items: any[], start: Date, end: Date) => {
       const filtered = items.filter((i) => {
-          const t = new Date(i.timestamp || i.requestedAt);
+        //   const t = new Date(i.timestamp || i.requestedAt);
+          const t = new Date(i.timestamp);
           return t >= start && t < end;
       });
       return countDistinctEvents(filtered);
@@ -109,7 +107,6 @@ async function getChartData() {
         dayData.push({ 
             name: format(start, "HH:mm"), 
             falls: groupAndCount(falls, start, end), 
-            sos: groupAndCount(sos, start, end),
             heart: groupAndCount(heartRaw, start, end),
             temp: groupAndCount(tempRaw, start, end),
             zone: groupAndCount(zoneRaw, start, end)
@@ -126,7 +123,6 @@ async function getChartData() {
     weekData.push({ 
         name: format(d, "EEE", { locale: th }), 
         falls: groupAndCount(falls, start, end), 
-        sos: groupAndCount(sos, start, end),
         heart: groupAndCount(heartRaw, start, end),
         temp: groupAndCount(tempRaw, start, end),
         zone: groupAndCount(zoneRaw, start, end)
@@ -142,7 +138,6 @@ async function getChartData() {
     monthData.push({ 
         name: format(d, "d"), 
         falls: groupAndCount(falls, start, end), 
-        sos: groupAndCount(sos, start, end),
         heart: groupAndCount(heartRaw, start, end),
         temp: groupAndCount(tempRaw, start, end),
         zone: groupAndCount(zoneRaw, start, end)
@@ -163,83 +158,82 @@ async function getComparisonData() {
     const fetchStartDate = startOfThisMonth < startOfThisWeek ? startOfThisMonth : startOfThisWeek;
 
     const [
-        falls, 
-        sos, 
-        heartTotal, heartAbnormal,
-        tempTotal, tempAbnormal,
-        zoneTotal, zoneAbnormal
+        fallTotal, 
+        fallHelp, 
+        heartTotal, 
+        heartHelp,
+        tempTotal, 
+        tempHelp,
+        zoneTotal, 
+        zoneHelp
     ] = await Promise.all([
-        // Fall
+        // FallTotal
         prisma.fallRecord.findMany({ 
             where: { timestamp: { gte: fetchStartDate } }, // ✅ กรองวันที่
             select: { timestamp: true } 
         }),
-        // SOS
+        // FallHelp
         prisma.extendedHelp.findMany({ 
-            where: { requestedAt: { gte: fetchStartDate } }, // ✅ กรองวันที่
+            where: { 
+                requestedAt: { gte: fetchStartDate }, 
+                type: { in: ['FALL_CONSCIOUS', 'FALL_UNCONSCIOUS'] } 
+            }, // ✅ กรองวันที่
+            select: { requestedAt: true } 
+        }),
+        // HeartTotal
+        prisma.heartRateRecord.findMany({ 
+            where: { timestamp: { gte: fetchStartDate }, status: 'ABNORMAL'  }, // ✅ กรองวันที่
+            select: { timestamp: true } 
+        }),
+        prisma.extendedHelp.findMany({ 
+            where: { requestedAt: { gte: fetchStartDate }, type: 'HEART_RATE' }, 
             select: { requestedAt: true } 
         }),
         
-        // Heart
-        prisma.heartRateRecord.findMany({ 
-            where: { timestamp: { gte: fetchStartDate } }, // ✅ กรองวันที่
+        // TempTotal
+        prisma.temperatureRecord.findMany({ 
+            where: { timestamp: { gte: fetchStartDate }, status: 'ABNORMAL'  }, // ✅ กรองวันที่
             select: { timestamp: true } 
         }),
-        prisma.heartRateRecord.findMany({ 
-            where: { timestamp: { gte: fetchStartDate }, status: 'ABNORMAL' }, 
-            select: { timestamp: true } 
+        prisma.extendedHelp.findMany({ 
+            where: { requestedAt: { gte: fetchStartDate }, type: 'TEMPERATURE' }, 
+            select: { requestedAt: true } 
         }),
         
-        // Temp
-        prisma.temperatureRecord.findMany({ 
-            where: { timestamp: { gte: fetchStartDate } }, // ✅ กรองวันที่
-            select: { timestamp: true } 
-        }),
-        prisma.temperatureRecord.findMany({ 
-            where: { timestamp: { gte: fetchStartDate }, status: 'ABNORMAL' }, 
-            select: { timestamp: true } 
-        }),
-        
-        // Zone
+        // ZoneTotal
         prisma.location.findMany({ 
-            where: { timestamp: { gte: fetchStartDate } }, // ✅ กรองวันที่
+            where: { timestamp: { gte: fetchStartDate }, status: 'DANGER' }, // ✅ กรองวันที่
             select: { timestamp: true } 
         }),
-        prisma.location.findMany({ 
-            where: { timestamp: { gte: fetchStartDate }, status: 'DANGER' }, 
-            select: { timestamp: true } 
+        prisma.extendedHelp.findMany({ 
+            where: { requestedAt: { gte: fetchStartDate }, type: 'ZONE' }, 
+            select: { requestedAt: true } 
         }),
     ]);
 
     return [
         { 
             name: "การล้ม", 
-            total: falls.length, 
-            critical: falls.length, // Fall ปกติไม่ถี่ นับตามจริงได้
+            total: fallTotal.length, 
+            critical: fallHelp.length, // Fall ปกติไม่ถี่ นับตามจริงได้
             fill: "#F97316" // Neon Orange
-        },
-        { 
-            name: "SOS", 
-            total: sos.length, 
-            critical: sos.length, // SOS ปกติไม่ถี่ นับตามจริงได้
-            fill: "#EF4444" // Neon Red
         },
         { 
             name: "หัวใจ", 
             total: heartTotal.length, 
-            critical: countDistinctEvents(heartAbnormal), // ✅ ใช้ Grouping ลดจำนวน
+            critical: countDistinctEvents(heartHelp), // ✅ ใช้ Grouping ลดจำนวน
             fill: "#F500FF" // Neon Pink
         },
         { 
             name: "อุณหภูมิ", 
             total: tempTotal.length, 
-            critical: countDistinctEvents(tempAbnormal), // ✅ ใช้ Grouping ลดจำนวน
+            critical: countDistinctEvents(tempHelp), // ✅ ใช้ Grouping ลดจำนวน
             fill: "#FFD600" // Neon Yellow
         },
         { 
             name: "โซน", 
             total: zoneTotal.length, 
-            critical: countDistinctEvents(zoneAbnormal), // ✅ ใช้ Grouping ลดจำนวน
+            critical: countDistinctEvents(zoneHelp), // ✅ ใช้ Grouping ลดจำนวน
             fill: "#00E5FF" // Neon Cyan
         },
     ];

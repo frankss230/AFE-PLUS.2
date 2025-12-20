@@ -37,8 +37,6 @@ async function handleSOS(request: Request) {
          return NextResponse.json({ success: false, message: 'Caregiver not linked' }, { status: 400 });
     }
 
-    // ❌ [ลบออก] ไม่บันทึกเข้าหน้า Admin (ExtendedHelp) ตรงนี้
-    // ✅ [สร้างข้อมูลจำลอง] เพื่อเอาไปใช้ส่ง Flex Message ในไลน์เท่านั้น
     const temporaryHelpData = {
         id: 0, // ใส่ 0 ไว้เพราะไม่มีในฐานข้อมูล
         latitude: parseFloat(latitude || 0),

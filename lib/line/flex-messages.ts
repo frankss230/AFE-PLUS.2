@@ -23,7 +23,7 @@ export const createAlertFlexMessage = (
   record: any, 
   user: User, 
   dependentProfile: DependentProfile & { locations?: any[]; }, 
-  alertType: "FALL" | "FALL_SOS" | "FALL_UNCONSCIOUS" | "SOS" | "HEALTH" | "ZONE" | "HEART" | "TEMP" = "FALL", 
+  alertType: "FALL" | "FALL_CONSCIOUS" | "FALL_UNCONSCIOUS" | "SOS" | "HEALTH" | "ZONE" | "HEART" | "TEMP" = "FALL", 
   notiText: string = ""
 ): FlexBubble => {
   // 1. ธีมสี & หัวข้อ
@@ -32,12 +32,12 @@ export const createAlertFlexMessage = (
   let endColor = "#FF4B2B";
 
   // --- แยกประเภทการล้ม ---
-  if (alertType === "FALL_SOS") {
+  if (alertType === "FALL_CONSCIOUS") {
     headerText = "ล้ม (กดขอความช่วยเหลือ)"; 
     startColor = "#FF416C"; 
     endColor = "#FF4B2B";
   } else if (alertType === "FALL_UNCONSCIOUS") {
-    headerText = "ล้ม (หมดสติ/ไม่ตอบสนอง)"; 
+    headerText = "ล้มโดยไม่ตอบสนอง)"; 
     startColor = "#991B1B"; 
     endColor = "#7F1D1D";   
   } else if (alertType === "FALL") {
@@ -51,7 +51,7 @@ export const createAlertFlexMessage = (
     startColor = "#FF8008"; 
     endColor = "#FFC837";
   } else if (alertType === "ZONE") {
-    headerText = "หลุดเขตอันตราย";
+    headerText = "ออกนอกเขตปลอดภัย";
     startColor = "#D90429"; 
     endColor = "#EF233C";
   } else if (alertType === "HEART") {
@@ -311,7 +311,7 @@ export async function sendCriticalAlertFlexMessage(
   user: User,
   caregiverPhone: string,
   dependentProfile: DependentProfile,
-  alertType: "FALL" | "FALL_SOS" | "FALL_UNCONSCIOUS" | "SOS" | "HEALTH" | "ZONE" | "HEART" | "TEMP", 
+  alertType: "FALL" | "FALL_CONSCIOUS" | "FALL_UNCONSCIOUS" | "SOS" | "HEALTH" | "ZONE" | "HEART" | "TEMP", 
   notiText?: string 
 ) {
   if (!config.channelAccessToken) return;
