@@ -1484,8 +1484,8 @@ export const createWatchConnectionBubble = (
   };
 };
 
-// =================================================================
-// ⌚ 6. Equipment Menu (Single Entry Point)
+/// =================================================================
+// ⌚ Equipment Menu - Single Button Design
 // =================================================================
 export const createBorrowReturnFlexMessage = (
   caregiverProfile: any,
@@ -1494,76 +1494,77 @@ export const createBorrowReturnFlexMessage = (
   const liffBase =
     process.env.LIFF_BASE_URL || "https://liff.line.me/YOUR_LIFF_ID";
 
-  // ✅ ลิงก์เดียว เข้าไปหน้าเมนูรวม (ไปจัดการ Logic ต่อในเว็บ)
+  // ✅ ลิงก์เดียว เข้าไปหน้าเมนูรวม
   const menuUrl = `${liffBase}/equipment`;
 
-  // ดึงสถานะปัจจุบัน (เอาไว้โชว์ให้รู้สถานะคร่าวๆ ก่อนกดเข้าไป)
+  // ดึงสถานะปัจจุบัน
   const status = activeBorrow?.status || "NONE";
   const equipmentName =
     activeBorrow?.items?.[0]?.equipment?.name || "อุปกรณ์ติดตาม";
 
   // ตั้งค่าสีและข้อความตามสถานะล่าสุด
-  let headerTitle = "บริการอุปกรณ์";
-  let statusText = "ทำรายการใหม่";
-  let statusDesc = "กดเพื่อจัดการการยืม-คืน";
-  let themeColor = "#3B82F6"; // สีฟ้า (Default)
-  let bgColor = "#EFF6FF"; // ฟ้าอ่อน
+  let headerTitle = "ยืม-คืนครุภัณฑ์";
+  let statusText = "ไม่มีรายการ";
+  let statusDesc = "กดเพื่อเริ่มทำรายการยืมใหม่";
+  let statusColor = "#64748B"; // เทา
+  let statusBgColor = "#F1F5F9"; // พื้นหลังเทาอ่อน
+  let buttonColor = "#3B82F6"; // สีปุ่ม
 
   switch (status) {
     case "PENDING":
-      headerTitle = "⏳ รอการอนุมัติ";
-      statusText = "อยู่ระหว่างตรวจสอบ";
-      statusDesc = "กรุณารอเจ้าหน้าที่ดำเนินการ";
-      themeColor = "#F59E0B"; // เหลือง/ส้ม
-      bgColor = "#FFFBEB";
+      statusText = "รอการอนุมัติ";
+      statusDesc = "อยู่ระหว่างตรวจสอบ กรุณารอเจ้าหน้าที่ดำเนินการ";
+      statusColor = "#D97706"; // ส้ม/เหลือง
+      statusBgColor = "#FEF3C7";
+      buttonColor = "#F59E0B";
       break;
 
     case "APPROVED":
-      headerTitle = "🟢 กำลังใช้งาน";
-      statusText = `กำลังยืม: ${equipmentName}`;
-      statusDesc = "กดเพื่อดูรายละเอียดหรือแจ้งคืน";
-      themeColor = "#10B981"; // เขียว
-      bgColor = "#ECFDF5";
+      statusText = "กำลังใช้งาน";
+      statusDesc = `กำลังยืม: ${equipmentName}`;
+      statusColor = "#059669"; // เขียว
+      statusBgColor = "#D1FAE5";
+      buttonColor = "#10B981";
       break;
 
     case "REJECTED":
-      headerTitle = "🔴 ไม่ผ่านการอนุมัติ";
-      statusText = "คำขอถูกปฏิเสธ";
-      statusDesc = "กดเพื่อดูสาเหตุและประวัติ";
-      themeColor = "#EF4444"; // แดง
-      bgColor = "#FEF2F2";
+      statusText = "ไม่ผ่านการอนุมัติ";
+      statusDesc = "คำขอถูกปฏิเสธ กดเพื่อดูสาเหตุและประวัติ";
+      statusColor = "#DC2626"; // แดง
+      statusBgColor = "#FEE2E2";
+      buttonColor = "#EF4444";
       break;
 
     case "RETURN_PENDING":
-      headerTitle = "🟠 กำลังตรวจสอบการคืน";
-      statusText = "แจ้งคืนอุปกรณ์แล้ว";
-      statusDesc = "รอเจ้าหน้าที่ตรวจสอบสภาพ";
-      themeColor = "#F97316"; // ส้มเข้ม
-      bgColor = "#FFF7ED";
+      statusText = "กำลังตรวจสอบการคืน";
+      statusDesc = "แจ้งคืนอุปกรณ์แล้ว รอเจ้าหน้าที่ตรวจสอบสภาพ";
+      statusColor = "#EA580C"; // ส้มเข้ม
+      statusBgColor = "#FFEDD5";
+      buttonColor = "#F97316";
       break;
 
     case "RETURN_FAILED":
-      headerTitle = "⚠️ การคืนมีปัญหา";
-      statusText = "ตรวจสอบไม่ผ่าน";
-      statusDesc = "กรุณาติดต่อเจ้าหน้าที่";
-      themeColor = "#B91C1C"; // แดงเข้ม
-      bgColor = "#FEF2F2";
+      statusText = "การคืนมีปัญหา";
+      statusDesc = "ตรวจสอบไม่ผ่าน กรุณาติดต่อเจ้าหน้าที่";
+      statusColor = "#991B1B"; // แดงเข้ม
+      statusBgColor = "#FECACA";
+      buttonColor = "#B91C1C";
       break;
 
     case "RETURNED":
-      headerTitle = "🏁 คืนสำเร็จแล้ว";
-      statusText = "ไม่มีรายการค้าง";
-      statusDesc = "สามารถทำรายการยืมใหม่ได้";
-      themeColor = "#64748B"; // เทา
-      bgColor = "#F8FAFC";
+      statusText = "คืนสำเร็จแล้ว";
+      statusDesc = "ไม่มีรายการค้าง สามารถทำรายการยืมใหม่ได้";
+      statusColor = "#475569"; // เทาเข้ม
+      statusBgColor = "#E2E8F0";
+      buttonColor = "#64748B";
       break;
 
     default: // NONE
-      headerTitle = "📦 ยืม-คืนอุปกรณ์";
       statusText = "ยังไม่มีรายการยืม";
-      statusDesc = "เริ่มทำรายการยืมใหม่อุปกรณ์";
-      themeColor = "#3B82F6"; // ฟ้า
-      bgColor = "#EFF6FF";
+      statusDesc = "เริ่มทำรายการยืมอุปกรณ์ใหม่";
+      statusColor = "#3B82F6"; // ฟ้า
+      statusBgColor = "#DBEAFE";
+      buttonColor = "#3B82F6";
       break;
   }
 
@@ -1573,91 +1574,92 @@ export const createBorrowReturnFlexMessage = (
     body: {
       type: "box",
       layout: "vertical",
-      paddingAll: "none",
+      paddingAll: "xl",
+      spacing: "lg",
+      backgroundColor: "#FFFFFF", // พื้นหลังขาวเสมอ
       contents: [
-        // 1. Header & Status Bar (สีเปลี่ยนตามสถานะ)
+        // 1. Header - Gradient Blue
         {
           type: "box",
           layout: "vertical",
-          backgroundColor: themeColor,
-          paddingAll: "lg",
+          paddingAll: "xl",
+          cornerRadius: "xxl",
+          background: {
+            type: "linearGradient",
+            angle: "135deg",
+            startColor: "#3B82F6",
+            endColor: "#60A5FA",
+          },
           contents: [
             {
               type: "text",
               text: headerTitle,
               weight: "bold",
+              size: "xl",
               color: "#FFFFFF",
-              size: "lg",
+              align: "center",
+            },
+            {
+              type: "text",
+              text: "ระบบจัดการอุปกรณ์",
+              size: "xs",
+              color: "#DBEAFE",
+              align: "center",
+              margin: "sm",
             },
             {
               type: "text",
               text: `ผู้ดูแล: คุณ${caregiverProfile?.firstName || "-"}`,
-              color: "#FFFFFFCC", // White with opacity
+              color: "#FFFFFF",
               size: "xs",
-              margin: "sm",
+              align: "center",
+              margin: "md",
+              weight: "bold",
             },
           ],
         },
-        // 2. Content Area
+
+        // 2. Status Box - พื้นหลังสีตามสถานะ (จางๆ) + ขอบมน
         {
           type: "box",
           layout: "vertical",
-          paddingAll: "lg",
-          backgroundColor: bgColor,
+          backgroundColor: statusBgColor, // พื้นหลังจางตามสถานะ
+          cornerRadius: "xl",
+          paddingAll: "xl",
+          margin: "lg",
           contents: [
+            // Status Text
             {
-              type: "box",
-              layout: "horizontal",
-              alignItems: "center",
-              spacing: "md",
-              contents: [
-                // Icon (Smart Watch symbol)
-                {
-                  type: "image",
-                  url: "https://cdn-icons-png.flaticon.com/512/3661/3661391.png", // รูปนาฬิกา
-                  size: "sm",
-                  aspectMode: "fit",
-                  flex: 0,
-                },
-                // Text Detail
-                {
-                  type: "box",
-                  layout: "vertical",
-                  contents: [
-                    {
-                      type: "text",
-                      text: statusText,
-                      weight: "bold",
-                      size: "sm",
-                      color: "#334155",
-                      wrap: true,
-                    },
-                    {
-                      type: "text",
-                      text: statusDesc,
-                      size: "xs",
-                      color: "#64748B",
-                      wrap: true,
-                      margin: "xs",
-                    },
-                  ],
-                },
-              ],
+              type: "text",
+              text: statusText,
+              weight: "bold",
+              color: statusColor,
+              size: "lg",
+              wrap: true,
+            },
+            // Description
+            {
+              type: "text",
+              text: statusDesc,
+              size: "sm",
+              color: statusColor,
+              wrap: true,
+              margin: "md",
             },
           ],
         },
-        // 3. Footer Button (ปุ่มเดียวเข้าเมนู)
+
+        // 3. Single Action Button - ปุ่มเดียวขอบมน
         {
           type: "box",
           layout: "vertical",
-          paddingAll: "md",
-          backgroundColor: "#FFFFFF",
+          margin: "lg",
           contents: [
             {
               type: "button",
               style: "primary",
-              color: themeColor, // สีปุ่มตามสถานะ
-              height: "sm",
+              color: buttonColor, // สีปุ่มตามสถานะ
+              height: "md",
               action: {
                 type: "uri",
                 label: "จัดการอุปกรณ์",
@@ -1667,11 +1669,6 @@ export const createBorrowReturnFlexMessage = (
           ],
         },
       ],
-    },
-    styles: {
-      footer: {
-        separator: false,
-      },
     },
   };
 };
