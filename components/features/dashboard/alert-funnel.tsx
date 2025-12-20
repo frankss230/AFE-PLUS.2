@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
-import { AlertTriangle, CheckCircle, Clock, User, Bell } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, Bell, HeartPulse, MapPin, Thermometer } from "lucide-react";
 
 interface AlertItem {
   id: number;
@@ -18,110 +18,106 @@ interface ActiveAlertsProps {
 
 export default function AlertFunnel({ activeAlerts }: ActiveAlertsProps) {
   
+  // ✅ ฟังก์ชันแปลงเวลาแบบมืออาชีพ (ใช้ได้ทั่วโลก ได้เวลาไทยเสมอ)
+  const formatThaiTime = (dateInput: Date) => {
+    return new Intl.DateTimeFormat('th-TH', {
+      timeZone: 'Asia/Bangkok', // 👈 บังคับโซนเวลาไทย
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(new Date(dateInput));
+  };
+
   // ✅ กรณีที่ 1: ปกติ (ไม่มีการแจ้งเตือน)
   if (!activeAlerts || activeAlerts.length === 0) {
     return (
-      <div className="w-full h-[calc(100vh-28.8rem)] bg-gradient-to-br from-emerald-50 to-teal-50 rounded-[24px] border border-emerald-100 shadow-[0_2px_20px_-10px_rgba(16,185,129,0.15)] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
-        
-        {/* Decorative Background */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        
-        <div className="relative z-10 flex flex-col items-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-emerald-200/50">
-            <CheckCircle className="w-8 h-8 text-white" strokeWidth={2.5} />
-          </div>
-          <h3 className="text-lg font-bold text-emerald-800 mb-1">เหตุการณ์ปกติ</h3>
-          <p className="text-xs text-emerald-600 max-w-[200px] leading-relaxed">
-            ไม่มีการแจ้งเตือน หรือรอการช่วยเหลือในขณะนี้
-          </p>
+      <div className="w-full h-[calc(100vh-28.8rem)] bg-white rounded-[24px] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+            <CheckCircle className="w-8 h-8 text-slate-300" strokeWidth={1.5} />
         </div>
+        <h3 className="text-slate-600 font-medium mb-1">สถานการณ์ปกติ</h3>
+        <p className="text-xs text-slate-400 font-light">
+           ไม่พบการแจ้งเตือนใหม่
+        </p>
       </div>
     );
   }
 
-  // ✅ กรณีที่ 2: มีรายการแจ้งเตือน
+  // ✅ กรณีที่ 2: มีรายการแจ้งเตือน (Minimal Design)
   return (
-    // ปรับความสูงให้สัมพันธ์กับ Layout หลัก
-    <div className="w-full h-[calc(100vh-28.8rem)] bg-white rounded-[24px] border border-blue-100 shadow-[0_2px_20px_-10px_rgba(59,130,246,0.15)] flex flex-col overflow-hidden">
+    <div className="w-full h-[calc(100vh-28.8rem)] bg-white rounded-[24px] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col overflow-hidden">
       
-      {/* Header - ปรับให้เล็กกระชับขึ้น */}
-      <div className="p-4 bg-white border-b border-slate-100 flex justify-between items-center z-10 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-md shadow-blue-200">
-            <Bell className="w-4 h-4 text-white animate-pulse" strokeWidth={2.5} />
+      {/* Header - เรียบง่าย */}
+      <div className="px-5 py-4 bg-white border-b border-slate-50 flex justify-between items-center shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+             <Bell className="w-5 h-5 text-slate-700" />
+             <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </div>
-          <div>
-            <h3 className="font-bold text-slate-800 text-sm">รายการแจ้งเตือน</h3>
-            <p className="text-[10px] text-slate-500 font-medium">{activeAlerts.length} รายการรอดำเนินการ</p>
-          </div>
+          <h3 className="font-semibold text-slate-700 text-sm">การแจ้งเตือน</h3>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 rounded-full border border-blue-100">
-          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
-          <span className="text-[10px] text-blue-600 font-bold">Live</span>
-        </div>
+        <span className="text-[10px] text-slate-400 font-medium bg-slate-50 px-2 py-1 rounded-full">
+          {activeAlerts.length} รายการ
+        </span>
       </div>
 
-      {/* Content List - Scrollable */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2 bg-gradient-to-b from-slate-50 to-white">
+      {/* Content List - Minimal Cards */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 bg-white scrollbar-hide">
         {activeAlerts.map((alert, index) => {
           const isAck = alert.status === "ACKNOWLEDGED";
           
-          const statusConfig = isAck 
-            ? {
-                borderColor: "border-l-orange-500",
-                bgColor: "bg-orange-50/50",
-                iconBg: "bg-orange-100",
-                iconColor: "text-orange-600",
-                badgeBg: "bg-orange-100",
-                badgeText: "text-orange-700",
-                label: "กำลังช่วยเหลือ"
-              }
-            : {
-                borderColor: "border-l-red-500",
-                bgColor: "bg-red-50/30",
-                iconBg: "bg-red-100",
-                iconColor: "text-red-600",
-                badgeBg: "bg-red-100",
-                badgeText: "text-red-700",
-                label: "เกิดเหตุ!"
-              };
+          // Logic เลือกสีและไอคอนแบบมินิมอล
+          let icon = <AlertTriangle className="w-5 h-5" />;
+          let themeColor = isAck ? "text-orange-500" : "text-red-500";
+          let bgIcon = isAck ? "bg-orange-50" : "bg-red-50";
+
+          if (alert.type.includes("หัวใจ")) icon = <HeartPulse className="w-5 h-5" />;
+          else if (alert.type.includes("พื้นที่")) icon = <MapPin className="w-5 h-5" />;
+          else if (alert.type.includes("อุณหภูมิ")) icon = <Thermometer className="w-5 h-5" />;
+
+          // เวลาไทย (+7 ชม.)
+          const thaiTime = new Date(new Date(alert.timestamp).getTime() + (7 * 60 * 60 * 1000));
 
           return (
             <div 
               key={`${alert.type}-${alert.id}-${index}`}
-              // 🔥 ปรับลด Padding (p-4 -> p-2.5) และ Gap (gap-3 -> gap-2)
-              className={`w-full p-2.5 rounded-xl border-l-[3px] shadow-sm bg-white flex flex-col gap-2 transition-all hover:shadow-md hover:scale-[1.01] ${statusConfig.borderColor} ${!isAck && 'animate-pulse'}`}
+              className="group w-full p-4 bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.08)] hover:border-slate-200 transition-all duration-300 flex items-center gap-4 cursor-default"
             >
-              {/* แถวบน: Badge + เวลา */}
-              <div className="flex justify-between items-center">
-                <div className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${statusConfig.badgeBg} ${statusConfig.badgeText}`}>
-                  {statusConfig.label}
-                </div>
-                <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
-                  <Clock className="w-3 h-3" />
-                  {/* บวก 7 ชม. ให้เวลาไทย (เผื่อ Server UTC) */}
-                  {format(new Date(new Date(alert.timestamp).getTime() + (7 * 60 * 60 * 1000)), "HH:mm น.", { locale: th })}
-                </div>
+              {/* 1. Icon Circle */}
+              <div className={`w-10 h-10 rounded-full ${bgIcon} ${themeColor} flex items-center justify-center shrink-0 transition-transform group-hover:scale-110`}>
+                  {icon}
               </div>
 
-              {/* เนื้อหา: Icon + รายละเอียด */}
-              <div className="flex items-center gap-2.5">
-                {/* 🔥 ลดขนาด Icon Container (p-3 -> p-1.5) และ Icon (w-6 -> w-4) */}
-                <div className={`p-1.5 rounded-lg ${statusConfig.iconBg} ${statusConfig.iconColor} shadow-sm shrink-0`}>
-                  {alert.type.includes("SOS") 
-                    ? <AlertTriangle className="w-4 h-4" strokeWidth={2.5} /> 
-                    : <User className="w-4 h-4" strokeWidth={2.5} />
-                  }
-                </div>
-                <div className="flex-1 min-w-0">
-                  {/* 🔥 ลดขนาด Font */}
-                  <h4 className="font-bold text-slate-800 text-sm leading-tight truncate">
-                    {alert.dependentName}
-                  </h4>
-                  <p className="text-[10px] text-slate-500 font-medium truncate">
-                    {alert.type}
-                  </p>
-                </div>
+              {/* 2. Alert Type (โชว์ยาวๆ ไม่ตบบรรทัด) */}
+              <div className="flex-1 min-w-0 flex flex-col justify-center pr-2">
+                <p className="font-bold text-slate-700 text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                  {alert.type}
+                </p>
+              </div>
+
+              {/* 3. Time & Status (กองรวมกันขวาสุด แยกบรรทัด) */}
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                {/* เวลา (บรรทัดบน) */}
+                <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                   <Clock className="w-3 h-3" />
+                   {formatThaiTime(alert.timestamp)} น.
+                </span>
+                
+                {/* สถานะ/จุดกะพริบ (บรรทัดล่าง) */}
+                {isAck ? (
+                   <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] text-orange-500 font-medium">กำลังช่วยเหลือ</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                   </div>
+                ) : (
+                   <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] text-red-500 font-medium animate-pulse">เกิดเหตุ!</span>
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                      </span>
+                   </div>
+                )}
               </div>
             </div>
           );

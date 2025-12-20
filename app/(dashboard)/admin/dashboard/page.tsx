@@ -251,6 +251,7 @@ async function getComparisonData() {
 }
 
 async function getActiveAlerts() {
+  // 1. ดึงข้อมูลจาก ExtendedHelp (แหล่งรวมทุกแจ้งเตือน)
   const alerts = await prisma.extendedHelp.findMany({
     where: {
       status: { in: ['DETECTED', 'ACKNOWLEDGED'] }, // เอาเฉพาะที่ยังไม่จบเคส
@@ -262,15 +263,30 @@ async function getActiveAlerts() {
     take: 10 // เอาแค่ 10 อันล่าสุด
   });
 
+  // ✅ สร้างตัวแปลภาษา (Dictionary)
+  const typeMapping: Record<string, string> = {
+      FALL_CONSCIOUS: "ล้มมีการตอบสนอง",
+      FALL_UNCONSCIOUS: "ล้มไม่มีการตอบสนอง",
+      HEART_RATE: "ชีพจรผิดปกติ",
+      TEMPERATURE: "อุณหภูมิผิดปกติ",
+      ZONE: "ออกนอกเขตปลอดภัย",
+      SOS: "ขอความช่วยเหลือ",
+  };
+
   return alerts.map(alert => {
-    // 🔥 สูตรโกงเวลา +7 ชั่วโมง (Hardcode) เหมือนเดิม
-    const thaiTime = new Date(new Date(alert.requestedAt).getTime() + (7 * 60 * 60 * 1000));
+    // เพื่อให้มันกลายเป็นเวลาไทย ไม่ว่า Server จะอยู่ที่ไหน
+    // const rawDate = new Date(alert.requestedAt);
+    // const thaiTime = new Date(rawDate.getTime() + (7 * 60 * 60 * 1000));
     
+    // ✅ แปลง Type เป็นภาษาคน (ถ้าหาไม่เจอให้ใช้ค่าเดิม)
+    const rawType = alert.type || 'SOS';
+    const humanType = typeMapping[rawType] || rawType;
+
     return {
       id: alert.id,
-      type: alert.type || 'SOS', // ถ้า type เป็น null ให้เป็น SOS
+      type: humanType,
       status: alert.status,
-      timestamp: thaiTime, // ✅ ส่งเวลาไทยไป
+      timestamp: alert.requestedAt,
       dependentName: alert.dependent ? `${alert.dependent.firstName} ${alert.dependent.lastName}` : "ไม่ระบุชื่อ"
     };
   });
