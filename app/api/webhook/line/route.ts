@@ -344,10 +344,10 @@ async function handleStatusRequest(lineId: string, replyToken: string) {
   const latestTemp = dependent.temperatureRecords[0];
 
   // =======================================================
-  // 🔥 จุดที่แก้: ตรวจสอบว่า GPS ปิดอยู่ หรือ ข้อมูลเก่าเกิน 5 นาที
+  // 🔥 จุดที่แก้: ตรวจสอบว่า GPS ปิดอยู่ หรือ ข้อมูลเก่าเกิน 10 วิ
   // =======================================================
   const isStale = latestLoc 
-    ? (new Date().getTime() - new Date(latestLoc.timestamp).getTime() > 5 * 60 * 1000) 
+    ? (new Date().getTime() - new Date(latestLoc.timestamp).getTime() > 10 * 1000) 
     : true;
 
   if (!dependent.isGpsEnabled || isStale) {
