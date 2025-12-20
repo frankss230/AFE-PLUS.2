@@ -102,7 +102,7 @@ export default function OverviewChart({ data }: OverviewChartProps) {
   // ==========================================
   const now = new Date();
   // ถ้าบน Vercel (UTC) เวลา 00:00 -> บวก 7 ชม -> เป็น 07:00 (เวลาไทย)
-  const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+  const thaiTime = new Date(now.getTime() + (14 * 60 * 60 * 1000));
   
   const currentMonth = format(thaiTime, "MMMM yyyy", { locale: th });
   // ==========================================
