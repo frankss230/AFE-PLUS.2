@@ -1484,7 +1484,7 @@ export const createWatchConnectionBubble = (
   };
 };
 
-/// =================================================================
+// =================================================================
 // ⌚ Equipment Menu - Single Button Design
 // =================================================================
 export const createBorrowReturnFlexMessage = (
@@ -1508,7 +1508,6 @@ export const createBorrowReturnFlexMessage = (
   let statusDesc = "กดเพื่อเริ่มทำรายการยืมใหม่";
   let statusColor = "#64748B"; // เทา
   let statusBgColor = "#F1F5F9"; // พื้นหลังเทาอ่อน
-  let buttonColor = "#3B82F6"; // สีปุ่ม
 
   switch (status) {
     case "PENDING":
@@ -1516,7 +1515,6 @@ export const createBorrowReturnFlexMessage = (
       statusDesc = "อยู่ระหว่างตรวจสอบ กรุณารอเจ้าหน้าที่ดำเนินการ";
       statusColor = "#D97706"; // ส้ม/เหลือง
       statusBgColor = "#FEF3C7";
-      buttonColor = "#F59E0B";
       break;
 
     case "APPROVED":
@@ -1524,7 +1522,6 @@ export const createBorrowReturnFlexMessage = (
       statusDesc = `กำลังยืม: ${equipmentName}`;
       statusColor = "#059669"; // เขียว
       statusBgColor = "#D1FAE5";
-      buttonColor = "#10B981";
       break;
 
     case "REJECTED":
@@ -1532,7 +1529,6 @@ export const createBorrowReturnFlexMessage = (
       statusDesc = "คำขอถูกปฏิเสธ กดเพื่อดูสาเหตุและประวัติ";
       statusColor = "#DC2626"; // แดง
       statusBgColor = "#FEE2E2";
-      buttonColor = "#EF4444";
       break;
 
     case "RETURN_PENDING":
@@ -1540,7 +1536,6 @@ export const createBorrowReturnFlexMessage = (
       statusDesc = "แจ้งคืนอุปกรณ์แล้ว รอเจ้าหน้าที่ตรวจสอบสภาพ";
       statusColor = "#EA580C"; // ส้มเข้ม
       statusBgColor = "#FFEDD5";
-      buttonColor = "#F97316";
       break;
 
     case "RETURN_FAILED":
@@ -1548,7 +1543,6 @@ export const createBorrowReturnFlexMessage = (
       statusDesc = "ตรวจสอบไม่ผ่าน กรุณาติดต่อเจ้าหน้าที่";
       statusColor = "#991B1B"; // แดงเข้ม
       statusBgColor = "#FECACA";
-      buttonColor = "#B91C1C";
       break;
 
     case "RETURNED":
@@ -1556,15 +1550,13 @@ export const createBorrowReturnFlexMessage = (
       statusDesc = "ไม่มีรายการค้าง สามารถทำรายการยืมใหม่ได้";
       statusColor = "#475569"; // เทาเข้ม
       statusBgColor = "#E2E8F0";
-      buttonColor = "#64748B";
       break;
 
     default: // NONE
       statusText = "ยังไม่มีรายการยืม";
       statusDesc = "เริ่มทำรายการยืมอุปกรณ์ใหม่";
-      statusColor = "#3B82F6"; // ฟ้า
-      statusBgColor = "#DBEAFE";
-      buttonColor = "#3B82F6";
+      statusColor = "#64748B"; // เทา
+      statusBgColor = "#F1F5F9"; // พื้นหลังเทาอ่อน
       break;
   }
 
@@ -1649,7 +1641,7 @@ export const createBorrowReturnFlexMessage = (
           ],
         },
 
-        // 3. Single Action Button - ปุ่มเดียวขอบมน
+        // 3. Single Action Button - ปุ่มเดียวขอบมน (สีน้ำเงินเสมอ)
         {
           type: "box",
           layout: "vertical",
@@ -1658,7 +1650,7 @@ export const createBorrowReturnFlexMessage = (
             {
               type: "button",
               style: "primary",
-              color: buttonColor, // สีปุ่มตามสถานะ
+              color: "#3B82F6", // สีน้ำเงินคงที่
               height: "md",
               action: {
                 type: "uri",
