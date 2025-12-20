@@ -76,7 +76,7 @@ async function handleRequest(request: Request) {
     let shouldSendLine = false;
     let alertType = "NONE";
 
-    // 🕒 TIME LOCK (กัน LINE Error 429)
+    // 🕒 TIME LOCK (สำหรับ Check Logic ขากลับ)
     const lastLocation = dependent.locations[0];
     const now = new Date();
     let timeDiffSec = 9999; 
@@ -122,8 +122,8 @@ async function handleRequest(request: Request) {
       if (currentStatus === 0) {
         currentDBStatus = "SAFE";
         if (distInt <= (r1 - buffer)) {
-            // เช็ค Time Lock > 10 วิ ค่อยแจ้งกลับบ้าน
             if (isAlertZone1Sent || isAlertNearZone2Sent || isAlertZone2Sent) {
+                // ต้องอยู่ในบ้านเกิน 10 วิ ถึงจะแจ้งว่ากลับบ้าน (กันเด้ง)
                 if (timeDiffSec > 10) { 
                     shouldSendLine = true; alertType = "BACK_SAFE";
                     isAlertZone1Sent = false; 
@@ -136,7 +136,6 @@ async function handleRequest(request: Request) {
       // 🟡 ZONE 1 (1)
       else if (currentStatus === 1) {
         currentDBStatus = "WARNING";
-        
         // ขาออก
         if (!isAlertZone1Sent) { 
             shouldSendLine = true; alertType = "ZONE_1"; isAlertZone1Sent = true; 
@@ -144,9 +143,9 @@ async function handleRequest(request: Request) {
         // ขาเข้า (จาก Zone 2/Near)
         else if (isAlertZone2Sent || isAlertNearZone2Sent) {
             if (distInt <= (Math.floor(r2 * 0.8) - buffer)) {
+                // ต้องกลับเข้ามานานเกิน 30 วิ ถึงจะแจ้ง
                 if (timeDiffSec > 30) {
                     shouldSendLine = true; alertType = "BACK_TO_ZONE_1";
-                    // ✅ ต้องปิด Flag สูงกว่าทิ้ง ไม่งั้นจะรัว
                     isAlertZone2Sent = false;
                     isAlertNearZone2Sent = false;
                 }
@@ -155,19 +154,19 @@ async function handleRequest(request: Request) {
       } 
       // 🟠 NEAR ZONE 2 (3) - 80%
       else if (currentStatus === 3) {
-          currentDBStatus = "DANGER";
-
-          // ขาออก
+          currentDBStatus = "DANGER"; // สถานะ DANGER
+          
+          // ขาออก (เพิ่งแตะ 80%)
           if (!isAlertNearZone2Sent) {
               shouldSendLine = true; alertType = "NEAR_ZONE_2";
               isAlertNearZone2Sent = true; isAlertZone1Sent = true; 
           }
-          // ขาเข้า (จาก Zone 2)
+          // ขาเข้า (กลับมาจาก Zone 2)
           else if (isAlertZone2Sent) {
              if (distInt <= (r2 - buffer)) {
+                 // ต้องกลับเข้ามานานเกิน 30 วิ ถึงจะแจ้ง
                  if (timeDiffSec > 30) {
                      shouldSendLine = true; alertType = "BACK_TO_NEAR_ZONE_2";
-                     // ✅ ต้องปิด Flag แดงทิ้ง ไม่งั้นจะรัว
                      isAlertZone2Sent = false;
                  }
              }
@@ -175,16 +174,13 @@ async function handleRequest(request: Request) {
       }
       // 🔴 ZONE 2 DANGER (2)
       else if (currentStatus === 2) {
-        currentDBStatus = "DANGER";
+        currentDBStatus = "DANGER"; // สถานะ DANGER (เหมือน 80% เลยทำให้ Filter เก่าทำงานผิด)
         
-        // 🔥 แก้แล้ว: ใช้ Logic เดียวกับ Zone 1 เป๊ะๆ
-        // เช็คแค่ "ถ้ายังไม่เคยแจ้งเตือน (Flag = false)" -> ให้แจ้งทันที!
-        
+        // Logic ง่ายที่สุด: ถ้า Flag ยังไม่เปิด -> แจ้งเลย!
         if (!isAlertZone2Sent) { 
           shouldSendLine = true; 
           alertType = "ZONE_2_DANGER"; 
           
-          // ล็อก Flag ทุกตัวเพื่อกันรัว
           isAlertZone2Sent = true; 
           isAlertNearZone2Sent = true; 
           isAlertZone1Sent = true;
@@ -192,18 +188,9 @@ async function handleRequest(request: Request) {
       }
     }
 
-    // ==========================================
-    // 🛡️ FINAL SPAM FILTER (ด่านสุดท้าย)
-    // ==========================================
-    // ถ้าสถานะไม่เปลี่ยน และเพิ่งส่งไปไม่ถึง 60 วิ -> ห้ามส่ง
-    if (shouldSendLine && !isManualSOS) {
-        if (lastLocation && lastLocation.status === currentDBStatus) {
-            if (timeDiffSec < 60) {
-                console.log(`⏳ Spam Filter: Blocked repeated alert`);
-                shouldSendLine = false; 
-            }
-        }
-    }
+    // 🔥🔥🔥 ลบ SPAM FILTER ทิ้งไปแล้ว! 🔥🔥🔥
+    // เพราะเรามี Flag (isAlert...) และ Time Lock (timeDiffSec) คุมในแต่ละ Logic ไว้ดีแล้ว
+    // การมี Spam Filter ตรงนี้ทำให้การเปลี่ยนสถานะจาก Near(Danger) -> Zone2(Danger) โดนบล็อก
 
     // ==========================================
     // 📨 SEND LINE MESSAGES
@@ -218,7 +205,6 @@ async function handleRequest(request: Request) {
                await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าพื้นที่", contents: msg });
            } 
            else if (alertType === "ZONE_2_DANGER") {
-               // ✅ ใช้การ์ดสีแดง + ปุ่ม SOS (Critical Alert)
                await sendCriticalAlertFlexMessage(
                   lineId,
                   { latitude: lat, longitude: lng, timestamp: new Date(), id: 0 },
@@ -227,7 +213,6 @@ async function handleRequest(request: Request) {
                   `⚠️ แจ้งเตือน: ${dependent.firstName} ออกนอกเขตปลอดภัย! (ระยะ ${distText})`
                );
            }
-           // ... (Type อื่นๆ เหมือนเดิม) ...
            else if (alertType === "ZONE_1") {
                const msg = createGeneralAlertBubble("ออกนอกพื้นที่ชั้นใน", `ระยะ ${distText}`, distText, "#F59E0B", false);
                await lineClient.pushMessage(lineId, { type: "flex", altText: "เตือนโซน 1", contents: msg });
