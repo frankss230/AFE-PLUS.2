@@ -1888,24 +1888,59 @@ export function createRescueGroupFlexMessage(
 ): FlexBubble {
   const hasLocation = alertData.latitude && alertData.longitude;
 
-  // ✅ 1. ดึงตัวแปร Env ตามที่นายน้อยใช้ในโค้ดตัวอย่าง
+  // 1. Env & Base URL
   const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAP || "";
-  const liffBaseUrl =
-    process.env.LIFF_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || ""; // กันเหนียวเผื่อลืมตั้ง LIFF_BASE_URL
+  const liffBaseUrl = process.env.LIFF_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "";
 
-  // 2. สร้างลิงก์รูปภาพแผนที่ (Static Map)
+  // 2. Map Image
   let mapImageUrl = "https://cdn-icons-png.flaticon.com/512/854/854878.png";
   if (hasLocation && GOOGLE_KEY) {
     mapImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${alertData.latitude},${alertData.longitude}&zoom=16&size=400x260&maptype=roadmap&markers=color:red%7C${alertData.latitude},${alertData.longitude}&key=${GOOGLE_KEY}`;
   }
 
-  // ✅ 3. แก้ตรงนี้! สร้างลิงก์นำทาง (Navigate URL) ให้ตรงกับ Format ของระบบนายน้อย
-  // รูปแบบ: /location?lat=xx&lng=xx&mode=navigate&id=xx
-  const navigationUrl =
-    hasLocation && liffBaseUrl
+  // 3. Navigation URL
+  const navigationUrl = hasLocation && liffBaseUrl
       ? `${liffBaseUrl}/location?lat=${alertData.latitude}&lng=${alertData.longitude}&mode=navigate&id=${dependentInfo.id}`
-      : `https://www.google.com/maps/search/?api=1&query=${alertData.latitude},${alertData.longitude}`; // Fallback ไป Google Maps ปกติถ้าไม่มี liffBaseUrl
+      : `https://www.google.com/maps/search/?api=1&query=${alertData.latitude},${alertData.longitude}`;
 
+  // 4. Acknowledge URL (Rescue Form)
+  const acknowledgeUrl = liffBaseUrl
+    ? `${liffBaseUrl}/rescue/form?id=${alertId}`
+    : `https://google.com?q=Error_No_LIFF_BASE_URL`;
+
+  // 🔥 5. แก้เวลาให้เป็นไทย (Timezone +7)
+  // ใช้เวลาจาก alertData (ถ้ามี) หรือใช้เวลาปัจจุบัน
+  const rawDate = alertData.createdAt || alertData.requestedAt || new Date();
+  const thaiTimeObj = new Date(new Date(rawDate).getTime() + (7 * 60 * 60 * 1000));
+
+  const thaiDate = thaiTimeObj.toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const thaiTime = thaiTimeObj.toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  // 🔥 6. แยกสีหัวข้อตามประเภท (Title Logic)
+  let headerStartColor = "#DC2626"; // Default Red
+  let headerEndColor = "#EF4444";
+
+  if (title.includes("หัวใจ") || title.includes("HEART")) {
+       headerStartColor = "#9333EA"; // 🟣 ม่วง (Heart)
+       headerEndColor = "#A855F7";
+  } else if (title.includes("อุณหภูมิ") || title.includes("TEMP") || title.includes("พื้นที่") || title.includes("ZONE")) {
+       headerStartColor = "#EA580C"; // 🟠 ส้ม (Temp/Zone)
+       headerEndColor = "#F97316";
+  } else {
+       // 🔴 แดง (Fall / SOS ทั่วไป)
+       headerStartColor = "#DC2626";
+       headerEndColor = "#EF4444";
+  }
+
+  // Common Phone Info
   const dependentPhone = dependentInfo?.phone || "-";
   const caregiverPhone = caregiverInfo?.phone || "-";
   const caregiverName = caregiverInfo
@@ -1914,24 +1949,6 @@ export function createRescueGroupFlexMessage(
   const dependentName = dependentInfo
     ? `${dependentInfo.firstName} ${dependentInfo.lastName}`
     : dependentUser.username;
-
-  // ✅ 4. แก้ตรงนี้! ให้ชี้ไปที่ /rescue/form (ตามชื่อไฟล์จริงของนายน้อย)
-  const acknowledgeUrl = liffBaseUrl
-    ? `${liffBaseUrl}/rescue/form?id=${alertId}` // <--- แก้จาก acknowledge เป็น form
-    : `https://google.com?q=Error_No_LIFF_BASE_URL`;
-
-  // ฟอร์แมทวันที่และเวลา
-  const currentDate = new Date();
-  const thaiDate = currentDate.toLocaleDateString("th-TH", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-  const thaiTime = currentDate.toLocaleTimeString("th-TH", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
 
   return {
     type: "bubble",
@@ -1942,7 +1959,7 @@ export function createRescueGroupFlexMessage(
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        // Header
+        // Header (สีเปลี่ยนตามประเภท)
         {
           type: "box",
           layout: "vertical",
@@ -1950,22 +1967,31 @@ export function createRescueGroupFlexMessage(
           background: {
             type: "linearGradient",
             angle: "135deg",
-            startColor: "#DC2626",
-            endColor: "#EF4444",
+            startColor: headerStartColor, // ✅ ใช้ตัวแปรสี
+            endColor: headerEndColor,     // ✅ ใช้ตัวแปรสี
           },
           cornerRadius: "xxl",
           contents: [
             {
               type: "text",
-              text: title,
+              text: title, // ข้อความประเภท (ส่งมาจาก route.ts)
               weight: "bold",
               size: "xl",
               color: "#FFFFFF",
               align: "center",
+              wrap: true, // เผื่อชื่อยาว
             },
+            {
+              type: "text",
+              text: `Ref ID: #${alertId}`,
+              size: "xs",
+              color: "#FFFFFFCC",
+              align: "center",
+              margin: "xs"
+            }
           ],
         },
-        // รูปแผนที่ (กดแล้วไปหน้า /location?mode=navigate)
+        // Map Image
         ...(hasLocation
           ? [
               {
@@ -1983,7 +2009,7 @@ export function createRescueGroupFlexMessage(
                     action: {
                       type: "uri" as const,
                       label: "Open Navigation",
-                      uri: navigationUrl, // ✅ ใช้ลิงก์ที่แก้ใหม่ตรงนี้ครับ
+                      uri: navigationUrl,
                     },
                   },
                 ],
@@ -2118,19 +2144,24 @@ export function createRescueGroupFlexMessage(
         {
           type: "text",
           text: hasLocation
-            ? `${alertData.latitude}, ${alertData.longitude}`
+            ? `${alertData.latitude?.toFixed(5)}, ${alertData.longitude?.toFixed(5)}`
             : "ไม่มีข้อมูลพิกัด",
           size: "xs",
           color: "#94A3B8",
           align: "center",
           margin: "sm",
           wrap: true,
+          action: {
+            type: "uri",
+            label: "Open Map",
+            uri: navigationUrl
+          }
         },
         // ปุ่มตอบรับ
         {
           type: "button",
           style: "primary",
-          color: "#DC2626",
+          color: headerStartColor, // ✅ ใช้สีเดียวกับ Header
           height: "md",
           margin: "lg",
           action: {

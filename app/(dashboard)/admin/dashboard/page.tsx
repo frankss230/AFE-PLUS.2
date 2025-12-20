@@ -239,6 +239,52 @@ async function getComparisonData() {
     ];
 }
 
+// 🔥 แก้ฟังก์ชันนี้: ดึงเฉพาะที่ยังไม่จบ AND เกิดขึ้นภายใน 24 ชม. (กันข้อมูลเก่าหลอน)
+async function getActiveAlerts() {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 ชม. ย้อนหลัง
+
+    // 1. ดึง SOS ที่ยังไม่จบ + ไม่เก่าเกิน 1 วัน
+    const sosList = await prisma.extendedHelp.findMany({
+        where: { 
+            status: { in: ['DETECTED', 'ACKNOWLEDGED'] }, // เอาเฉพาะที่ยังไม่ปิด
+            requestedAt: { gte: yesterday }               // ✅ ต้องไม่เก่าเกิน 24 ชม.
+        },
+        include: { dependent: true },
+        orderBy: { requestedAt: 'desc' }
+    });
+
+    // 2. ดึง Fall ที่ยังไม่จบ + ไม่เก่าเกิน 1 วัน
+    const fallList = await prisma.extendedHelp.findMany({
+        where: { 
+            status: { in: ['DETECTED', 'ACKNOWLEDGED'] }, // เอาเฉพาะที่ยังไม่ปิด
+            requestedAt: { gte: yesterday }                 // ✅ ต้องไม่เก่าเกิน 24 ชม.
+        },
+        include: { dependent: true },
+        orderBy: { requestedAt: 'desc' }
+    });
+
+    // 3. รวมร่าง
+    const alerts = [
+        ...sosList.map(s => ({
+            id: s.id,
+            type: `SOS (${s.type})`,
+            status: s.status,
+            timestamp: s.requestedAt,
+            dependentName: `${s.dependent.firstName} ${s.dependent.lastName}`
+        })),
+        ...fallList.map(f => ({
+            id: f.id,
+            type: 'ตรวจพบการล้ม',
+            status: f.status,
+            timestamp: f.requestedAt,
+            dependentName: `${f.dependent.firstName} ${f.dependent.lastName}`
+        }))
+    ];
+
+    // เรียงเวลาล่าสุดขึ้นก่อน
+    return alerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
+
 // --- Main Page Component ---
 export default async function DashboardPage() {
   const session = await getSession();
@@ -254,7 +300,8 @@ export default async function DashboardPage() {
     ackFallsCount,
     activeDevices,
     chartData,
-    comparisonData
+    comparisonData,
+    activeAlerts // ✅ ได้มาเป็น List Array
   ] = await Promise.all([
     prisma.dependentProfile.count(),
     prisma.fallRecord.count({ where: { timestamp: { gte: new Date(new Date().setHours(0,0,0,0)) } } }),
@@ -267,7 +314,9 @@ export default async function DashboardPage() {
     // นับอุปกรณ์ที่มีการส่ง Location มาใน 1 ชม. ล่าสุด
     prisma.location.groupBy({ by: ['dependentId'], where: { timestamp: { gte: new Date(Date.now() - 60 * 60 * 1000) } } }).then(res => res.length),
     getChartData(),
-    getComparisonData()
+    getComparisonData(),
+
+    getActiveAlerts() // ✅ เรียกใช้ฟังก์ชันใหม่
   ]);
 
   const funnelData = {
@@ -323,8 +372,8 @@ export default async function DashboardPage() {
             </div>
             
             <div className="flex-1 min-h-0">
-                 <AlertFunnel data={funnelData} />
-            </div>
+                 <AlertFunnel activeAlerts={activeAlerts} />
+            </div>  
             
         </div>
       </div>

@@ -12,8 +12,6 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  Area,
-  AreaChart,
   Line,
   LineChart,
 } from "recharts";
@@ -28,7 +26,7 @@ import { Activity, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 
-// ชุดสีธีมน้ำเงิน (แยกสีชัดเจน)
+// ชุดสีธีมน้ำเงิน
 const COLORS = {
   falls: "#3B82F6",   // Blue 500 (น้ำเงินกลาง)
   sos: "#DC2626",     // Red 600 (แดง - ฉุกเฉิน)
@@ -95,10 +93,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-
-
 export default function OverviewChart({ data }: OverviewChartProps) {
-  const [chartType, setChartType] = useState("area");
+  // 1. Change default state from "area" to "bar"
+  const [chartType, setChartType] = useState("bar");
   const [range, setRange] = useState<"day" | "week" | "month">("week");
 
   const safeData = data || { day: [], week: [], month: [] };
@@ -164,7 +161,7 @@ export default function OverviewChart({ data }: OverviewChartProps) {
               <SelectValue placeholder="รูปแบบกราฟ" />
             </SelectTrigger>
             <SelectContent>
-              {/* <SelectItem value="area">พื้นที่</SelectItem> */}
+              {/* 2. Removed Area Option */}
               <SelectItem value="bar">แท่ง</SelectItem>
               <SelectItem value="line">เส้น</SelectItem>
               <SelectItem value="pie">วงกลม</SelectItem>
@@ -207,19 +204,6 @@ export default function OverviewChart({ data }: OverviewChartProps) {
               <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" className="fill-blue-400 text-xs font-bold uppercase tracking-widest">เหตุการณ์รวม</text>
               <text x="50%" y="56%" textAnchor="middle" dominantBaseline="middle" className="fill-blue-700 text-4xl font-black">{grandTotal}</text>
             </PieChart>
-          ) : chartType === "bar" ? (
-            <BarChart data={currentData} barGap={8}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#DBEAFE" />
-              <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} dy={15} />
-              <YAxis stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} allowDecimals={false} domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]} />
-              
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "#EFF6FF" }} />
-              
-              <Bar name="การล้ม" dataKey="falls" fill={COLORS.falls} radius={[6, 6, 6, 6]} barSize={10} />
-              <Bar name="หัวใจ" dataKey="heart" fill={COLORS.heart} radius={[6, 6, 6, 6]} barSize={10} />
-              <Bar name="อุณหภูมิ" dataKey="temp" fill={COLORS.temp} radius={[6, 6, 6, 6]} barSize={10} />
-              <Bar name="โซน" dataKey="zone" fill={COLORS.zone} radius={[6, 6, 6, 6]} barSize={10} />
-            </BarChart>
           ) : chartType === "line" ? (
             <LineChart data={currentData}>
               <defs>
@@ -239,28 +223,19 @@ export default function OverviewChart({ data }: OverviewChartProps) {
               <Line type="monotone" dataKey="zone" name="โซน" stroke={COLORS.zone} strokeWidth={3} dot={{ fill: COLORS.zone, r: 4 }} activeDot={{ r: 6 }} filter="url(#lineShadow)" />
             </LineChart>
           ) : (
-            <AreaChart data={currentData}>
-              <defs>
-                <linearGradient id="colorFalls" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.falls} stopOpacity={0.3}/><stop offset="95%" stopColor={COLORS.falls} stopOpacity={0}/></linearGradient>
-                <linearGradient id="colorHeart" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.heart} stopOpacity={0.3}/><stop offset="95%" stopColor={COLORS.heart} stopOpacity={0}/></linearGradient>
-                <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.temp} stopOpacity={0.3}/><stop offset="95%" stopColor={COLORS.temp} stopOpacity={0}/></linearGradient>
-                <linearGradient id="colorZone" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.zone} stopOpacity={0.3}/><stop offset="95%" stopColor={COLORS.zone} stopOpacity={0}/></linearGradient>
-                
-                <filter id="areaShadow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#3B82F6" floodOpacity="0.15" />
-                </filter>
-              </defs>
+             // Default is now BarChart since Area is removed
+            <BarChart data={currentData} barGap={8}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#DBEAFE" />
               <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} dy={15} />
               <YAxis stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} allowDecimals={false} domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]} />
-
-              <Tooltip content={<CustomTooltip />} />
               
-              <Area type="monotone" dataKey="falls" name="การล้ม" stroke={COLORS.falls} strokeWidth={3} fillOpacity={1} fill="url(#colorFalls)" filter="url(#areaShadow)" />
-              <Area type="monotone" dataKey="heart" name="หัวใจ" stroke={COLORS.heart} strokeWidth={3} fillOpacity={1} fill="url(#colorHeart)" filter="url(#areaShadow)" />
-              <Area type="monotone" dataKey="temp" name="อุณหภูมิ" stroke={COLORS.temp} strokeWidth={3} fillOpacity={1} fill="url(#colorTemp)" filter="url(#areaShadow)" />
-              <Area type="monotone" dataKey="zone" name="โซน" stroke={COLORS.zone} strokeWidth={3} fillOpacity={1} fill="url(#colorZone)" filter="url(#areaShadow)" />
-            </AreaChart>
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "#EFF6FF" }} />
+              
+              <Bar name="การล้ม" dataKey="falls" fill={COLORS.falls} radius={[6, 6, 6, 6]} barSize={10} />
+              <Bar name="หัวใจ" dataKey="heart" fill={COLORS.heart} radius={[6, 6, 6, 6]} barSize={10} />
+              <Bar name="อุณหภูมิ" dataKey="temp" fill={COLORS.temp} radius={[6, 6, 6, 6]} barSize={10} />
+              <Bar name="โซน" dataKey="zone" fill={COLORS.zone} radius={[6, 6, 6, 6]} barSize={10} />
+            </BarChart>
           )}
         </ResponsiveContainer>
       </div>

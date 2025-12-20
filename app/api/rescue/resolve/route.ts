@@ -60,13 +60,13 @@ export async function POST(req: Request) {
             // 1. ส่งเข้ากลุ่มกู้ภัย
             if (rescueGroup) {
                 await lineClient.pushMessage(rescueGroup.groupId, {
-                    type: 'flex', altText: `🚑 รับเคสแล้วโดย ${name}`, contents: acceptBubble
+                    type: 'flex', altText: `รับเคสแล้วโดย ${name}`, contents: acceptBubble
                 });
             }
             // 2. ส่งหาผู้ดูแล (ญาติ)
             if (caregiverLineId) {
                 await lineClient.pushMessage(caregiverLineId, {
-                    type: 'flex', altText: `🚑 เจ้าหน้าที่กำลังเดินทาง`, contents: acceptBubble
+                    type: 'flex', altText: `เจ้าหน้าที่กำลังเดินทาง`, contents: acceptBubble
                 });
             }
 
