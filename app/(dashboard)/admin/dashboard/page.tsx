@@ -59,10 +59,15 @@ const countDistinctEvents = (records: any[]) => {
 
 // 🔥 1. ดึงข้อมูลกราฟเส้น/พื้นที่ (Timeline)
 async function getChartData() {
-  const now = new Date();
-  const startOfThisMonth = startOfMonth(now);
-  const startOfThisWeek = startOfWeek(now, { weekStartsOn: 1 });
-  const fetchStartDate = startOfThisMonth < startOfThisWeek ? startOfThisMonth : startOfThisWeek;
+  // 1.1 สร้างเวลาปัจจุบันแบบ THAI TIME (Server UTC + 7 ชม.)
+  const nowUTC = new Date();
+  const nowThai = new Date(nowUTC.getTime() + (7 * 60 * 60 * 1000));
+
+  const startOfThisMonth = startOfMonth(nowThai);
+  const startOfThisWeek = startOfWeek(nowThai, { weekStartsOn: 1 });
+  
+  // ใช้เวลาที่เก่ากว่าเป็นตัวตั้งต้นดึงข้อมูล (เผื่อ Timezone นิดหน่อยเลยลบไป 1 วัน)
+  const fetchStartDate = new Date((startOfThisMonth < startOfThisWeek ? startOfThisMonth : startOfThisWeek).getTime() - (24 * 60 * 60 * 1000));
 
   const [falls, heartRaw, tempRaw, zoneRaw] = await Promise.all([
     prisma.fallRecord.findMany({ 
@@ -86,24 +91,30 @@ async function getChartData() {
     }),
   ]);
 
-  // ใช้ Logic Grouping ในการนับจำนวนกราฟด้วย
-  // (เพื่อให้กราฟเส้นไม่โดดสูงเกินจริง)
+  // ✅ ฟังก์ชันช่วยนับ: แปลง Timestamp ใน DB เป็นเวลาไทยก่อนเทียบ
   const groupAndCount = (items: any[], start: Date, end: Date) => {
       const filtered = items.filter((i) => {
-        //   const t = new Date(i.timestamp || i.requestedAt);
-          const t = new Date(i.timestamp);
-          return t >= start && t < end;
+          // ดึงเวลา UTC จาก DB
+          const tUTC = new Date(i.timestamp);
+          // แปลงเป็นเวลาไทย (+7 ชม.)
+          const tThai = new Date(tUTC.getTime() + (7 * 60 * 60 * 1000));
+          
+          // เทียบกับ Slot ที่เป็นเวลาไทย
+          return tThai >= start && tThai < end;
       });
       return countDistinctEvents(filtered);
   };
 
-  // 1. Hourly Today
+  // 1. Hourly Today (ใช้ nowThai)
   const dayData = [];
-  const startOfToday = startOfDay(now);
+  const startOfToday = startOfDay(nowThai); 
+
   for (let i = 0; i < 24; i++) {
     const start = new Date(startOfToday); start.setHours(i);
     const end = new Date(startOfToday); end.setHours(i + 1);
-    if (start <= now) {
+    
+    // โชว์เฉพาะเวลาที่ผ่านมาแล้ว (เทียบกับเวลาไทย)
+    if (start <= nowThai) {
         dayData.push({ 
             name: format(start, "HH:mm"), 
             falls: groupAndCount(falls, start, end), 
@@ -114,9 +125,9 @@ async function getChartData() {
     }
   }
 
-  // 2. Daily This Week
+  // 2. Daily This Week (ใช้ nowThai)
   const weekData = [];
-  const weekInterval = eachDayOfInterval({ start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) });
+  const weekInterval = eachDayOfInterval({ start: startOfWeek(nowThai, { weekStartsOn: 1 }), end: endOfWeek(nowThai, { weekStartsOn: 1 }) });
   for (const d of weekInterval) {
     const start = startOfDay(d);
     const end = endOfDay(d);
@@ -129,9 +140,9 @@ async function getChartData() {
     });
   }
 
-  // 3. Daily This Month
+  // 3. Daily This Month (ใช้ nowThai)
   const monthData = [];
-  const monthInterval = eachDayOfInterval({ start: startOfMonth(now), end: endOfMonth(now) });
+  const monthInterval = eachDayOfInterval({ start: startOfMonth(nowThai), end: endOfMonth(nowThai) });
   for (const d of monthInterval) {
     const start = startOfDay(d);
     const end = endOfDay(d);
