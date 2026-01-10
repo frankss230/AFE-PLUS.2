@@ -28,7 +28,7 @@ export function CaregiverTable({ data }: { data: CaregiverData[] }) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteClick = (item: CaregiverData) => {
-    // 1. เช็คว่ามีผู้สูงอายุในความดูแลไหม?
+    
     if (item.dependentCount > 0) {
         toast.error(`ไม่สามารถลบคุณ "${item.firstName}" ได้`, {
             description: `เนื่องจากยังมีผู้สูงอายุในความดูแล ${item.dependentCount} คน กรุณาลบหรือย้ายผู้สูงอายุก่อนครับ`,
@@ -108,7 +108,7 @@ export function CaregiverTable({ data }: { data: CaregiverData[] }) {
                     <Link href={`/admin/caregivers/${item.id}`}>
                         <Button variant="ghost" size="icon" className="text-slate-400 hover:text-blue-600"><Eye className="w-4 h-4" /></Button>
                     </Link>
-                    {/* 🗑️ ปุ่มลบ: เรียกฟังก์ชันใหม่ของเรา */}
+                    {}
                     <Button 
                         variant="ghost" size="icon" 
                         className="text-slate-400 hover:text-red-600" 
@@ -124,7 +124,7 @@ export function CaregiverTable({ data }: { data: CaregiverData[] }) {
         </table>
       </div>
       
-      {/* Dialog ยืนยันการลบ */}
+      {}
       <AlertDialog open={!!targetDelete} onOpenChange={(o) => !o && setTargetDelete(null)}>
          <AlertDialogContent>
             <AlertDialogHeader>

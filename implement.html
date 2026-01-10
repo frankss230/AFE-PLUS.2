@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFE Plus V2 - Project Structure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #fff;
+        }
+        h1 {
+            border-bottom: 2px solid #eaecef;
+            padding-bottom: 0.3em;
+            font-size: 2.25em;
+            margin-bottom: 16px;
+        }
+        h2 {
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+            font-size: 1.75em;
+            margin-top: 35px;
+            margin-bottom: 16px;
+            color: #24292e;
+        }
+        ul {
+            padding-left: 20px;
+            margin-bottom: 16px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+        }
+        strong {
+            font-weight: 600;
+            color: #0366d6;
+        }
+        .icon {
+            margin-right: 8px;
+        }
+        @media print {
+            body {
+                padding: 0;
+                max-width: 100%;
+            }
+            a {
+                text-decoration: none;
+                color: #333;
+            }
+        }
+    </style>
+</head>
+<body>
+<h1>📁 โครงสร้างโปรเจกต์และคู่มือการใช้งาน</h1>
+<p>เอกสารนี้อธิบายการจัดระเบียบและวัตถุประสงค์ของ Directory และไฟล์ต่าง ๆ ภายในโปรเจกต์ AFE Plus V2</p>
+<h2>📂 Root Directory</h2>
+<ul>
+    <li><strong>middleware.ts</strong>: การกำหนดค่า Middleware สำหรับ Next.js ใช้จัดการการดักจับ Request เช่น การตรวจสอบสิทธิ์ (Verify Session) และการปกป้อง Route ก่อนที่จะแสดงผลหน้าเว็บ</li>
+    <li><strong>next.config.ts</strong>: ไฟล์กำหนดค่า (Configuration) สำหรับเฟรมเวิร์ก Next.js</li>
+    <li><strong>package.json</strong>: ระบุ Dependencies ของโปรเจกต์และสคริปต์ต่าง ๆ (เช่น build, start, dev)</li>
+    <li><strong>tsconfig.json</strong>: การกำหนดค่าสำหรับ TypeScript Compiler</li>
+    <li><strong>.env</strong>: ตัวแปรสภาพแวดล้อม (Environment Variables) เช่น ความลับ (Secrets), API Keys, และ URL ของฐานข้อมูล</li>
+</ul>
+<h2>📂 Directory <code>app/</code> (Next.js App Router)</h2>
+<p>ระบบ Routing แบบใหม่ของ Next.js</p>
+<ul>
+    <li><strong>(admin-login)/</strong>: กลุ่ม Route สำหรับการเข้าสู่ระบบของผู้ดูแลระบบ วงเล็บ <code>()</code> หมายความว่าโฟลเดอร์นี้จะไม่มีผลต่อ URL Path</li>
+    <li><strong>(dashboard)/</strong>: กลุ่ม Route สำหรับหน้า Dashboard หลักของผู้ดูแลระบบ</li>
+    <li><strong>(liff)/</strong>: กลุ่ม Route สำหรับหน้าเว็บที่เชื่อมต่อกับ LINE Front-end Framework (LIFF)</li>
+    <li><strong>api/</strong>: API Routes (REST Endpoints) สำหรับให้ Frontend หรือ Client ภายนอกเรียกใช้งาน
+        <ul>
+            <li><code>auth/</code>: Endpoints เกี่ยวกับการยืนยันตัวตน (Login, Logout, Session)</li>
+            <li><code>register/</code>: Endpoints สำหรับการลงทะเบียน</li>
+            <li><code>rescue/</code>: Endpoints เกี่ยวกับการแจ้งเตือนฉุกเฉินและการกู้ภัย</li>
+            <li><code>users/</code>, <code>dependent/</code>: Endpoints สำหรับจัดการข้อมูลผู้ใช้งาน</li>
+            <li><strong>watch/</strong>: Endpoints สำหรับรับข้อมูลจาก Smart Watch
+                <ul>
+                    <li><code>config/</code>: รับการตั้งค่าอุปกรณ์</li>
+                    <li><code>fall/</code>: รับข้อมูลการตรวจจับการล้ม</li>
+                    <li><code>heart-rate/</code>: รับข้อมูลอัตราการเต้นของหัวใจ</li>
+                    <li><code>location-battery/</code>: รับข้อมูลพิกัด GPS และสถานะแบตเตอรี่</li>
+                    <li><code>login/</code>: สำหรับอุปกรณ์ Watch ยืนยันตัวตนเข้าระบบ</li>
+                    <li><code>sos/</code>: รับสัญญาณขอความช่วยเหลือฉุกเฉิน</li>
+                    <li><code>temperature/</code>: รับข้อมูลอุณหภูมิร่างกาย</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+</ul>
+<h2>📂 Directory <code>actions/</code> (Server Actions)</h2>
+<p>ฟังก์ชันที่ทำงานฝั่ง Server ที่สามารถเรียกใช้ได้โดยตรงจาก Component ฝั่ง Frontend</p>
+<ul>
+    <li><strong>admin.actions.ts</strong>: จัดการข้อมูลผู้ดูแลระบบ, การอัปเดตโปรไฟล์, และการลบบัญชี</li>
+    <li><strong>auth.actions.ts / auth-cookie.actions.ts</strong>: จัดการ Logic การ Login/Logout และ Session Cookie</li>
+    <li><strong>user.actions.ts / dependent.actions.ts / caregiver.actions.ts</strong>: การจัดการข้อมูล (CRUD) สำหรับ User แต่ละประเภท</li>
+    <li><strong>alert.actions.ts / rescue.actions.ts</strong>: Logic สำหรับจัดการการแจ้งเตือนและการกู้ภัย</li>
+    <li><strong>equipment.actions.ts</strong>: Logic สำหรับการติดตามอุปกรณ์, สต็อก, และการยืม-คืน</li>
+    <li><strong>safety-settings.actions.ts</strong>: จัดการการตั้งค่าความปลอดภัย (Zone, Alert Thresholds)</li>
+    <li><strong>sidebar.actions.ts</strong>: ข้อมูลประกอบสำหรับ Sidebar (เช่น ตัวเลขแจ้งเตือน)</li>
+    <li><strong>liff-auth.actions.ts</strong>: จัดการการเชื่อมต่อกับ LINE Login</li>
+</ul>
+<h2>📂 Directory <code>services/</code></h2>
+<p>ชั้น Business Logic รวบรวม Logic ที่ซับซ้อนและการติดต่อกับฐานข้อมูล</p>
+<ul>
+    <li><strong>auth.service.ts</strong>: Logic หลักสำหรับการยืนยันตัวตน (Hash Password, Create Token)</li>
+    <li><strong>caregiver.service.ts</strong>: Logic เพิ่มเติมสำหรับการจัดการผู้ดูแล</li>
+    <li><strong>thai-data.service.ts</strong>: จัดการข้อมูลที่อยู่ (จังหวัด, อำเภอ, ตำบล) ของประเทศไทย</li>
+</ul>
+<h2>📂 Directory <code>components/</code></h2>
+<p>React Components สำหรับ UI</p>
+<ul>
+    <li><strong>features/</strong>: Component ที่มีความฉลาดและผูกกับ Business Domain เฉพาะ
+        <ul>
+            <li><code>admins/</code>: ตารางรายชื่อ Admin และการจัดการ</li>
+            <li><code>auth/</code>: แบบฟอร์มการเข้าสู่ระบบ</li>
+            <li><code>caregivers/</code>, <code>dependents/</code>: รายการ, โปรไฟล์, และแบบฟอร์มจัดการผู้ใช้งาน</li>
+            <li><code>dashboard/</code>: กราฟ, สถิติ, และ Widget ภาพรวม</li>
+            <li><code>monitoring/</code>: หน้าจอ Monitoring แบบ Real-time, แผนที่</li>
+            <li><code>settings/</code>: หน้าตั้งค่าและจัดการบัญชีส่วนตัว</li>
+            <li><code>transaction/</code>: รายการเหตุการณ์หรือ Transaction ของระบบ (ยืม-คืนอุปกรณ์)</li>
+        </ul>
+    </li>
+    <li><strong>ui/</strong>: UI Elements ทั่วไปที่นำกลับมาใช้ซ้ำได้ (Buttons, Inputs, Cards, Dialogs)</li>
+    <li><strong>layouts/</strong>: Component สำหรับโครงสร้างหน้าเว็บ (Sidebar, Header)</li>
+</ul>
+<h2>📂 Directory <code>lib/</code></h2>
+<p>Utilities และ Libraries ที่ใช้ร่วมกัน</p>
+<ul>
+    <li><strong>db/prisma.ts</strong>: Prisma Client Instance สำหรับเชื่อมต่อฐานข้อมูล</li>
+    <li><strong>auth/</strong>: ตัวช่วยเกี่ยวกับการยืนยันตัวตน (<code>jwt.ts</code>, <code>password.ts</code>, <code>session.ts</code>)</li>
+    <li><strong>line/</strong>: Utilities สำหรับเชื่อมต่อกับ LINE API (<code>client.ts</code>, <code>flex-messages.ts</code>)</li>
+    <li><strong>validations/</strong>: Zod Schemas สำหรับตรวจสอบความถูกต้องของฟอร์ม</li>
+    <li><strong>utils.ts</strong>: ฟังก์ชันช่วยเหลือทั่วไป</li>
+</ul>
+<h2>📂 Directory <code>prisma/</code></h2>
+<p>การกำหนดค่าฐานข้อมูล</p>
+<ul>
+    <li><strong>schema.prisma</strong>: นิยามโครงสร้างฐานข้อมูล (Models) และความสัมพันธ์ระหว่างตาราง</li>
+    <li><strong>seed.ts</strong>: สคริปต์สำหรับสร้างข้อมูลจำลองเริ่มต้น</li>
+</ul>
+<h2>📂 Directory <code>types/</code></h2>
+<p>TypeScript User Definitions</p>
+<ul>
+    <li><strong>auth.types.ts</strong>: Type definitions สำหรับระบบ Authentication และ Response data</li>
+</ul>
+</body>
+</html>

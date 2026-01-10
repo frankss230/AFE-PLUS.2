@@ -10,9 +10,9 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
   const isLoginPage = pathname === '/admin/login';
 
-  // =========================================================
-  // 1. ป้องกันพื้นที่หวงห้าม (Admin Only)
-  // =========================================================
+  
+  
+  
   if (isProtectedRoute && !isLoginPage) {
     if (!token) {
       return redirectToLogin(request);
@@ -34,9 +34,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // =========================================================
-  // 2. ถ้าเป็น Admin แล้ว ห้ามเข้าหน้า Login ซ้ำ (ดีดไป Dashboard เลย)
-  // =========================================================
+  
+  
+  
   if (isLoginPage && token) {
     const payload = await verifyToken(token);
     
@@ -45,9 +45,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // =========================================================
-  // 3. ปล่อยผ่าน + ตั้งค่า Header ห้าม Cache (Security)
-  // =========================================================
+  
+  
+  
   const response = NextResponse.next();
   
   if (isProtectedRoute) {
@@ -64,7 +64,6 @@ function redirectToLogin(request: NextRequest) {
   
   const response = NextResponse.redirect(loginUrl);
   
-  // ห้าม Cache การ Redirect
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   response.headers.set('Pragma', 'no-cache');
   response.headers.set('Expires', '0');

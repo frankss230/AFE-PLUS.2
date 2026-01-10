@@ -17,7 +17,6 @@ export default async function EquipmentPage() {
             <h1 className="text-3xl font-bold text-gray-900">จัดการอุปกรณ์</h1>
             <p className="text-gray-600 mt-1">เพิ่ม/ลด และตรวจสอบสถานะครุภัณฑ์</p>
         </div>
-        {/* ปุ่มเพิ่ม (Modal) */}
         <EquipmentDialog mode="create" />
       </div>
       

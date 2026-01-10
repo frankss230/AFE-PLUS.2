@@ -7,7 +7,7 @@ export function AlertsAutoRefresh() {
   const router = useRouter();
 
   useEffect(() => {
-    // refresh every 5 seconds
+    
     const interval = setInterval(() => {
       router.refresh();
     }, 5000);

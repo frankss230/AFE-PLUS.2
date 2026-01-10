@@ -11,10 +11,10 @@ export default function EditCaregiverModal({ initialData }: { initialData: any }
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
-  // ฟังก์ชันนี้จะถูกเรียกเมื่อบันทึกข้อมูลใน UserForm สำเร็จ
+  
   const handleSuccess = () => {
-    setOpen(false); // สั่งปิด Popup
-    router.refresh(); // สั่งรีเฟรชหน้าจอหลัก
+    setOpen(false); 
+    router.refresh(); 
   };
 
   return (
@@ -26,7 +26,7 @@ export default function EditCaregiverModal({ initialData }: { initialData: any }
         </Button>
       </DialogTrigger>
       
-      {/* bg-white: ใส่เพื่อให้แน่ใจว่าพื้นหลังเป็นสีขาว */}
+      {}
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col p-0 overflow-hidden bg-white border-none shadow-2xl rounded-2xl">
         <DialogHeader className="px-6 py-4 border-b bg-slate-50/80 backdrop-blur-sm sticky top-0 z-10">
           <DialogTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -38,7 +38,7 @@ export default function EditCaregiverModal({ initialData }: { initialData: any }
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-white">
-          {/* ส่ง handleSuccess ไปให้ฟอร์ม เพื่อให้มันสั่งปิดตัวเองได้เมื่อบันทึกเสร็จ */}
+          {}
           <UserForm initialData={initialData} onSuccess={handleSuccess} />
         </div>
       </DialogContent>

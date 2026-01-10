@@ -7,13 +7,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Validate input
     const validated = loginSchema.parse(body);
 
-    // Login
     const { user, token } = await loginUser(validated.username, validated.password);
 
-    // Create session
     await createSession(token);
 
     return NextResponse.json({

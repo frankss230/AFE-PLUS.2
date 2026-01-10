@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (user.lineId) {
       await sendLineNotification(
         user.lineId,
-        `✅ ลงทะเบียนสำเร็จ\n\nยินดีต้อนรับคุณ ${firstName} ${lastName}\n\nคุณสามารถเริ่มใช้งานระบบได้แล้ว`
+        `ลงทะเบียนสำเร็จ\n\nยินดีต้อนรับคุณ ${firstName} ${lastName}\n\nคุณสามารถเริ่มใช้งานระบบได้แล้ว`
       );
     }
 

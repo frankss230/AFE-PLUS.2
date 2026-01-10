@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Sarabun } from 'next/font/google'; // Import Sarabun
+import { Sarabun } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { GlobalModal } from '@/components/ui/global-modal';
 import '../styles/globals.css';
@@ -23,7 +23,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th" suppressHydrationWarning={true}>
-      {/* ✅ เติม font-sans ตรงนี้ครับ */}
       <body className={`${sarabun.variable} font-sans antialiased`}>
         {children}
         <Toaster position="top-right" richColors closeButton />

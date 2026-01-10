@@ -137,7 +137,7 @@ export default function TransactionModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl border-0 shadow-2xl">
         
-        {/* 🟡 ส่วน Loading: Heart Radar กลับมาแล้ว! */}
+        {}
         {loadingData || !transaction ? (
              <div className="h-[350px] flex flex-col items-center justify-center bg-white/50 backdrop-blur-sm">
                 
@@ -145,13 +145,13 @@ export default function TransactionModal({
 
                 <div className="relative flex flex-col items-center scale-90">
                     <div className="relative flex h-20 w-20 items-center justify-center">
-                        {/* วงแหวนเรดาร์ */}
+                        {}
                         <div className="absolute inset-0 h-full w-full rounded-full bg-blue-400 opacity-20 animate-ping"></div>
                         
                         <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-white/50 bg-white/60 shadow-lg backdrop-blur-md">
-                            {/* ไอคอนหมุน */}
+                            {}
                             <div className="absolute inset-0 h-full w-full animate-spin rounded-full border-4 border-slate-100 border-t-blue-600"></div>
-                            {/* ไอคอนหัวใจ */}
+                            {}
                             <Activity className="h-6 w-6 text-blue-600" />
                         </div>
                     </div>
@@ -163,7 +163,7 @@ export default function TransactionModal({
                 </div>
              </div>
         ) : (
-            // 🟢 ส่วนเนื้อหาจริง
+            
             <>
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
                     <div className="flex flex-col">
@@ -179,7 +179,7 @@ export default function TransactionModal({
 
                 <div className="p-6 space-y-6 bg-[#F8FAFC]">
                     
-                    {/* 1. ตารางข้อมูลหลัก */}
+                    {}
                     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                         <table className="w-full text-sm">
                         <tbody className="divide-y divide-slate-100">
@@ -221,7 +221,7 @@ export default function TransactionModal({
                         </table>
                     </div>
 
-                    {/* 2. ตารางผู้อนุมัติ (แสดงเมื่ออนุมัติแล้ว) */}
+                    {}
                     {(transaction.status !== 'PENDING' && transaction.status !== 'RETURN_PENDING') && (
                         <div>
                              <h3 className="text-sm font-bold text-slate-700 mb-2 pl-1">การอนุมัติ</h3>
@@ -246,7 +246,7 @@ export default function TransactionModal({
                         </div>
                     )}
 
-                    {/* 3. รายการอุปกรณ์ */}
+                    {}
                     <div>
                         <h3 className="text-sm font-bold text-slate-700 mb-2 pl-1">เครื่องที่ยืม</h3>
                         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -269,7 +269,7 @@ export default function TransactionModal({
                         </div>
                     </div>
 
-                    {/* 4. Action Zone & History Log */}
+                    {}
                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                         
                         <div className="flex items-center justify-between mb-4">
@@ -281,7 +281,7 @@ export default function TransactionModal({
                             )}
                         </div>
 
-                        {/* ปุ่มกดอนุมัติ/ไม่อนุมัติ */}
+                        {}
                         {((transaction.status === 'PENDING' || transaction.status === 'RETURN_PENDING') && !isEditing) ? (
                             <div className="grid grid-cols-2 gap-4">
                                 <Button onClick={() => handleStatusUpdate(view === 'borrow' ? 'REJECTED' : 'RETURN_FAILED')} disabled={isSaving} className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 h-12">
@@ -293,7 +293,7 @@ export default function TransactionModal({
                             </div>
                         ) : null}
 
-                        {/* ฟอร์มแก้ไข */}
+                        {}
                         {isEditing && (
                             <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex gap-3">
@@ -336,7 +336,7 @@ export default function TransactionModal({
                             </div>
                         )}
 
-                        {/* ประวัติการแก้ไข (History Log) */}
+                        {}
                         {transaction.history && transaction.history.length > 0 && (
                             <div className="mt-6 pt-4 border-t border-slate-100">
                                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">

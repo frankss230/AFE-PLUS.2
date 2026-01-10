@@ -41,26 +41,26 @@ export async function POST(req: Request) {
     }
 
     if (!validateLineSignature(bodyText, signature)) {
-      console.warn("⚠️ Invalid LINE signature received.");
+      console.warn("️ Invalid LINE signature received.");
     }
 
     const body = JSON.parse(bodyText);
     const events: WebhookEvent[] = body.events;
 
-    console.log("🔥 EVENT LOG:", JSON.stringify(events, null, 2));
+    console.log(" EVENT LOG:", JSON.stringify(events, null, 2));
 
     await Promise.all(
       events.map(async (event) => {
-        // 🟢 PART 1: Rescue Group Logic
+        
         if (event.type === "join" && event.source.type === "group") {
           const groupId = event.source.groupId;
-          console.log(`🤖 บอทเข้ากลุ่ม ID: ${groupId}`);
+          console.log(` บอทเข้ากลุ่ม ID: ${groupId}`);
           try {
             await prisma.rescueGroup.deleteMany();
             await prisma.rescueGroup.create({ data: { groupId } });
             await client.replyMessage(event.replyToken, {
               type: "text",
-              text: '✅ บันทึกกลุ่มนี้เป็น "กลุ่มแจ้งเหตุฉุกเฉิน" เรียบร้อยแล้วครับ 🚑',
+              text: ' บันทึกกลุ่มนี้เป็น "กลุ่มแจ้งเหตุฉุกเฉิน" เรียบร้อยแล้วครับ ',
             });
           } catch (e) {
             console.error("Database Error:", e);
@@ -71,16 +71,16 @@ export async function POST(req: Request) {
           await prisma.rescueGroup.deleteMany({
             where: { groupId: event.source.groupId },
           });
-          console.log("👋 บอทออกจากกลุ่ม - ลบข้อมูลแล้ว");
+          console.log(" บอทออกจากกลุ่ม - ลบข้อมูลแล้ว");
         }
 
-        // 🟢 PART 3: Postback Action
+        
         if (event.type === "postback") {
           const data = event.postback.data;
           const params = new URLSearchParams(data);
           const action = params.get("action");
 
-          // --- Action: ปิดเคสล้ม (Resolve Fall) ---
+          
           if (action === "resolve_fall") {
             const recordId = parseInt(params.get("id") || "0");
             if (recordId > 0) {
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
                     data: { status: "RESOLVED" },
                   });
 
-                  // รีเซ็ต Flag โซน
+                  
                   await prisma.dependentProfile.update({
                     where: { id: fallRecord.dependentId },
                     data: {
@@ -109,54 +109,54 @@ export async function POST(req: Request) {
 
                 await client.replyMessage(event.replyToken, {
                   type: "text",
-                  text: "✅ รับทราบครับ ระบบบันทึกว่าท่านได้เข้าช่วยเหลือเรียบร้อยแล้ว",
+                  text: " รับทราบครับ ระบบบันทึกว่าท่านได้เข้าช่วยเหลือเรียบร้อยแล้ว",
                 });
               } catch (e) {
                 console.error("Resolve Fall Error:", e);
                 await client.replyMessage(event.replyToken, {
                   type: "text",
-                  text: "❌ เกิดข้อผิดพลาดในการบันทึกสถานะ",
+                  text: " เกิดข้อผิดพลาดในการบันทึกสถานะ",
                 });
               }
             }
           }
-          // --- Action: ขอความช่วยเหลือ (LINE SOS) ---
-          // เผื่อในอนาคตใช้ปุ่ม Postback แทน Text Message
+          
+          
           else if (action === "trigger_sos") {
               await handleSosRequest(event.source.userId!, event.replyToken);
           }
         }
 
-        // 🟡 PART 2: Message Logic
+        
         if (event.type === "message" && event.message.type === "text") {
           const userMessage = event.message.text.trim();
           const senderLineId = event.source.userId;
           if (!senderLineId) return;
 
-          // --- 1. ตั้งค่าความปลอดภัย ---
+          
           if (userMessage === "ตั้งค่าความปลอดภัย") {
             await handleSafetySettingsRequest(senderLineId, event.replyToken);
           }
-          // --- 2. สถานะปัจจุบัน ---
+          
           else if (
             userMessage === "สถานะปัจจุบัน" ||
             userMessage === "ดูข้อมูลสุขภาพ"
           ) {
             await handleStatusRequest(senderLineId, event.replyToken);
           }
-          // --- 3. ข้อมูลรายละเอียด ---
+          
           else if (userMessage === "ข้อมูลรายละเอียด") {
             await handleProfileRequest(senderLineId, event.replyToken);
           }
-          // --- 4. การเชื่อมต่อนาฬิกา ---
+          
           else if (userMessage === "ข้อมูลการเชื่อมต่อนาฬิกา") {
             await handleWatchConnectionRequest(senderLineId, event.replyToken);
           }
-          // --- 5. การยืม-คืนครุภัณฑ์ ---
+          
           else if (userMessage === "การยืม-คืนครุภัณฑ์") {
             await handleBorrowReturnRequest(senderLineId, event.replyToken);
           }
-          // --- 6. ลงทะเบียน ---
+          
           else if (
             userMessage.includes("ลงทะเบียน") &&
             event.source.type === "user"
@@ -170,8 +170,8 @@ export async function POST(req: Request) {
               contents: flexMsg as any,
             });
           }
-          // --- 7. ขอความช่วยเหลือ (SOS) ---
-          // อันนี้คีย์เวิร์ดสำคัญ! ถ้านายน้อยตั้ง Rich Menu เป็นคำนี้
+          
+          
           else if (userMessage === "ขอความช่วยเหลือ" || userMessage === "แจ้งเหตุฉุกเฉิน") {
               await handleSosRequest(senderLineId, event.replyToken);
           }
@@ -189,12 +189,12 @@ export async function POST(req: Request) {
   }
 }
 
-// ============================================================
-// 🛠️ Helper Functions
-// ============================================================
-// ฟังก์ชันจัดการ SOS จาก LINE (Admin Web + Rescue Group)
+
+
+
+
 async function handleSosRequest(lineId: string, replyToken: string) {
-    // 1. ดึงข้อมูล User และ Dependent
+    
     const caregiverUser = await prisma.user.findFirst({
         where: { lineId },
         include: { 
@@ -210,7 +210,7 @@ async function handleSosRequest(lineId: string, replyToken: string) {
         }
     });
 
-    // ถ้าไม่เจอ user ให้ส่งปุ่มลงทะเบียน
+    
     if (!caregiverUser || !caregiverUser.caregiverProfile || caregiverUser.caregiverProfile.dependents.length === 0) {
         await sendNotRegisteredFlex(replyToken);
         return;
@@ -220,12 +220,12 @@ async function handleSosRequest(lineId: string, replyToken: string) {
     const location = dependent.locations[0];
     const caregiver = caregiverUser.caregiverProfile;
 
-    // 2. บันทึกลง DB (เพื่อให้ขึ้นหน้า Admin Web) ✅
+    
     const helpRecord = await prisma.extendedHelp.create({
         data: {
             reporterId: caregiver.id,
             dependentId: dependent.id,
-            type: "LINE_SOS", // Type นี้จะไปโชว์ในหน้า Admin
+            type: "LINE_SOS", 
             status: "DETECTED",
             latitude: location?.latitude || 0,
             longitude: location?.longitude || 0,
@@ -233,34 +233,34 @@ async function handleSosRequest(lineId: string, replyToken: string) {
         }
     });
 
-    // 3. ตอบกลับผู้ใช้ในแชทส่วนตัว ✅
+    
     await client.replyMessage(replyToken, {
         type: "text",
-        text: "🚨 ระบบได้รับแจ้งเหตุแล้ว! กำลังประสานงานไปยังกลุ่มช่วยเหลือทันทีครับ"
+        text: " ระบบได้รับแจ้งเหตุแล้ว! กำลังประสานงานไปยังกลุ่มช่วยเหลือทันทีครับ"
     });
 
-    // 4. ส่งแจ้งเตือนเข้า 'กลุ่มกู้ภัย' (Rescue Group) 🚨 ✅
-    const rescueGroup = await prisma.rescueGroup.findFirst(); // หา Group ID
+    
+    const rescueGroup = await prisma.rescueGroup.findFirst(); 
     
     if (rescueGroup) {
-        console.log(`📣 Sending LINE SOS to Group: ${rescueGroup.groupId}`);
+        console.log(` Sending LINE SOS to Group: ${rescueGroup.groupId}`);
         
         await sendCriticalAlertFlexMessage(
-            rescueGroup.groupId, // ส่งเข้ากลุ่ม
+            rescueGroup.groupId, 
             {
                 latitude: location?.latitude || 0,
                 longitude: location?.longitude || 0,
                 timestamp: new Date(),
-                id: helpRecord.id // ส่ง ID เคสไปด้วย
+                id: helpRecord.id 
             },
-            caregiverUser, // ข้อมูล User (caregiver)
-            caregiver.phone, // เบอร์โทรติดต่อกลับ
-            dependent, // ข้อมูลผู้ป่วย
-            "SOS", // Alert Type
-            `🚨 แจ้งเหตุฉุกเฉินจากญาติ: คุณ ${caregiver.firstName} ขอความช่วยเหลือ!` // ข้อความแจ้งเตือน (Noti Text)
+            caregiverUser, 
+            caregiver.phone, 
+            dependent, 
+            "SOS", 
+            ` แจ้งเหตุฉุกเฉินจากญาติ: คุณ ${caregiver.firstName} ขอความช่วยเหลือ!` 
         );
     } else {
-        console.warn("⚠️ ไม่พบ Rescue Group ในระบบ (บอทยังไม่ได้ถูกเชิญเข้ากลุ่ม หรือไม่ได้ Join)");
+        console.warn("️ ไม่พบ Rescue Group ในระบบ (บอทยังไม่ได้ถูกเชิญเข้ากลุ่ม หรือไม่ได้ Join)");
     }
 }
 
@@ -313,9 +313,9 @@ async function handleSafetySettingsRequest(lineId: string, replyToken: string) {
   });
 }
 
-// =======================================================
-// 🔥 ฟังก์ชันพระเอกที่แก้ใหม่ (handleStatusRequest)
-// =======================================================
+
+
+
 
 async function handleStatusRequest(lineId: string, replyToken: string) {
   const caregiverUser = await prisma.user.findFirst({
@@ -345,11 +345,11 @@ async function handleStatusRequest(lineId: string, replyToken: string) {
   const latestHr = dependent.heartRateRecords[0];
   const latestTemp = dependent.temperatureRecords[0];
 
-  // 1. ถ้า GPS ปิดอยู่ -> ต้องปลุก -> ขึ้นหน้าจอรอดาวเทียม 📡
+  
   if (!dependent.isGpsEnabled) {
-    console.log(`📡 GPS OFF: Waking up Dependent: ${dependent.id}`);
+    console.log(` GPS OFF: Waking up Dependent: ${dependent.id}`);
 
-    // สั่งเปิด GPS + รอติดตามผล (อันนี้ต้องรอ เพราะไม่มีข้อมูล)
+    
     await prisma.dependentProfile.update({
       where: { id: dependent.id },
       data: { waitViewLocation: true, isGpsEnabled: true },
@@ -358,18 +358,18 @@ async function handleStatusRequest(lineId: string, replyToken: string) {
     const waitingFlex = createWaitingGpsBubble();
     await client.replyMessage(replyToken, {
         type: 'flex',
-        altText: '📡 กำลังค้นหาตำแหน่ง...',
+        altText: ' กำลังค้นหาตำแหน่ง...',
         contents: waitingFlex as any
     });
     return; 
   }
 
-  // =======================================================
-  // 🔥 แก้ตรงนี้: ลบตัวดักรอ (waitViewLocation) ทิ้งไปเลย!
-  // =======================================================
   
-  // 2. ถ้า GPS เปิดอยู่แล้ว -> โชว์ข้อมูลทันที (จบ!) 🚀
-  // ไม่ต้องสั่ง prisma.update waitViewLocation แล้ว เพราะจะทำให้ข้อความเบิ้ล
+  
+  
+  
+  
+  
   
   const healthData = {
     bpm: latestHr?.bpm || 0,
@@ -388,7 +388,7 @@ async function handleStatusRequest(lineId: string, replyToken: string) {
   });
 }
 
-// ✅ FIX: ฟังก์ชัน Push Status
+
 export async function pushStatusMessage(lineId: string, dependentId: number) {
     const dependent = await prisma.dependentProfile.findUnique({
         where: { id: dependentId },
@@ -400,7 +400,7 @@ export async function pushStatusMessage(lineId: string, dependentId: number) {
     });
 
     if (!dependent) {
-        console.warn(`⚠️ ไม่พบ Dependent ID: ${dependentId} สำหรับ Push Message`);
+        console.warn(`️ ไม่พบ Dependent ID: ${dependentId} สำหรับ Push Message`);
         return;
     }
 
@@ -424,7 +424,7 @@ export async function pushStatusMessage(lineId: string, dependentId: number) {
             altText: `สถานะปัจจุบัน: คุณ${dependent.firstName}`,
             contents: flexMessage,
         });
-        console.log("✅ ส่งสถานะปัจจุบันสำเร็จ");
+        console.log(" ส่งสถานะปัจจุบันสำเร็จ");
     } catch (e) {
         console.error("Failed to push status message:", e);
     }
@@ -534,13 +534,13 @@ async function handleBorrowReturnRequest(lineId: string, replyToken: string) {
   });
 }
 
-// ============================================================
-// 🎨 ฟังก์ชันสร้าง Flex Message "กำลังค้นหา" (แปะไว้ล่างสุดไฟล์)
-// ============================================================
+
+
+
 function createWaitingGpsBubble() {
   return {
     "type": "bubble",
-    "size": "mega", // ขนาดกำลังดี ไม่ใหญ่เทอะทะ
+    "size": "mega", 
     "body": {
       "type": "box",
       "layout": "vertical",
@@ -551,12 +551,12 @@ function createWaitingGpsBubble() {
           "contents": [
             {
               "type": "text",
-              "text": "📡", // ไอคอนจานดาวเทียม
+              "text": "", 
               "size": "3xl",
               "align": "center"
             }
           ],
-          "backgroundColor": "#E8F3FF", // พื้นหลังวงกลมสีฟ้าอ่อน
+          "backgroundColor": "#E8F3FF", 
           "cornerRadius": "100px",
           "width": "80px",
           "height": "80px",
@@ -571,13 +571,13 @@ function createWaitingGpsBubble() {
           "size": "lg",
           "align": "center",
           "margin": "lg",
-          "color": "#1D4ED8" // สีน้ำเงินเข้ม
+          "color": "#1D4ED8" 
         },
         {
           "type": "text",
           "text": "ระบบกำลังสั่งเปิด GPS และค้นหาตำแหน่งล่าสุด กรุณารอสักครู่",
           "wrap": true,
-          "color": "#64748B", // สีเทาอ่านง่าย
+          "color": "#64748B", 
           "size": "sm",
           "align": "center",
           "margin": "md"

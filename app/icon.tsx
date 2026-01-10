@@ -1,6 +1,5 @@
 import { ImageResponse } from 'next/og';
 
-// ขนาดรูป (32x32)
 export const size = {
   width: 32,
   height: 32,
@@ -8,9 +7,8 @@ export const size = {
 export const contentType = 'image/png';
 
 export default function Icon() {
-  // สีธีมเดียวกับ Loading Component
-  const blue = '#2563EB'; // blue-600
-  const slate = '#F1F5F9'; // slate-100
+  const blue = '#2563EB';
+  const slate = '#F1F5F9';
 
   return new ImageResponse(
     (
@@ -22,35 +20,32 @@ export default function Icon() {
           alignItems: 'center',
           justifyContent: 'center',
           background: 'transparent',
-          position: 'relative', // ใช้ relative เพื่อซ้อน Layer
+          position: 'relative',
         }}
       >
-        {/* Layer 1: พื้นหลังสีขาว (รองพื้น) */}
         <div
           style={{
             position: 'absolute',
-            width: '26px', // เล็กกว่าวงกลมนิดนึงเพื่อไม่ให้กินขอบ
+            width: '26px',
             height: '26px',
             borderRadius: '50%',
             background: 'white',
           }}
         />
 
-        {/* Layer 2: วงแหวน Spinner (เอียงขวา) */}
         <div
           style={{
             position: 'absolute',
             width: '32px',
             height: '32px',
             borderRadius: '50%',
-            border: `4px solid ${slate}`, // สีขอบเทาจางๆ
-            borderTop: `4px solid ${blue}`, // สีขอบฟ้า (ส่วนที่หมุน)
-            transform: 'rotate(45deg)',     // ✅ สั่งเอียงขวา 45 องศาตรงนี้ครับ
+            border: `4px solid ${slate}`,
+            borderTop: `4px solid ${blue}`,
+            transform: 'rotate(45deg)',
             boxSizing: 'border-box',
           }}
         />
 
-        {/* Layer 3: ไอคอนกราฟหัวใจ (อยู่บนสุด) */}
         <div
             style={{
                 position: 'absolute',

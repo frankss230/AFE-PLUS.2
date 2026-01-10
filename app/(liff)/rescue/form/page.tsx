@@ -16,23 +16,19 @@ export default function RescueFormPage() {
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAP || ''
     });
 
-    // Data State
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [details, setDetails] = useState("");
     const [victimLoc, setVictimLoc] = useState<{lat: number, lng: number} | null>(null);
 
-    // Map & Tracking State
     const [myLoc, setMyLoc] = useState<{lat: number, lng: number} | null>(null);
-    const [mapCenter, setMapCenter] = useState<{lat: number, lng: number} | null>(null); // ✅ ใช้คุม Center แยกต่างหาก
+    const [mapCenter, setMapCenter] = useState<{lat: number, lng: number} | null>(null);
     const [directions, setDirections] = useState<any>(null);
     
-    // Refs
     const mapRef = useRef<google.maps.Map | null>(null);
     const watchIdRef = useRef<number | null>(null);
     const lastSentRef = useRef<number>(0);
 
-    // UI State
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [status, setStatus] = useState("checking"); 
@@ -41,7 +37,6 @@ export default function RescueFormPage() {
 
     const STORAGE_KEY = `rescue_owner_${alertId}`;
 
-    // 1. Init Data
     useEffect(() => {
         const init = async () => {
             try {
@@ -54,7 +49,6 @@ export default function RescueFormPage() {
                 if (data.lat && data.lng) {
                     const vLoc = { lat: parseFloat(data.lat), lng: parseFloat(data.lng) };
                     setVictimLoc(vLoc);
-                    // เริ่มต้นให้แมพอยู่ตรงกลางระหว่างคนเจ็บ (หรือรอ GPS เรา)
                     setMapCenter(vLoc);
                 }
 
@@ -85,7 +79,6 @@ export default function RescueFormPage() {
         return () => stopTracking();
     }, [alertId]);
 
-    // 2. Routing (คำนวณเส้นทางครั้งเดียวพอ หรือเมื่อเปลี่ยนเป้าหมาย)
     useEffect(() => {
         if (isLoaded && myLoc && victimLoc) {
             const service = new google.maps.DirectionsService();
@@ -97,11 +90,8 @@ export default function RescueFormPage() {
                 if (status === 'OK') setDirections(result);
             });
         }
-    }, [isLoaded, myLoc, victimLoc]); // myLoc เปลี่ยน Route เปลี่ยนได้ แต่ Map จะไม่ขยับมั่วเพราะ preserveViewport
+    }, [isLoaded, myLoc, victimLoc]);
 
-    // ---------------------------------------------
-    // 🛰️ GPS Logic
-    // ---------------------------------------------
     const startTracking = async () => {
         if (!('geolocation' in navigator)) return;
 
@@ -109,12 +99,8 @@ export default function RescueFormPage() {
             (pos) => {
                 const { latitude, longitude } = pos.coords;
                 
-                // อัปเดตพิกัดตัวเอง (จุดสีน้ำเงินขยับ)
                 setMyLoc({ lat: latitude, lng: longitude });
 
-                // *หมายเหตุ: เราไม่สั่ง setMapCenter ที่นี่ แมพเลยจะไม่เด้งตาม*
-
-                // ส่ง Server (Throttle 5 วิ)
                 const now = Date.now();
                 if (alertId && (now - lastSentRef.current > 5000)) { 
                     updateRescuerLocation(alertId, latitude, longitude);
@@ -130,7 +116,6 @@ export default function RescueFormPage() {
         if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
     };
 
-    // ปุ่มกดเพื่อดึงกล้องกลับมาหาเรา
     const handleRecenter = () => {
         if (myLoc && mapRef.current) {
             mapRef.current.panTo(myLoc);
@@ -138,9 +123,6 @@ export default function RescueFormPage() {
         }
     };
 
-    // ---------------------------------------------
-    // Actions
-    // ---------------------------------------------
     const handleAccept = async () => {
         if (!name.trim()) return setErrorMsg("กรุณาระบุชื่อผู้ช่วยเหลือ");
         if (phone.length !== 10 || !phone.startsWith('0')) return setErrorMsg("เบอร์โทรศัพท์ต้องมี 10 หลัก");
@@ -195,14 +177,10 @@ export default function RescueFormPage() {
         setActionLoading(false);
     };
 
-    // ---------------------------------------------
-    // Render
-    // ---------------------------------------------
-    if (loading) return <div className="h-screen bg-[#FFFBF5] flex items-center justify-center text-gray-400">⏳ กำลังโหลด...</div>;
+    if (loading) return <div className="h-screen bg-[#FFFBF5] flex items-center justify-center text-gray-400">กำลังโหลด...</div>;
 
     if (status === "locked") return (
         <div className="h-screen bg-gray-100 flex flex-col items-center justify-center p-6 text-center">
-             <div className="text-6xl mb-4 grayscale opacity-50">🔒</div>
              <h1 className="text-xl font-bold text-gray-800">มีผู้รับเคสไปแล้ว</h1>
              <p className="text-gray-500 mt-2">โดย: {lockedBy}</p>
              <button onClick={() => liff.closeWindow()} className="mt-8 w-full py-3 bg-white border border-gray-300 rounded-xl text-gray-600 font-bold shadow-sm">ปิดหน้าต่าง</button>
@@ -211,9 +189,8 @@ export default function RescueFormPage() {
 
     if (status === "success") return (
         <div className="h-screen bg-green-50 flex flex-col items-center justify-center p-6 text-center">
-             <div className="text-6xl mb-4 animate-bounce">✅</div>
              <h1 className="text-2xl font-bold text-green-700">ปิดเคสสมบูรณ์</h1>
-             <p className="text-gray-500 mt-2">ขอบคุณที่ช่วยเหลือครับ ❤️</p>
+             <p className="text-gray-500 mt-2">ขอบคุณที่ช่วยเหลือครับ</p>
              <button onClick={() => liff.closeWindow()} className="mt-8 w-full py-3 bg-white border border-green-200 rounded-xl text-green-600 font-bold shadow-sm">ปิดหน้าต่าง</button>
         </div>
     );
@@ -223,33 +200,30 @@ export default function RescueFormPage() {
     return (
         <div className="min-h-screen bg-[#FFFBF5] font-sans pb-10 flex flex-col gap-6">
             
-            {/* 🗺️ MAP SECTION (แยกส่วนชัดเจน) */}
             <div className="relative mx-4 mt-6 h-[320px] rounded-[32px] border-[6px] border-white shadow-xl overflow-hidden bg-slate-100 shrink-0">
                 {isLoaded && mapCenter ? (
                     <GoogleMap
                         mapContainerStyle={{ width: '100%', height: '100%' }}
-                        center={mapCenter} // ใช้ State เริ่มต้นครั้งเดียว
+                        center={mapCenter}
                         zoom={15}
-                        onLoad={map => { mapRef.current = map; }} // เก็บ Ref ไว้คุมกล้อง
+                        onLoad={map => { mapRef.current = map; }}
                         options={{ 
                             disableDefaultUI: true, 
                             zoomControl: false,
                         }}
                     >
-                        {/* 🔴 จุดคนเจ็บ */}
                         {victimLoc && (
                             <OverlayView position={victimLoc} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
                                 <div className="relative flex items-center justify-center w-12 h-12 -translate-x-1/2 -translate-y-1/2">
                                     <div className="absolute w-full h-full rounded-full bg-red-500 opacity-30 animate-ping"></div>
                                     <div className="relative w-4 h-4 border-2 border-white rounded-full bg-red-600 shadow-md"></div>
                                     <div className="absolute top-full mt-2 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold text-red-600 shadow-sm border border-red-100 whitespace-nowrap">
-                                        📍 ผู้ประสบเหตุ
+                                         ผู้ประสบเหตุ
                                     </div>
                                 </div>
                             </OverlayView>
                         )}
 
-                        {/* 🔵 จุดเรา (Rescuer) */}
                         {isAccepted && myLoc && (
                             <OverlayView position={myLoc} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
                                 <div className="relative flex items-center justify-center w-12 h-12 -translate-x-1/2 -translate-y-1/2">
@@ -261,13 +235,12 @@ export default function RescueFormPage() {
                             </OverlayView>
                         )}
 
-                        {/* 🛣️ เส้นทาง (✅ Fix: preserveViewport = true) */}
                         {directions && (
                             <DirectionsRenderer 
                                 directions={directions} 
                                 options={{ 
                                     suppressMarkers: true, 
-                                    preserveViewport: true, // 👈 พระเอกของเรา! หยุดแย่งกล้อง
+                                    preserveViewport: true,
                                     polylineOptions: { strokeColor: "#3B82F6", strokeWeight: 6, strokeOpacity: 0.8 } 
                                 }} 
                             />
@@ -279,7 +252,6 @@ export default function RescueFormPage() {
                     </div>
                 )}
                 
-                {/* ปุ่ม Recenter (เป้า) */}
                 {isAccepted && (
                     <button 
                         onClick={handleRecenter}
@@ -289,7 +261,6 @@ export default function RescueFormPage() {
                     </button>
                 )}
 
-                {/* ปุ่มนำทาง Google Maps */}
                 {victimLoc && (
                     <a 
                         href={`https://www.google.com/maps/dir/?api=1&destination=${victimLoc.lat},${victimLoc.lng}`}
@@ -301,18 +272,17 @@ export default function RescueFormPage() {
                 )}
             </div>
 
-            {/* FORM SECTION (แยกออกมาแล้ว) */}
             <div className="px-6 flex-1">
                 <div className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100 space-y-4">
                     
                     <div className="mb-2">
                         <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                            {isAccepted ? <span className="text-green-500">● ปฏิบัติการช่วยเหลือ</span> : "🚑 ยืนยันการช่วยเหลือ"}
+                            {isAccepted ? <span className="text-green-500">● ปฏิบัติการช่วยเหลือ</span> : " ยืนยันการช่วยเหลือ"}
                         </h1>
                         <p className="text-gray-400 text-xs mt-1">Case ID: {alertId}</p>
                     </div>
 
-                    {errorMsg && <div className="bg-red-50 text-red-500 text-xs p-3 rounded-xl">⚠️ {errorMsg}</div>}
+                    {errorMsg && <div className="bg-red-50 text-red-500 text-xs p-3 rounded-xl">️ {errorMsg}</div>}
 
                     <div>
                         <label className="text-xs font-bold text-gray-400 ml-1">ชื่อผู้ช่วยเหลือ</label>
@@ -336,7 +306,7 @@ export default function RescueFormPage() {
                                 onChange={e => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
                                 disabled={isAccepted}
                                 className={`w-full px-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 transition-all ${isAccepted ? 'text-gray-500 bg-gray-100 font-medium' : ''}`}
-                                placeholder="08xxxxxxxx" 
+                                placeholder="ระบุเบอร์โทรของคุณ" 
                             />
                         </div>
 
@@ -350,7 +320,7 @@ export default function RescueFormPage() {
                                 }
                             `}
                         >
-                            {isAccepted ? <span className="text-2xl">✓</span> : actionLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : "รับเคส"}
+                            {isAccepted ? <span className="text-2xl"></span> : actionLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : "รับเคส"}
                         </button>
                     </div>
 

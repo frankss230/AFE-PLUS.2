@@ -5,15 +5,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Slider } from "@/components/ui/slider"; // ใช้ Slider ของ shadcn
+import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Lock, Save, Loader2, Camera, Check, X, ZoomIn } from 'lucide-react';
+import { User, Lock, Save, Loader2, Camera, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateAdminProfile, getAdminProfile } from '@/actions/admin.actions';
-import Cropper from 'react-easy-crop'; // ✅ Import ตัวตัดรูป
+import Cropper from 'react-easy-crop';
 import { Area } from 'react-easy-crop';
 
-// --- Utility Functions สำหรับตัดรูป (ไว้ในไฟล์เดียวกันเลยจะได้ก๊อปง่ายๆ) ---
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -44,9 +43,8 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string>
     pixelCrop.height
   );
 
-  return canvas.toDataURL('image/jpeg', 0.9); // คืนค่าเป็น Base64 Quality 90%
+  return canvas.toDataURL('image/jpeg', 0.9);
 }
-// -------------------------------------------------------------------
 
 export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: number, trigger: React.ReactNode, onUpdateSuccess: (newData: any) => void }) {
   const [open, setOpen] = useState(false);
@@ -56,12 +54,12 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
   });
   const [passwords, setPasswords] = useState({ newPassword: '', confirmPassword: '' });
   
-  // State สำหรับ Cropper
-  const [imageSrc, setImageSrc] = useState<string | null>(null); // รูปต้นฉบับก่อนตัด
+  
+  const [imageSrc, setImageSrc] = useState<string | null>(null); 
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const [isCropping, setIsCropping] = useState(false); // ควบคุมหน้าจอตัดรูป
+  const [isCropping, setIsCropping] = useState(false); 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,11 +88,11 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         setImageSrc(reader.result?.toString() || '');
-        setIsCropping(true); // เปิดโหมดตัดรูป
+        setIsCropping(true); 
       });
       reader.readAsDataURL(file);
     }
-    // Reset value เพื่อให้เลือกรูปเดิมซ้ำได้ถ้าต้องการ
+    
     e.target.value = ''; 
   };
 
@@ -102,9 +100,9 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
     if (imageSrc && croppedAreaPixels) {
         try {
             const croppedImageBase64 = await getCroppedImg(imageSrc, croppedAreaPixels);
-            setData({ ...data, image: croppedImageBase64 }); // บันทึกรูปที่ตัดแล้วลง State
-            setIsCropping(false); // ปิดหน้าตัดรูป
-            setImageSrc(null); // เคลียร์รูปต้นฉบับ
+            setData({ ...data, image: croppedImageBase64 }); 
+            setIsCropping(false); 
+            setImageSrc(null); 
         } catch (e) {
             console.error(e);
             toast.error("เกิดข้อผิดพลาดในการตัดรูป");
@@ -118,7 +116,7 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
         return toast.error("รหัสผ่านใหม่ไม่ตรงกัน");
     }
     setLoading(true);
-    // ส่งข้อมูลรวมถึง image (base64) ไปบันทึก
+    
     const res = await updateAdminProfile(userId, { ...data, newPassword: passwords.newPassword });
 
     if (res.success) {
@@ -142,7 +140,7 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
           <DialogTitle>{isCropping ? 'ปรับแต่งรูปโปรไฟล์' : 'แก้ไขข้อมูลส่วนตัว'}</DialogTitle>
         </DialogHeader>
         
-        {/* --- ✂️ หน้าจอสำหรับ Crop รูป --- */}
+        {}
         {isCropping ? (
             <div className="space-y-4">
                 <div className="relative w-full h-[300px] bg-black rounded-xl overflow-hidden">
@@ -150,11 +148,11 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
                         image={imageSrc || ''}
                         crop={crop}
                         zoom={zoom}
-                        aspect={1} // สัดส่วน 1:1 (สี่เหลี่ยมจัตุรัส)
+                        aspect={1} 
                         onCropChange={setCrop}
                         onCropComplete={onCropComplete}
                         onZoomChange={setZoom}
-                        cropShape="round" // ตัดเป็นวงกลมให้เห็นภาพจริง
+                        cropShape="round" 
                         showGrid={false}
                     />
                 </div>
@@ -183,7 +181,7 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
                 </div>
             </div>
         ) : (
-        /* --- 📝 หน้าฟอร์มปกติ --- */
+        
         <form onSubmit={handleSubmit}>
             <Tabs defaultValue="general" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -192,7 +190,7 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
                 </TabsList>
 
                 <TabsContent value="general" className="space-y-4">
-                    {/* Profile Image Preview */}
+                    {}
                     <div className="flex flex-col items-center gap-3 mb-4">
                         <div 
                             onClick={() => fileInputRef.current?.click()}
@@ -241,7 +239,7 @@ export function ProfileDialog({ userId, trigger, onUpdateSuccess }: { userId: nu
 
                 <TabsContent value="security" className="space-y-4">
                     <div className="p-3 bg-yellow-50 text-yellow-700 text-xs rounded-lg border border-yellow-200 mb-2">
-                        ⚠️ ปล่อยว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน
+                        ️ ปล่อยว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน
                     </div>
                     <div className="space-y-2">
                         <Label>Username</Label>

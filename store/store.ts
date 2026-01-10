@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
-// Types
+
 interface User {
   id: number;
   username?: string;
@@ -18,7 +18,7 @@ interface Caregiver {
   userId: number;
 }
 
-// Auth Store
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -40,7 +40,7 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Modal Store
+
 interface ModalState {
   isOpen: boolean;
   type: 'alert' | 'confirm' | 'form' | null;
@@ -92,7 +92,7 @@ export const useModalStore = create<ModalState>()(
   }))
 );
 
-// Alert Store
+
 interface AlertItem {
   id: string;
   type: 'safezone' | 'heartrate' | 'temperature' | 'fall' | 'battery' | 'sos';
@@ -136,7 +136,7 @@ export const useAlertStore = create<AlertState>()(
   }))
 );
 
-// Caregiver Store
+
 interface CaregiverState {
   activeCaregiver: Caregiver | null;
   caregivers: Caregiver[];
@@ -153,7 +153,7 @@ export const useCaregiverStore = create<CaregiverState>()(
   }))
 );
 
-// UI Store
+
 interface UIState {
   isSidebarOpen: boolean;
   isLoading: boolean;

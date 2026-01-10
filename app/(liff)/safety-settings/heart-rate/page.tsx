@@ -15,35 +15,33 @@ function HeartRateContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
-  // State
   const [bpm, setBpm] = useState(120);
   const [lineId, setLineId] = useState('');
 
-  // 🎨 Logic เลือกธีม
   const getTheme = (val: number) => {
-    if (val >= 120) return { // สูง (อันตราย)
+    if (val >= 120) return {
         gradient: 'from-rose-500 via-red-500 to-pink-600',
         bgBtn: 'bg-rose-600 hover:bg-rose-700',
         slider: 'accent-rose-500',
         label: 'หัวใจเต้นเร็ว (Tachycardia)',
         icon: <HeartPulse className="w-24 h-24 text-white" strokeWidth={2} />,
-        colorHex: '#f43f5e' // Rose-500
+        colorHex: '#f43f5e'
     };
-    if (val <= 50) return { // ต่ำ (อันตราย)
+    if (val <= 50) return {
         gradient: 'from-indigo-400 via-blue-500 to-cyan-600',
         bgBtn: 'bg-indigo-500 hover:bg-indigo-600',
         slider: 'accent-indigo-500',
         label: 'หัวใจเต้นช้า (Bradycardia)',
         icon: <Activity className="w-24 h-24 text-white" strokeWidth={2} />,
-        colorHex: '#6366f1' // Indigo-500
+        colorHex: '#6366f1'
     };
-    return { // ปกติ
+    return {
         gradient: 'from-teal-400 via-emerald-500 to-green-500',
         bgBtn: 'bg-teal-600 hover:bg-teal-700',
         slider: 'accent-teal-500',
         label: 'อัตราปกติ (Normal)',
         icon: <Heart className="w-24 h-24 text-white fill-white/20" strokeWidth={2} />,
-        colorHex: '#14b8a6' // Teal-500
+        colorHex: '#14b8a6'
     };
   };
 
@@ -84,14 +82,11 @@ function HeartRateContent() {
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-gray-50"><Loader2 className="animate-spin text-gray-400" /></div>;
 
-  // ⚡️ คำนวณความเร็ว Animation (วินาทีต่อจังหวะ)
-  // สูตร: 60 / BPM = วินาทีต่อครั้ง
   const beatDuration = 60 / Math.max(40, bpm); 
 
   return (
     <div className={`h-screen flex flex-col overflow-hidden relative font-sans transition-colors duration-700 ease-in-out bg-gradient-to-b ${theme.gradient}`}>
       
-      {/* ✅ CSS Keyframes แบบดิบๆ (ทำงานชัวร์) */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes heartbeat {
           0% { transform: scale(1); opacity: 1; }
@@ -106,13 +101,10 @@ function HeartRateContent() {
         }
       `}} />
 
-      {/* --- Visual Area --- */}
       <div className="flex-1 relative flex flex-col items-center justify-center p-6 overflow-hidden">
 
-         {/* Heart Visual */}
          <div className="relative mb-8 flex items-center justify-center">
             
-            {/* 🟢 วงแหวนกระจาย (Ripple) */}
             <div 
                 className="absolute w-40 h-40 rounded-full border-white/40 box-border"
                 style={{ animation: `ripple ${beatDuration}s linear infinite` }}
@@ -122,7 +114,6 @@ function HeartRateContent() {
                 style={{ animation: `ripple ${beatDuration}s linear infinite`, animationDelay: `${beatDuration/2}s` }}
             ></div>
             
-            {/* 💗 ตัวหัวใจ (Heartbeat) */}
             <div 
                 className="w-40 h-40 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl border-4 border-white/40 relative z-10 transition-all duration-500"
                 style={{ animation: `heartbeat ${beatDuration}s ease-in-out infinite` }}
@@ -132,7 +123,6 @@ function HeartRateContent() {
 
          </div>
 
-         {/* Info Label */}
          <div className="text-center text-white relative z-10">
              <p className="text-sm font-medium opacity-80 mb-1">แจ้งเตือนเมื่อสูงกว่า</p>
              <div className="text-6xl font-black drop-shadow-lg tracking-tighter flex items-baseline justify-center gap-1">
@@ -144,14 +134,12 @@ function HeartRateContent() {
          </div>
       </div>
 
-      {/* --- Control Panel --- */}
       <div className="bg-white rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] p-8 pb-8 relative z-30 shrink-0">
          
          <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8"></div>
 
          <div className="space-y-8">
             
-            {/* Controls */}
             <div>
                 <div className="flex justify-between items-center mb-4">
                     <span className="text-sm font-bold text-gray-500 uppercase tracking-wide">Max Heart Rate</span>
@@ -168,7 +156,7 @@ function HeartRateContent() {
                             value={bpm}
                             onChange={handleInputChange}
                             className={`w-full h-14 text-center text-2xl font-bold text-gray-700 bg-gray-50 border-2 border-transparent rounded-2xl focus:outline-none focus:bg-white transition-all`}
-                            style={{ borderColor: 'transparent' }} // ใช้ style แทน class dynamic เพื่อความชัวร์
+                            style={{ borderColor: 'transparent' }}
                         />
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">BPM</span>
                     </div>
@@ -178,7 +166,6 @@ function HeartRateContent() {
                     </button>
                 </div>
                 
-                {/* Slider */}
                 <div className="mt-6 px-2">
                     <input 
                         type="range" 
@@ -195,7 +182,6 @@ function HeartRateContent() {
                 </div>
             </div>
 
-            {/* Save Button */}
             <div className="pt-2">
                 <button 
                     onClick={handleSave} 

@@ -9,7 +9,7 @@ import { Battery, Activity, Thermometer, User, Phone, Map as MapIcon } from 'luc
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 
-// โหลดแผนที่เฉพาะฝั่ง Client
+
 const MapContainer = dynamic(
   () => import('react-leaflet').then((mod) => mod.MapContainer),
   { ssr: false }
@@ -27,11 +27,11 @@ const Popup = dynamic(
   { ssr: false }
 );
 const MapController = dynamic(
-  () => import('./map-controller'), // เดี๋ยวสร้างไฟล์นี้แยกเล็กๆ ไว้คุมการ Zoom
+  () => import('./map-controller'), 
   { ssr: false }
 );
 
-// --- Interface ข้อมูลที่รับมาจาก Database ---
+
 interface UserData {
   id: number;
   firstName: string;
@@ -59,7 +59,7 @@ export default function MonitoringView({ users }: { users: UserData[] }) {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [showCaregiverPopup, setShowCaregiverPopup] = useState(false);
 
-  // 1. ตรวจสอบ URL: ถ้ามีการส่ง focusUser มา ให้เลือกคนนั้นทันที
+  
   useEffect(() => {
     const focusId = searchParams.get('focusUser');
     if (focusId) {
@@ -68,18 +68,18 @@ export default function MonitoringView({ users }: { users: UserData[] }) {
         setSelectedUserId(id);
       }
     } else if (users.length > 0 && !selectedUserId) {
-      // ถ้าไม่ได้ระบุใครมา ให้เลือกคนแรกเป็น Default
+      
       setSelectedUserId(users[0].id);
     }
   }, [searchParams, users]);
 
-  // หาข้อมูลคนปัจจุบันที่เลือกอยู่
+  
   const currentUser = users.find(u => u.id === selectedUserId);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
       
-      {/* ================= ซ้าย: รายชื่อ ================= */}
+      {}
       <Card className="lg:col-span-1 flex flex-col overflow-hidden border-slate-200">
         <div className="p-4 bg-slate-50 border-b border-slate-100">
           <h2 className="font-bold text-slate-700">รายชื่อผู้สูงอายุ ({users.length})</h2>
@@ -91,7 +91,7 @@ export default function MonitoringView({ users }: { users: UserData[] }) {
               key={user.id}
               onClick={() => {
                 setSelectedUserId(user.id);
-                // ถ้ากดที่รายการ ให้โชว์ popup ผู้ดูแลตามที่นายน้อยขอ
+                
                 setShowCaregiverPopup(true);
               }}
               className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
@@ -126,10 +126,10 @@ export default function MonitoringView({ users }: { users: UserData[] }) {
         </div>
       </Card>
 
-      {/* ================= ขวา: แผนที่ & สถานะ ================= */}
+      {}
       <div className="lg:col-span-2 flex flex-col gap-6 h-full">
         
-        {/* 1. ส่วนแผนที่ (Map) */}
+        {}
         <Card className="flex-1 overflow-hidden border-slate-200 relative z-0">
            {currentUser?.location ? (
              <MapContainer 
@@ -139,7 +139,7 @@ export default function MonitoringView({ users }: { users: UserData[] }) {
              >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 
-                {/* ตัวช่วยเปลี่ยนจุดกึ่งกลางเมื่อเปลี่ยนคน */}
+                {}
                 <MapController lat={currentUser.location.lat} lng={currentUser.location.lng} />
 
                 <Marker position={[currentUser.location.lat, currentUser.location.lng]}>
@@ -161,12 +161,12 @@ export default function MonitoringView({ users }: { users: UserData[] }) {
            )}
         </Card>
 
-        {/* 2. ส่วนสถานะ (Status Bar) ด้านล่าง */}
+        {}
         <Card className="p-4 border-slate-200 bg-white shrink-0">
            {currentUser ? (
               <div className="flex items-center justify-around text-center divide-x divide-slate-100">
                   
-                  {/* แบตเตอรี่ */}
+                  {}
                   <div className="flex-1 px-2">
                      <p className="text-xs text-slate-500 mb-1 flex items-center justify-center gap-1">
                         <Battery className="h-4 w-4" /> แบตเตอรี่
@@ -174,7 +174,7 @@ export default function MonitoringView({ users }: { users: UserData[] }) {
                      <p className="text-xl font-bold text-slate-800">{currentUser.location?.battery ?? 0}%</p>
                   </div>
 
-                  {/* ชีพจร */}
+                  {}
                   <div className="flex-1 px-2">
                      <p className="text-xs text-slate-500 mb-1 flex items-center justify-center gap-1">
                         <Activity className="h-4 w-4 text-red-500" /> ชีพจร
@@ -182,7 +182,7 @@ export default function MonitoringView({ users }: { users: UserData[] }) {
                      <p className="text-xl font-bold text-slate-800">{currentUser.health?.bpm ?? '-'} <span className="text-xs font-normal">bpm</span></p>
                   </div>
 
-                  {/* อุณหภูมิ */}
+                  {}
                   <div className="flex-1 px-2">
                      <p className="text-xs text-slate-500 mb-1 flex items-center justify-center gap-1">
                         <Thermometer className="h-4 w-4 text-orange-500" /> อุณหภูมิ
@@ -198,7 +198,7 @@ export default function MonitoringView({ users }: { users: UserData[] }) {
 
       </div>
 
-      {/* ================= Popup ข้อมูลผู้ดูแล (เด้งเมื่อกดชื่อ) ================= */}
+      {}
       <Dialog open={showCaregiverPopup} onOpenChange={setShowCaregiverPopup}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

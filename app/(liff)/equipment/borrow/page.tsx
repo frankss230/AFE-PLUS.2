@@ -40,7 +40,6 @@ export default function BorrowForm() {
   const [liffReady, setLiffReady] = useState(false);
   const [lineId, setLineId] = useState<string | null>(null);
 
-  // Data
   const [caregiver, setCaregiver] = useState<any>(null);
   const [dependents, setDependents] = useState<any[]>([]);
   const [equipments, setEquipments] = useState<Equipment[]>([]);
@@ -54,7 +53,6 @@ export default function BorrowForm() {
     },
   });
 
-  // Init
   useEffect(() => {
     const init = async () => {
       const liffId = process.env.NEXT_PUBLIC_LIFF_ID || "";
@@ -161,7 +159,6 @@ export default function BorrowForm() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-10 font-sans">
-      {/* Header - ธีมขาว Clean White */}
       <div className="relative bg-white pb-10 rounded-b-[2.5rem] shadow-lg overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50 to-white pointer-events-none" />
 
@@ -179,7 +176,6 @@ export default function BorrowForm() {
       </div>
 
       <div className="px-5 -mt-6 relative z-20 max-w-lg mx-auto space-y-6">
-        {/* 1. Caregiver Info */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
@@ -199,7 +195,6 @@ export default function BorrowForm() {
           </div>
         </div>
 
-        {/* 2. Dependent Info */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
@@ -231,7 +226,6 @@ export default function BorrowForm() {
           </div>
         </div>
 
-        {/* 3. Address & Phone */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600">
@@ -266,7 +260,6 @@ export default function BorrowForm() {
           </div>
         </div>
 
-        {/* 4. Equipment Selection */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
@@ -308,7 +301,6 @@ export default function BorrowForm() {
               })}
             </div>
 
-            {/* Add Button */}
             <div className="space-y-2 pt-2">
               <p className="text-xs font-bold text-slate-400 ml-1 mb-2 uppercase tracking-wider">
                 เลือกอุปกรณ์ที่ต้องการยืม
@@ -350,7 +342,6 @@ export default function BorrowForm() {
           </div>
         </div>
 
-        {/* 5. Reason */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600">
@@ -379,7 +370,6 @@ export default function BorrowForm() {
           </div>
         </div>
 
-        {/* Submit Button */}
         <button
           onClick={form.handleSubmit(onSubmit)}
           disabled={isLoading}

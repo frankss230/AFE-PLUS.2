@@ -66,9 +66,6 @@ export default function CaregiverEditPage() {
           if (res.success && res.data) {
             const d = res.data;
             
-            // ✅ แก้ไข 1: การดึงเบอร์มาแสดง
-            // ถ้าเบอร์เก่าเป็น +66 ให้แปลงกลับเป็น 0 เพื่อแสดงผล
-            // ถ้าเป็น 0 อยู่แล้วก็แสดงเลย
             let formattedPhone = d.phone || "";
             if (formattedPhone.startsWith("+66")) {
                 formattedPhone = "0" + formattedPhone.substring(3);
@@ -78,7 +75,7 @@ export default function CaregiverEditPage() {
               lineId: targetLineId,
               firstName: d.firstName,
               lastName: d.lastName,
-              phone: formattedPhone, // แสดงเบอร์ที่มี 0 นำหน้า
+              phone: formattedPhone,
               houseNumber: d.houseNumber,
               village: d.village,
               road: d.road || "",
@@ -162,8 +159,6 @@ export default function CaregiverEditPage() {
   const onSubmit = async (data: CaregiverRegisterInput) => {
     setIsLoading(true);
     try {
-      // ✅ แก้ไข 2: เอา Logic แปลงเป็น +66 ออก
-      // ส่งค่า data.phone ไปตรงๆ เลย (ผู้ใช้กรอก 08x... ก็ส่ง 08x...)
       const submitData = {
         ...data,
       };
@@ -190,7 +185,6 @@ export default function CaregiverEditPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-10 font-sans">
-      {/* Header */}
       <div className="relative bg-white pb-10 rounded-b-[2.5rem] shadow-lg overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50 to-white pointer-events-none" />
         <div className="relative z-10 pt-10 px-6 text-center">
@@ -213,7 +207,7 @@ export default function CaregiverEditPage() {
               />
             ) : (
               <div className="relative w-24 h-24 bg-white rounded-full flex items-center justify-center text-3xl shadow-xl text-blue-200">
-                👤
+                
               </div>
             )}
           </div>
@@ -227,7 +221,6 @@ export default function CaregiverEditPage() {
         onSubmit={form.handleSubmit(onSubmit)}
         className="px-5 -mt-6 relative z-20 max-w-lg mx-auto space-y-6"
       >
-        {/* ข้อมูลส่วนตัว */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
@@ -265,17 +258,14 @@ export default function CaregiverEditPage() {
                 เบอร์โทรศัพท์
               </label>
               
-              {/* ✅ แก้ไข 3: เอา UI ที่แสดง +66 ออก เพื่อให้กรอก 0 ได้ปกติ */}
               <div className="relative">
                 <div className="absolute left-4 top-3.5 flex items-center gap-2 pointer-events-none">
                   <Phone className="w-5 h-5 text-slate-400" />
-                  {/* ลบตัว +66 ตรงนี้ออก */}
                 </div>
                 <input
                   type="tel"
                   maxLength={10}
                   {...form.register("phone")}
-                  // เปลี่ยน pl-28 (เว้นเยอะ) เป็น pl-12 (เว้นแค่ไอคอน)
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 rounded-2xl border-0 focus:ring-2 focus:ring-blue-500/20 transition-all font-bold text-slate-700 tracking-wide placeholder:text-slate-300"
                   placeholder="ระบุเบอร์โทร"
                 />
@@ -288,7 +278,6 @@ export default function CaregiverEditPage() {
               )}
             </div>
 
-            {/* ... ส่วนอื่นๆ เหมือนเดิม ... */}
             <div className="grid grid-cols-2 gap-4 pt-2">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">
@@ -339,7 +328,6 @@ export default function CaregiverEditPage() {
           </div>
         </div>
 
-        {/* ที่อยู่ */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-2xl bg-green-50 flex items-center justify-center text-green-600">

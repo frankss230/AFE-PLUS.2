@@ -10,7 +10,7 @@ async function handleSOS(request: Request) {
     const targetId = body.uid || body.lineId || body.users_id;
     const { latitude, longitude } = body;
 
-    console.log(`🚨 [SOS DEBUG] Received ID: ${targetId}`);
+    console.log(` [SOS DEBUG] Received ID: ${targetId}`);
 
     if (!targetId) return NextResponse.json({ error: 'Missing ID' }, { status: 400 });
 
@@ -38,22 +38,22 @@ async function handleSOS(request: Request) {
     }
 
     const temporaryHelpData = {
-        id: 0, // ใส่ 0 ไว้เพราะไม่มีในฐานข้อมูล
+        id: 0, 
         latitude: parseFloat(latitude || 0),
         longitude: parseFloat(longitude || 0),
         timestamp: new Date()
     };
 
-    // ส่ง LINE Alert ไปหาผู้ดูแลคนเดียวพอ
+    
     if (caregiverProfile.user.lineId) {
         const recipientId = caregiverProfile.user.lineId;
         const caregiverPhone = caregiverProfile.phone || '0000000000';
 
-        console.log(`✅ Sending SOS Alert (Private) to: ${recipientId}`);
+        console.log(` Sending SOS Alert (Private) to: ${recipientId}`);
 
         await sendCriticalAlertFlexMessage(
             recipientId,
-            temporaryHelpData as any, // ใช้ข้อมูลจำลองส่งไป
+            temporaryHelpData as any, 
             user,
             caregiverPhone,
             dependent as any,

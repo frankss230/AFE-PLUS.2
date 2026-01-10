@@ -12,7 +12,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 
-// Interface
+
 export interface DependentData {
   id: number;
   firstName: string;
@@ -32,7 +32,7 @@ export function DependentTable({ data }: { data: DependentData[] }) {
   const [targetDelete, setTargetDelete] = useState<{ id: number, name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Helper คำนวณอายุ
+  
   const calculateAge = (birthday: Date | null) => {
     if (!birthday) return '-';
     const today = new Date();
@@ -74,7 +74,7 @@ export function DependentTable({ data }: { data: DependentData[] }) {
     <>
       <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
         <table className="w-full text-sm text-left">
-          {/* Header Style (เหมือน Caregiver) */}
+          {}
           <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
             <tr>
               <th className="px-6 py-3 w-[80px]">ID</th>
@@ -94,7 +94,7 @@ export function DependentTable({ data }: { data: DependentData[] }) {
                 <td className="px-6 py-4">
                     <div className="font-bold text-slate-800">{item.firstName} {item.lastName}</div>
                     
-                    {/* 👇 แก้ไขตรงนี้ครับ: เช็ค isActive ? สีเขียว : สีแดง */}
+                    {}
                     <div className={`text-xs ${item.isActive ? 'text-green-600' : 'text-red-600'}`}>
                         {item.isActive ? '● ใช้งานปกติ' : '● ถูกระงับ'}
                     </div>
@@ -131,21 +131,21 @@ export function DependentTable({ data }: { data: DependentData[] }) {
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     
-                    {/* 🗺️ ปุ่มพิเศษสำหรับ Dependent: ดูแผนที่ */}
+                    {}
                     <Link href={`/admin/monitoring?focusUser=${item.id}`}>
                       <Button variant="ghost" size="icon" className="text-blue-600 hover:bg-blue-50" title="ดูตำแหน่ง">
                         <MapPin className="w-4 h-4" />
                       </Button>
                     </Link>
 
-                    {/* ปุ่มดูรายละเอียด */}
+                    {}
                     <Link href={`/admin/dependents/${item.id}`}>
                       <Button variant="ghost" size="icon" className="text-slate-400 hover:text-blue-600 hover:bg-blue-50">
                         <Eye className="w-4 h-4" />
                       </Button>
                     </Link>
 
-                    {/* ปุ่มลบ */}
+                    {}
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -162,7 +162,7 @@ export function DependentTable({ data }: { data: DependentData[] }) {
         </table>
       </div>
 
-      {/* Modal ลบ (เหมือนเดิม) */}
+      {}
       <AlertDialog open={!!targetDelete} onOpenChange={(open) => !open && setTargetDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

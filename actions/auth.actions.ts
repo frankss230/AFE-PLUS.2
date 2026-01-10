@@ -1,5 +1,3 @@
-// actions/auth.actions.ts
-
 "use server"; 
 
 import { loginSchema } from "@/lib/validations/auth.schema";
@@ -14,7 +12,6 @@ export async function loginAction(formData: FormData): Promise<AuthResponse> {
         password: formData.get('password'),
     };
 
-    // 1. Validation
     const validated = loginSchema.safeParse(rawData);
 
     if (!validated.success) {
@@ -25,21 +22,15 @@ export async function loginAction(formData: FormData): Promise<AuthResponse> {
     }
 
     try {
-        // 2. Login & Create Session
         const { user, token } = await loginUser(
             validated.data.username, 
             validated.data.password
         );
         
-        // ❌ แก้อันนี้ เพราะ schema ไม่มี statusId แล้ว
-        // if (user.statusId !== 1) { ... }
-
-        // ✅ ใช้ role แทน (ตาม schema จริง)
         if (user.role !== "ADMIN") {
             throw new Error("คุณไม่มีสิทธิ์เข้าถึงส่วนผู้ดูแลระบบ");
         }
 
-        // (optional) หากต้องเช็คว่าถูกแบนไหม
         if (!user.isActive) {
             throw new Error("บัญชีของคุณถูกระงับการใช้งาน");
         }
@@ -57,6 +48,5 @@ export async function loginAction(formData: FormData): Promise<AuthResponse> {
         };
     }
 
-    // 3. Redirect นอก try/catch เพื่อไม่ให้เข้า catch
     redirect('/admin/dashboard');
 }

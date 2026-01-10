@@ -21,9 +21,6 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-// ==========================================
-// 🛠️ Server Action: บันทึกคืน (ตัดรูปออกแล้ว)
-// ==========================================
 async function submitReturnRequest(formData: FormData) {
   "use server";
 
@@ -63,7 +60,7 @@ export default async function ReturnEquipmentPage({ params }: PageProps) {
     },
   });
 
-  // Validation
+  
   if (!request) {
     return <div className="p-6 text-center text-red-500">ไม่พบข้อมูลการยืม</div>;
   }
@@ -89,7 +86,6 @@ export default async function ReturnEquipmentPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       
-      {/* Header */}
       <div className="bg-white p-4 shadow-sm border-b sticky top-0 z-10 flex items-center gap-3">
         <Link href="/equipment">
             <Button variant="ghost" size="icon" className="rounded-full">
@@ -101,7 +97,6 @@ export default async function ReturnEquipmentPage({ params }: PageProps) {
 
       <div className="p-4 space-y-6">
         
-        {/* 1. รายละเอียดของที่จะคืน */}
         <Card className="border-blue-100 shadow-sm bg-blue-50/50">
             <CardContent className="p-4 space-y-3">
                 <div className="flex items-center gap-3 pb-3 border-b border-blue-100">
@@ -133,11 +128,9 @@ export default async function ReturnEquipmentPage({ params }: PageProps) {
             </CardContent>
         </Card>
 
-        {/* 2. แบบฟอร์มแจ้งคืน (ตัดรูปออกแล้ว) */}
         <form action={submitReturnRequest} className="space-y-6">
             <input type="hidden" name="requestId" value={request.id} />
 
-            {/* รายละเอียดสภาพของ */}
             <div className="space-y-2">
                 <Label htmlFor="condition" className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-slate-500" /> 
@@ -152,7 +145,6 @@ export default async function ReturnEquipmentPage({ params }: PageProps) {
                 />
             </div>
 
-            {/* Submit Button */}
             <Button 
                 type="submit" 
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-lg h-12 text-base font-bold rounded-xl"

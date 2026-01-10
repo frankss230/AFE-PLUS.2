@@ -14,7 +14,7 @@ interface DependentPageClientProps {
 export default function DependentPageClient({ initialData }: DependentPageClientProps) {
   const router = useRouter();
 
-  // ✅ Auto Refresh: ทุก 10 วินาที
+  
   useEffect(() => {
     const interval = setInterval(() => {
       router.refresh();

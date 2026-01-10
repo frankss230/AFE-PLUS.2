@@ -6,7 +6,7 @@ async function handleFall(request: Request) {
   try {
     const body = await request.json();
     
-    // รับค่าต่างๆ
+    
     const targetId = body.users_id || body.lineId;
     const fallStat = String(body.fall_status || body.status);
     const x = body.x_axis || body.xAxis || 0;
@@ -30,11 +30,11 @@ async function handleFall(request: Request) {
     const dependent = user.dependentProfile;
     const caregiver = dependent.caregiver;
 
-    // Logic Status
+    
     const isCritical = fallStat === "0" || fallStat === "1";
     const dbStatus = isCritical ? 'DETECTED' : 'RESOLVED';
 
-    // 1. บันทึกการล้ม
+    
     const fallRecord = await prisma.fallRecord.create({
       data: {
         dependentId: dependent.id,
@@ -48,17 +48,17 @@ async function handleFall(request: Request) {
       },
     });
 
-    // 2. แจ้งเตือน LINE (แยกประเภทชัดเจน)
+    
     if (isCritical && caregiver?.user.lineId) {
         let notiText = "";
-        let specificAlertType = "FALL"; // Default
+        let specificAlertType = "FALL"; 
 
         if (fallStat === "0") {
-            // กดปุ่ม SOS เอง = รู้สึกตัว
+            
             specificAlertType = "FALL_SOS"; 
             notiText = `แจ้งเตือน: คุณ ${dependent.firstName} ล้มและกดปุ่มขอความช่วยเหลือ (รู้สึกตัว)`;
         } else {
-            // หมดเวลา 30 วิ = ไม่ตอบสนอง
+            
             specificAlertType = "FALL_UNCONSCIOUS";
             notiText = `ด่วน!: คุณ ${dependent.firstName} ล้มและไม่มีการตอบสนอง (อาจหมดสติ)`;
         }

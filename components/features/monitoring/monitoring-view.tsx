@@ -17,8 +17,8 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
     const router = useRouter();
     const mapRef = useRef<google.maps.Map | null>(null);
 
-    // ✅ 1. แก้ไขการตั้งค่าเริ่มต้น (Lazy Init)
-    // ตรวจสอบตั้งแต่เริ่มเลยว่ามี ID ส่งมาไหม ถ้ามีให้เลือกคนนั้นก่อนเลย (กันโดนแย่งซีน)
+    
+    
     const [selectedUser, setSelectedUser] = useState<any>(() => {
         if (initialFocusId) {
             const target = users.find(u => u.id === initialFocusId);
@@ -27,33 +27,33 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
         return users[0] || null;
     });
 
-    // ✅ 2. Ref กัน Map กระตุก
+    
     const lastPannedUserId = useRef<number | null>(null);
 
-    // ✅ 3. Sync Data Logic (เมื่อข้อมูลอัปเดตจาก Server)
-    // แก้ไขให้มันแค่อัปเดตข้อมูลของ "คนปัจจุบัน" เท่านั้น ไม่ไปเปลี่ยนคนมั่วซั่ว
+    
+    
     useEffect(() => {
         if (selectedUser) {
             const freshData = users.find(u => u.id === selectedUser.id);
             if (freshData) {
-                // อัปเดตข้อมูล (เช่น ชีพจร, พิกัด) แต่ยังเป็นคนเดิม
+                
                 setSelectedUser(freshData);
             }
         }
-    }, [users]); // ทำงานเมื่อ users เปลี่ยน (ทุก 5 วิ)
+    }, [users]); 
 
-    // ✅ 4. กรณีเปลี่ยน ID จาก URL (เช่น กดปุ่ม Back แล้วกดเลือกคนใหม่)
+    
     useEffect(() => {
         if (initialFocusId) {
             const target = users.find(u => u.id === initialFocusId);
             if (target && target.id !== selectedUser?.id) {
                 setSelectedUser(target);
-                lastPannedUserId.current = null; // สั่งให้ Map Pan ไปหาคนใหม่
+                lastPannedUserId.current = null; 
             }
         }
     }, [initialFocusId, users]);
 
-    // ✅ 5. Auto Refresh (ทุก 5 วิ)
+    
     useEffect(() => {
         const interval = setInterval(() => {
             router.refresh();
@@ -61,7 +61,7 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
         return () => clearInterval(interval);
     }, [router]);
 
-    // --- Map Section ---
+    
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAP || ''
@@ -70,10 +70,10 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
     const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
     const [directionsResponse, setDirectionsResponse] = useState<any>(null);
 
-    // ✅ 6. Camera Control
+    
     useEffect(() => {
         if (isLoaded && mapRef.current && selectedUser?.location) {
-            // เช็คว่า "เราเคย Pan ไปหาคนนี้แล้วหรือยัง?"
+            
             if (lastPannedUserId.current !== selectedUser.id) {
                 mapRef.current.panTo({ lat: selectedUser.location.lat, lng: selectedUser.location.lng });
                 lastPannedUserId.current = selectedUser.id; 
@@ -81,7 +81,7 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
         }
     }, [selectedUser, isLoaded]);
 
-    // Routing Logic
+    
     useEffect(() => {
         if (isLoaded && selectedUser?.isEmergency && selectedUser?.rescuer) {
             const directionsService = new google.maps.DirectionsService();
@@ -109,7 +109,7 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
     return (
         <div className="flex h-[calc(100vh-12rem)] gap-4">
 
-            {/* 🟢 Sidebar รายชื่อ */}
+            {}
             <Card className="w-1/4 flex flex-col overflow-hidden bg-white/90 backdrop-blur border-slate-200 shadow-sm">
                 <div className="p-4 bg-slate-50 border-b font-bold text-slate-700 flex justify-between items-center">
                     <span>รายชื่อผู้ใช้งาน</span>
@@ -130,7 +130,7 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
                                     {user.firstName} {user.lastName}
                                 </div>
                                 <div className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                                    {user.isEmergency ? <span className="text-red-500 font-bold flex items-center gap-1">🚨 EMERGENCY</span> : <span className="text-green-600 flex items-center gap-1"><ShieldCheck size={10} /> Normal</span>}
+                                    {user.isEmergency ? <span className="text-red-500 font-bold flex items-center gap-1"> EMERGENCY</span> : <span className="text-green-600 flex items-center gap-1"><ShieldCheck size={10} /> Normal</span>}
                                 </div>
                             </div>
                             {user.isEmergency && (
@@ -147,7 +147,7 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
                 </div>
             </Card>
 
-            {/* 🗺️ Main Area */}
+            {}
             <div className="flex-1 flex flex-col gap-4">
                 <Card className="flex-1 relative overflow-hidden shadow-xl border-slate-300 rounded-3xl bg-slate-100">
                     {!selectedUser?.isEmergency ? (
@@ -207,7 +207,7 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
                                             <div className="absolute w-full h-full rounded-full bg-blue-500 opacity-30 animate-[spin_3s_linear_infinite]"></div>
                                             <div className="relative w-5 h-5 border-2 border-white rounded-full bg-blue-500 shadow-lg"></div>
                                             <div className="absolute bottom-full mb-2 bg-blue-600 text-white text-[10px] px-2 py-1 rounded-full whitespace-nowrap shadow-md flex items-center gap-1">
-                                                <span>👮‍♂️</span> {selectedUser.rescuer.name}
+                                                <span>‍️</span> {selectedUser.rescuer.name}
                                             </div>
                                         </div>
                                     </OverlayView>
@@ -221,7 +221,7 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
                     )}
                 </Card>
 
-                {/* Status Panel */}
+                {}
                 {selectedUser && (
                     <Card className="p-4 flex items-center justify-between bg-white border-slate-200 shadow-sm shrink-0">
                         <div className="flex gap-8">
@@ -265,7 +265,7 @@ export default function MonitoringView({ users, initialFocusId }: MonitoringView
                                     </div>
                                 ) : (
                                     <div className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold border border-red-600 shadow-lg shadow-red-200 animate-pulse flex items-center gap-3">
-                                        <span className="text-xl">🚨</span> รอการช่วยเหลือ
+                                        <span className="text-xl"></span> รอการช่วยเหลือ
                                     </div>
                                 )
                             ) : (

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
-import CaregiverPageClient from '@/components/features/caregivers/caregiver-page-client'; // เรียกตัวใหม่มาใช้
+import CaregiverPageClient from '@/components/features/caregivers/caregiver-page-client'; 
 
 export const dynamic = 'force-dynamic';
 
@@ -45,17 +45,14 @@ async function getCaregivers() {
 }
 
 export default async function CaregiversPage() {
-  // ดึงข้อมูลครั้งแรกจาก Server
   const caregivers = await getCaregivers();
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">จัดการผู้ดูแล</h1>
-        <p className="text-gray-600 mt-1">รายชื่อญาติหรือผู้ดูแลทั้งหมดในระบบ</p>
+        <p className="text-gray-600 mt-1">รายชื่อผู้ดูแลทั้งหมดในระบบ</p>
       </div>
-
-      {/* ส่งข้อมูลไปให้ Client Component จัดการต่อ */}
       <CaregiverPageClient initialData={caregivers} />
     </div>
   );

@@ -1,7 +1,6 @@
 import { LoginForm } from '@/components/features/auth/login-form';
-import { Activity } from 'lucide-react'; // ✅ เปลี่ยนจาก Shield เป็น Activity
+import { Activity } from 'lucide-react';
 
-// ✅ เพิ่มเพื่อไม่ให้ cache
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -11,13 +10,10 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           
-          {/* ✅ ส่วนที่แก้: เปลี่ยนเป็น Icon วงแหวนหัวใจ (Custom Design) */}
           <div className="relative w-24 h-24 mx-auto mb-6 flex items-center justify-center rounded-full bg-white shadow-xl ring-4 ring-white/50">
              
-             {/* 1. วงแหวน Spinner (แต่งด้วย Tailwind) */}
              <div className="absolute inset-0 w-full h-full rounded-full border-[8px] border-slate-100 border-t-blue-600 rotate-45"></div>
              
-             {/* 2. ไอคอนหัวใจตรงกลาง */}
              <Activity className="relative z-10 w-10 h-10 text-blue-600" strokeWidth={2.5} />
              
           </div>

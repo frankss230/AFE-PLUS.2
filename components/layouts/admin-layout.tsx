@@ -10,16 +10,16 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <GlobalModal />
       <Sidebar isOpen={isSidebarOpen} />
-      
+
       <div className="flex-1 flex flex-col">
         <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-        
+
         <main className="flex-1 p-6">
           {children}
         </main>

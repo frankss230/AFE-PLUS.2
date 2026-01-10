@@ -5,22 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// ฟังก์ชันแปลงหน่วย Degree เป็น Radian
+
 function toRad(value: number): number {
   return (value * Math.PI) / 180;
 }
 
-/**
- * คำนวณระยะทางระหว่างพิกัด 2 จุด (Latitude/Longitude)
- * @returns ระยะทางเป็น "เมตร"
- */
+
 export function calculateDistance(
   lat1: number, 
   lon1: number, 
   lat2: number, 
   lon2: number
 ): number {
-  const R = 6371e3; // รัศมีโลก (เมตร)
+  const R = 6371e3; 
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   

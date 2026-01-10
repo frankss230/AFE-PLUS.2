@@ -5,10 +5,8 @@ export async function POST() {
   try {
     const cookieStore = cookies();
     
-    // Delete session cookie
     (await cookieStore).delete('session');
 
-    // Return success with headers to prevent caching
     return NextResponse.json(
       { success: true },
       {

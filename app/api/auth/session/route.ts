@@ -13,7 +13,6 @@ export async function GET() {
       );
     }
 
-    // ❗ ดึงทุกฟิลด์ตาม database Prisma โดยไม่ต้องระบุ select
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
     });

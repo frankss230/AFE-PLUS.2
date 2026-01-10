@@ -58,7 +58,6 @@ function TriggerContent() {
     type: string | null
   ) => {
     
-    // ✅ อัปเดตข้อความตาม Type ใหม่ (HEART, TEMP)
     let messageText = "เหตุฉุกเฉินเพิ่มเติม"
     
     if (type === 'FALL') messageText = "ยืนยันเหตุการล้ม (ต้องการความช่วยเหลือ)"
@@ -67,7 +66,7 @@ function TriggerContent() {
     else if (type === 'ZONE') messageText = "ออกนอกพื้นที่ปลอดภัย (ต้องการความช่วยเหลือ)"
     else if (type === 'HEART') messageText = "ชีพจรผิดปกติวิกฤต (ต้องการความช่วยเหลือ)"
     else if (type === 'TEMP') messageText = "อุณหภูมิร่างกายสูงวิกฤต (ต้องการความช่วยเหลือ)"
-    else if (type === 'HEALTH') messageText = "สัญญาณชีพผิดปกติ (ต้องการความช่วยเหลือ)" // เผื่อเคสเก่า
+    else if (type === 'HEALTH') messageText = "สัญญาณชีพผิดปกติ (ต้องการความช่วยเหลือ)"
 
     try {
       const res = await fetch('/api/rescue/broadcast', {

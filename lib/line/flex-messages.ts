@@ -16,9 +16,9 @@ const config = {
 
 const lineClient = new Client(config);
 
-// =================================================================
-// 🚨 Alert Message (Fixed Version)
-// =================================================================
+
+
+
 export const createAlertFlexMessage = (
   record: any, 
   user: User, 
@@ -26,12 +26,12 @@ export const createAlertFlexMessage = (
   alertType: "FALL" | "FALL_CONSCIOUS" | "FALL_UNCONSCIOUS" | "SOS" | "HEALTH" | "ZONE" | "HEART" | "TEMP" = "FALL", 
   notiText: string = ""
 ): FlexBubble => {
-  // 1. ธีมสี & หัวข้อ
+  
   let headerText = "แจ้งเตือน";
   let startColor = "#FF416C";
   let endColor = "#FF4B2B";
 
-  // --- แยกประเภทการล้ม ---
+  
   if (alertType === "FALL_CONSCIOUS") {
     headerText = "พบการล้ม"; 
     startColor = "#FF416C"; 
@@ -45,7 +45,7 @@ export const createAlertFlexMessage = (
     startColor = "#FF416C"; 
     endColor = "#FF4B2B";
   } 
-  // --- ประเภทอื่นๆ ---
+  
   else if (alertType === "SOS") {
     headerText = "ขอความช่วยเหลือ";
     startColor = "#FF8008"; 
@@ -68,20 +68,20 @@ export const createAlertFlexMessage = (
     endColor = "#F2C94C";
   }
 
-  // 2. เวลา
+  
   const eventTimeRaw = record.timestamp || record.requestedAt || new Date();
-  // สร้าง Date Object
+  
   const serverDate = new Date(eventTimeRaw);
-  // ✅ บังคับบวก 7 ชั่วโมง (7 * 60 * 60 * 1000 ms)
-  // เพื่อให้เวลาแสดงผลตรงกับไทย แม้ Server จะเป็น UTC
+  
+  
   const thaiDate = new Date(serverDate.getTime() + (7 * 60 * 60 * 1000));
   const time = format(thaiDate, "HH:mm น.", { locale: th });
   const date = format(thaiDate, "d MMM yyyy", { locale: th });
 
-  // const time = format(new Date(eventTimeRaw), "HH:mm น.", { locale: th });
-  // const date = format(new Date(eventTimeRaw), "d MMM yyyy", { locale: th });
+  
+  
 
-  // 3. พิกัด
+  
   let lat = record.latitude ? parseFloat(record.latitude) : null;
   let lng = record.longitude ? parseFloat(record.longitude) : null;
 
@@ -97,18 +97,18 @@ export const createAlertFlexMessage = (
   const hasLocation = lat && lng;
   const mapKey = process.env.NEXT_PUBLIC_GOOGLE_MAP;
   
-  // ⚠️ เช็คชื่อ Environment Variable ให้ตรงกับใน .env นะครับ
-  const liffBaseUrl = process.env.LIFF_BASE_URL; // สำหรับ map
   
-  // 🔥 ใช้ชื่อให้ตรงกับที่นายน้อยตั้งใน .env (เช่น NEXT_PUBLIC_LIFF_URL_TRIGGER)
-  // ถ้าในโค้ดนายน้อยใช้ LIFF_BASE_URL_TRIGGER ก็ต้องแก้ .env ให้ตรงกัน
+  const liffBaseUrl = process.env.LIFF_BASE_URL; 
+  
+  
+  
   const liffUrlBaseTrigger = process.env.NEXT_PUBLIC_LIFF_URL_TRIGGER || process.env.LIFF_BASE_URL_TRIGGER || "";
 
   const mapImageUrl = hasLocation && mapKey
       ? `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=16&size=800x400&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=${mapKey}`
       : "https://cdn-icons-png.flaticon.com/512/10337/10337160.png";
 
-  // ✅ แก้ Fallback URL ให้ถูกต้อง
+  
   let navigateUrl = "https://maps.google.com/";
   if (hasLocation) {
       navigateUrl = (liffBaseUrl)
@@ -118,13 +118,13 @@ export const createAlertFlexMessage = (
 
   const elderlyName = `คุณ${dependentProfile.firstName} ${dependentProfile.lastName}`;
 
-  // 4. 🔥 จัดการปุ่ม (แก้จุดตาย 400 Bad Request)
+  
   const buttonContents: any[] = [];
 
-  // ✅ เช็คว่ามี URL ไหม? ถ้าไม่มี ให้ใช้ Google Maps กันตายไปก่อน
+  
   const safeTriggerUrl = (liffUrlBaseTrigger && liffUrlBaseTrigger.startsWith("http"))
       ? `${liffUrlBaseTrigger}?id=${record.id || 0}&type=${alertType}`
-      : `https://www.google.com/maps?q=${lat},${lng}`; // Fallback
+      : `https://www.google.com/maps?q=${lat},${lng}`; 
 
   buttonContents.push({
     type: "button",
@@ -148,7 +148,7 @@ export const createAlertFlexMessage = (
       spacing: "md",
       paddingAll: "xl",
       contents: [
-        // Header
+        
         {
           type: "box",
           layout: "horizontal",
@@ -173,7 +173,7 @@ export const createAlertFlexMessage = (
             },
           ],
         },
-        // Map Image
+        
         {
           type: "box",
           layout: "vertical",
@@ -194,7 +194,7 @@ export const createAlertFlexMessage = (
             },
           ],
         },
-        // Name
+        
         {
           type: "box",
           layout: "vertical",
@@ -220,7 +220,7 @@ export const createAlertFlexMessage = (
             },
           ],
         },
-        // Info & Details
+        
         {
           type: "box",
           layout: "vertical",
@@ -239,7 +239,7 @@ export const createAlertFlexMessage = (
               type: "box",
               layout: "horizontal",
               contents: [
-                { type: "text", text: "📅 วันที่", size: "sm", color: "#64748B", flex: 2 },
+                { type: "text", text: " วันที่", size: "sm", color: "#64748B", flex: 2 },
                 { type: "text", text: date, size: "sm", color: "#334155", flex: 3, weight: "bold", align: "end" },
               ],
             },
@@ -247,7 +247,7 @@ export const createAlertFlexMessage = (
               type: "box",
               layout: "horizontal",
               contents: [
-                { type: "text", text: "⏰ เวลา", size: "sm", color: "#64748B", flex: 2 },
+                { type: "text", text: " เวลา", size: "sm", color: "#64748B", flex: 2 },
                 { type: "text", text: time, size: "sm", color: "#334155", flex: 3, weight: "bold", align: "end" },
               ],
             },
@@ -257,7 +257,7 @@ export const createAlertFlexMessage = (
               layout: "horizontal",
               margin: "md",
               contents: [
-                { type: "text", text: "📍 พิกัด", size: "sm", color: "#64748B", flex: 1 },
+                { type: "text", text: " พิกัด", size: "sm", color: "#64748B", flex: 1 },
                 {
                   type: "text",
                   text: hasLocation ? `${lat?.toFixed(5)}, ${lng?.toFixed(5)}` : "ไม่พบ GPS",
@@ -270,7 +270,7 @@ export const createAlertFlexMessage = (
                 },
               ],
             },
-            // รายละเอียดข้อความ (notiText)
+            
             ...(notiText
               ? [
                   { type: "separator", color: "#E2E8F0", margin: "md" } as any,
@@ -288,7 +288,7 @@ export const createAlertFlexMessage = (
               : []),
           ],
         },
-        // Buttons
+        
         ...(buttonContents.length > 0
           ? [
               {
@@ -330,20 +330,20 @@ export async function sendCriticalAlertFlexMessage(
       contents: flexMessageContent,
     });
     console.log(
-      `✅ LINE Alert sent to: ${recipientLineId} [Type: ${alertType}]`
+      ` LINE Alert sent to: ${recipientLineId} [Type: ${alertType}]`
     );
   } catch (error: any) {
-    console.error("❌ Failed to send LINE message:", error.message);
+    console.error(" Failed to send LINE message:", error.message);
     if (error.response && error.response.data) {
-        // ปริ้นท์รายละเอียด Error จาก LINE ออกมาดู (ช่วย Debug ได้เยอะ)
-        console.error("🔍 Detail:", JSON.stringify(error.response.data, null, 2));
+        
+        console.error(" Detail:", JSON.stringify(error.response.data, null, 2));
     }
   }
 }
 
-// =================================================================
-// 🔔 2. General Alert (Zone 1, Zone 80%, Back Safe) - สีเหลือง/ส้ม/เขียว
-// =================================================================
+
+
+
 export const createGeneralAlertBubble = (
   title: string,
   message: string,
@@ -384,7 +384,7 @@ export const createGeneralAlertBubble = (
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        // Header
+        
         {
           type: "box",
           layout: "vertical",
@@ -417,7 +417,7 @@ export const createGeneralAlertBubble = (
             },
           ],
         },
-        // Message
+        
         {
           type: "text",
           text: message,
@@ -427,7 +427,7 @@ export const createGeneralAlertBubble = (
           align: "center",
           margin: "lg",
         },
-        // Value
+        
         {
           type: "box",
           layout: "vertical",
@@ -459,7 +459,7 @@ export const createGeneralAlertBubble = (
             },
           ],
         },
-        // Buttons
+        
         ...(buttonContents.length > 0
           ? [
               {
@@ -476,9 +476,9 @@ export const createGeneralAlertBubble = (
   };
 };
 
-// =================================================================
-// 📊 3. Dashboard (Current Status)
-// =================================================================
+
+
+
 export const createCurrentStatusBubble = (
   dependentProfile: DependentProfile,
   health: {
@@ -522,7 +522,7 @@ export const createCurrentStatusBubble = (
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        // Header with Dark Gradient
+        
         {
           type: "box",
           layout: "vertical",
@@ -562,7 +562,7 @@ export const createCurrentStatusBubble = (
             },
           ],
         },
-        // Map Image
+        
         {
           type: "box",
           layout: "vertical",
@@ -579,7 +579,7 @@ export const createCurrentStatusBubble = (
             },
           ],
         },
-        // Health Stats
+        
         {
           type: "box",
           layout: "horizontal",
@@ -600,7 +600,7 @@ export const createCurrentStatusBubble = (
               flex: 1,
               alignItems: "center",
               contents: [
-                { type: "text", text: "❤️", size: "xl" },
+                { type: "text", text: "️", size: "xl" },
                 {
                   type: "text",
                   text: "ชีพจร",
@@ -632,7 +632,7 @@ export const createCurrentStatusBubble = (
               flex: 1,
               alignItems: "center",
               contents: [
-                { type: "text", text: "🌡️", size: "xl" },
+                { type: "text", text: "️", size: "xl" },
                 {
                   type: "text",
                   text: "อุณหภูมิ",
@@ -664,7 +664,7 @@ export const createCurrentStatusBubble = (
               flex: 1,
               alignItems: "center",
               contents: [
-                { type: "text", text: "🔋", size: "xl" },
+                { type: "text", text: "", size: "xl" },
                 {
                   type: "text",
                   text: "แบต",
@@ -684,7 +684,7 @@ export const createCurrentStatusBubble = (
             },
           ],
         },
-        // Map Button
+        
         {
           type: "button",
           style: "link",
@@ -701,9 +701,9 @@ export const createCurrentStatusBubble = (
   };
 };
 
-// =================================================================
-// 📋 4. Profile Info - ธีมขาว/ฟ้า (Clean Blue Gradient)
-// =================================================================
+
+
+
 export const createProfileFlexMessage = (
   caregiverProfile: CaregiverProfile,
   dependentProfile: DependentProfile
@@ -1244,7 +1244,7 @@ export const createProfileFlexMessage = (
                 },
               ],
             },
-            // ✅ แก้จาก "เบอร์โทร" เป็น "ยาที่ใช้ประจำ"
+            
             {
               type: "box",
               layout: "baseline",
@@ -1288,14 +1288,14 @@ export const createProfileFlexMessage = (
             },
           ],
         },
-        // Buttons
+        
         {
           type: "box",
           layout: "vertical",
           spacing: "sm",
           margin: "xl",
           contents: [
-            // ✅ แก้ลิงก์เป็นหน้า Edit
+            
             {
               type: "button",
               style: "secondary",
@@ -1323,9 +1323,9 @@ export const createProfileFlexMessage = (
   };
 };
 
-// =================================================================
-// ⌚ 5. Watch Connection - ธีมโมเดิร์น (Modern Tech)
-// =================================================================
+
+
+
 export const createWatchConnectionBubble = (
   caregiverProfile: CaregiverProfile,
   dependentProfile: DependentProfile,
@@ -1348,7 +1348,7 @@ export const createWatchConnectionBubble = (
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        // Header with Dark Gradient
+        
         {
           type: "box",
           layout: "vertical",
@@ -1379,7 +1379,7 @@ export const createWatchConnectionBubble = (
             },
           ],
         },
-        // Status Box
+        
         {
           type: "box",
           layout: "vertical",
@@ -1435,7 +1435,7 @@ export const createWatchConnectionBubble = (
             },
           ],
         },
-        // Device ID & PIN Box
+        
         {
           type: "box",
           layout: "vertical",
@@ -1484,79 +1484,79 @@ export const createWatchConnectionBubble = (
   };
 };
 
-// =================================================================
-// ⌚ Equipment Menu - Single Button Design
-// =================================================================
+
+
+
 export const createBorrowReturnFlexMessage = (
   caregiverProfile: any,
-  activeBorrow: any // รายการล่าสุด (ถ้ามี)
+  activeBorrow: any 
 ): FlexBubble => {
   const liffBase =
     process.env.LIFF_BASE_URL || "https://liff.line.me/YOUR_LIFF_ID";
 
-  // ✅ ลิงก์เดียว เข้าไปหน้าเมนูรวม
+  
   const menuUrl = `${liffBase}/equipment`;
 
-  // ดึงสถานะปัจจุบัน
+  
   const status = activeBorrow?.status || "NONE";
   const equipmentName =
     activeBorrow?.items?.[0]?.equipment?.name || "อุปกรณ์ติดตาม";
 
-  // ตั้งค่าสีและข้อความตามสถานะล่าสุด
+  
   let headerTitle = "ยืม-คืนครุภัณฑ์";
   let statusText = "ไม่มีรายการ";
   let statusDesc = "กดเพื่อเริ่มทำรายการยืมใหม่";
-  let statusColor = "#64748B"; // เทา
-  let statusBgColor = "#F1F5F9"; // พื้นหลังเทาอ่อน
+  let statusColor = "#64748B"; 
+  let statusBgColor = "#F1F5F9"; 
 
   switch (status) {
     case "PENDING":
       statusText = "รอการอนุมัติ";
       statusDesc = "อยู่ระหว่างตรวจสอบ กรุณารอเจ้าหน้าที่ดำเนินการ";
-      statusColor = "#D97706"; // ส้ม/เหลือง
+      statusColor = "#D97706"; 
       statusBgColor = "#FEF3C7";
       break;
 
     case "APPROVED":
       statusText = "กำลังใช้งาน";
       statusDesc = `กำลังยืม: ${equipmentName}`;
-      statusColor = "#059669"; // เขียว
+      statusColor = "#059669"; 
       statusBgColor = "#D1FAE5";
       break;
 
     case "REJECTED":
       statusText = "ไม่ผ่านการอนุมัติ";
       statusDesc = "คำขอถูกปฏิเสธ กดเพื่อดูสาเหตุและประวัติ";
-      statusColor = "#DC2626"; // แดง
+      statusColor = "#DC2626"; 
       statusBgColor = "#FEE2E2";
       break;
 
     case "RETURN_PENDING":
       statusText = "กำลังตรวจสอบการคืน";
       statusDesc = "แจ้งคืนอุปกรณ์แล้ว รอเจ้าหน้าที่ตรวจสอบสภาพ";
-      statusColor = "#EA580C"; // ส้มเข้ม
+      statusColor = "#EA580C"; 
       statusBgColor = "#FFEDD5";
       break;
 
     case "RETURN_FAILED":
       statusText = "การคืนมีปัญหา";
       statusDesc = "ตรวจสอบไม่ผ่าน กรุณาติดต่อเจ้าหน้าที่";
-      statusColor = "#991B1B"; // แดงเข้ม
+      statusColor = "#991B1B"; 
       statusBgColor = "#FECACA";
       break;
 
     case "RETURNED":
       statusText = "คืนสำเร็จแล้ว";
       statusDesc = "ไม่มีรายการค้าง สามารถทำรายการยืมใหม่ได้";
-      statusColor = "#475569"; // เทาเข้ม
+      statusColor = "#475569"; 
       statusBgColor = "#E2E8F0";
       break;
 
-    default: // NONE
+    default: 
       statusText = "ยังไม่มีรายการยืม";
       statusDesc = "เริ่มทำรายการยืมอุปกรณ์ใหม่";
-      statusColor = "#64748B"; // เทา
-      statusBgColor = "#F1F5F9"; // พื้นหลังเทาอ่อน
+      statusColor = "#64748B"; 
+      statusBgColor = "#F1F5F9"; 
       break;
   }
 
@@ -1568,9 +1568,9 @@ export const createBorrowReturnFlexMessage = (
       layout: "vertical",
       paddingAll: "xl",
       spacing: "lg",
-      backgroundColor: "#FFFFFF", // พื้นหลังขาวเสมอ
+      backgroundColor: "#FFFFFF", 
       contents: [
-        // 1. Header - Gradient Blue
+        
         {
           type: "box",
           layout: "vertical",
@@ -1611,16 +1611,16 @@ export const createBorrowReturnFlexMessage = (
           ],
         },
 
-        // 2. Status Box - พื้นหลังสีตามสถานะ (จางๆ) + ขอบมน
+        
         {
           type: "box",
           layout: "vertical",
-          backgroundColor: statusBgColor, // พื้นหลังจางตามสถานะ
+          backgroundColor: statusBgColor, 
           cornerRadius: "xl",
           paddingAll: "xl",
           margin: "lg",
           contents: [
-            // Status Text
+            
             {
               type: "text",
               text: statusText,
@@ -1629,7 +1629,7 @@ export const createBorrowReturnFlexMessage = (
               size: "lg",
               wrap: true,
             },
-            // Description
+            
             {
               type: "text",
               text: statusDesc,
@@ -1641,7 +1641,7 @@ export const createBorrowReturnFlexMessage = (
           ],
         },
 
-        // 3. Single Action Button - ปุ่มเดียวขอบมน (สีน้ำเงินเสมอ)
+        
         {
           type: "box",
           layout: "vertical",
@@ -1650,7 +1650,7 @@ export const createBorrowReturnFlexMessage = (
             {
               type: "button",
               style: "primary",
-              color: "#3B82F6", // สีน้ำเงินคงที่
+              color: "#3B82F6", 
               height: "md",
               action: {
                 type: "uri",
@@ -1665,9 +1665,9 @@ export const createBorrowReturnFlexMessage = (
   };
 };
 
-// =================================================================
-// 🛡️ 7. Safety Settings Bubble - ธีมเขียว (Emerald Gradient)
-// =================================================================
+
+
+
 interface SettingsValues {
   safezoneLv1: number;
   safezoneLv2: number;
@@ -1692,7 +1692,7 @@ export const createSafetySettingsBubble = (
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        // Header with Emerald Gradient
+        
         {
           type: "box",
           layout: "vertical",
@@ -1723,7 +1723,7 @@ export const createSafetySettingsBubble = (
             },
           ],
         },
-        // Settings Box with Gradient
+        
         {
           type: "box",
           layout: "vertical",
@@ -1817,7 +1817,7 @@ export const createSafetySettingsBubble = (
             },
           ],
         },
-        // Buttons
+        
         {
           type: "box",
           layout: "vertical",
@@ -1864,9 +1864,9 @@ export const createSafetySettingsBubble = (
   };
 };
 
-// =================================================================
-// 🚑 8. Rescue Group Message (ส่งเข้ากลุ่มกู้ภัย/อาสา)
-// =================================================================
+
+
+
 function formatDate(date: Date) {
   return new Date(date).toLocaleString("th-TH", {
     timeZone: "Asia/Bangkok",
@@ -1888,28 +1888,28 @@ export function createRescueGroupFlexMessage(
 ): FlexBubble {
   const hasLocation = alertData.latitude && alertData.longitude;
 
-  // 1. Env & Base URL
+  
   const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAP || "";
   const liffBaseUrl = process.env.LIFF_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "";
 
-  // 2. Map Image
+  
   let mapImageUrl = "https://cdn-icons-png.flaticon.com/512/854/854878.png";
   if (hasLocation && GOOGLE_KEY) {
     mapImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${alertData.latitude},${alertData.longitude}&zoom=16&size=400x260&maptype=roadmap&markers=color:red%7C${alertData.latitude},${alertData.longitude}&key=${GOOGLE_KEY}`;
   }
 
-  // 3. Navigation URL
+  
   const navigationUrl = hasLocation && liffBaseUrl
       ? `${liffBaseUrl}/location?lat=${alertData.latitude}&lng=${alertData.longitude}&mode=navigate&id=${dependentInfo.id}`
       : `https://www.google.com/maps/search/?api=1&query=${alertData.latitude},${alertData.longitude}`;
 
-  // 4. Acknowledge URL (Rescue Form)
+  
   const acknowledgeUrl = liffBaseUrl
     ? `${liffBaseUrl}/rescue/form?id=${alertId}`
     : `https://google.com?q=Error_No_LIFF_BASE_URL`;
 
-  // 🔥 5. แก้เวลาให้เป็นไทย (Timezone +7)
-  // ใช้เวลาจาก alertData (ถ้ามี) หรือใช้เวลาปัจจุบัน
+  
+  
   const rawDate = alertData.createdAt || alertData.requestedAt || new Date();
   const thaiTimeObj = new Date(new Date(rawDate).getTime() + (7 * 60 * 60 * 1000));
 
@@ -1924,23 +1924,23 @@ export function createRescueGroupFlexMessage(
     hour12: false,
   });
 
-  // 🔥 6. แยกสีหัวข้อตามประเภท (Title Logic)
-  let headerStartColor = "#DC2626"; // Default Red
+  
+  let headerStartColor = "#DC2626"; 
   let headerEndColor = "#EF4444";
 
   if (title.includes("หัวใจ") || title.includes("HEART")) {
-       headerStartColor = "#9333EA"; // 🟣 ม่วง (Heart)
+       headerStartColor = "#9333EA"; 
        headerEndColor = "#A855F7";
   } else if (title.includes("อุณหภูมิ") || title.includes("TEMP") || title.includes("พื้นที่") || title.includes("ZONE")) {
-       headerStartColor = "#EA580C"; // 🟠 ส้ม (Temp/Zone)
+       headerStartColor = "#EA580C"; 
        headerEndColor = "#F97316";
   } else {
-       // 🔴 แดง (Fall / SOS ทั่วไป)
+       
        headerStartColor = "#DC2626";
        headerEndColor = "#EF4444";
   }
 
-  // Common Phone Info
+  
   const dependentPhone = dependentInfo?.phone || "-";
   const caregiverPhone = caregiverInfo?.phone || "-";
   const caregiverName = caregiverInfo
@@ -1959,7 +1959,7 @@ export function createRescueGroupFlexMessage(
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        // Header (สีเปลี่ยนตามประเภท)
+        
         {
           type: "box",
           layout: "vertical",
@@ -1967,19 +1967,19 @@ export function createRescueGroupFlexMessage(
           background: {
             type: "linearGradient",
             angle: "135deg",
-            startColor: headerStartColor, // ✅ ใช้ตัวแปรสี
-            endColor: headerEndColor,     // ✅ ใช้ตัวแปรสี
+            startColor: headerStartColor, 
+            endColor: headerEndColor,     
           },
           cornerRadius: "xxl",
           contents: [
             {
               type: "text",
-              text: title, // ข้อความประเภท (ส่งมาจาก route.ts)
+              text: title, 
               weight: "bold",
               size: "xl",
               color: "#FFFFFF",
               align: "center",
-              wrap: true, // เผื่อชื่อยาว
+              wrap: true, 
             },
             {
               type: "text",
@@ -1991,7 +1991,7 @@ export function createRescueGroupFlexMessage(
             }
           ],
         },
-        // Map Image
+        
         ...(hasLocation
           ? [
               {
@@ -2016,7 +2016,7 @@ export function createRescueGroupFlexMessage(
               },
             ]
           : []),
-        // ข้อมูลผู้ประสบเหตุ
+        
         {
           type: "text",
           text: "ผู้ประสบเหตุ",
@@ -2067,7 +2067,7 @@ export function createRescueGroupFlexMessage(
           alignItems: "center",
         },
         { type: "separator", margin: "xl" },
-        // ข้อมูลผู้ดูแล
+        
         {
           type: "text",
           text: "ผู้ดูแล (ติดต่อฉุกเฉิน)",
@@ -2118,7 +2118,7 @@ export function createRescueGroupFlexMessage(
           alignItems: "center",
         },
         { type: "separator", margin: "xl" },
-        // เวลา + พิกัด
+        
         {
           type: "box",
           layout: "horizontal",
@@ -2126,14 +2126,14 @@ export function createRescueGroupFlexMessage(
           contents: [
             {
               type: "text",
-              text: `📅 ${thaiDate}`,
+              text: ` ${thaiDate}`,
               size: "sm",
               color: "#64748B",
               flex: 1,
             },
             {
               type: "text",
-              text: `⏰ ${thaiTime} น.`,
+              text: ` ${thaiTime} น.`,
               size: "sm",
               color: "#64748B",
               align: "end",
@@ -2157,11 +2157,11 @@ export function createRescueGroupFlexMessage(
             uri: navigationUrl
           }
         },
-        // ปุ่มตอบรับ
+        
         {
           type: "button",
           style: "primary",
-          color: headerStartColor, // ✅ ใช้สีเดียวกับ Header
+          color: headerStartColor, 
           height: "md",
           margin: "lg",
           action: {
@@ -2175,9 +2175,9 @@ export function createRescueGroupFlexMessage(
   };
 }
 
-// =================================================================
-// 🚨 9. Caregiver Alert (แจ้งเตือนผู้ดูแลเมื่อเกิดเหตุ)
-// =================================================================
+
+
+
 export function createCaregiverAlertBubble(
   dependentName: string,
   location: string,
@@ -2189,14 +2189,14 @@ export function createCaregiverAlertBubble(
       type: "box",
       layout: "vertical",
       paddingAll: "xl",
-      backgroundColor: "#FEF2F2", // แดงจางมาก
+      backgroundColor: "#FEF2F2", 
       contents: [
         {
           type: "text",
-          text: "🚨 แจ้งเหตุฉุกเฉิน!",
+          text: " แจ้งเหตุฉุกเฉิน!",
           weight: "bold",
           size: "xl",
-          color: "#DC2626", // แดงเข้ม
+          color: "#DC2626", 
           align: "center",
         },
         {
@@ -2219,7 +2219,7 @@ export function createCaregiverAlertBubble(
           contents: [
             {
               type: "text",
-              text: "📍 พิกัดล่าสุด:",
+              text: " พิกัดล่าสุด:",
               size: "sm",
               color: "#7F1D1D",
             },
@@ -2253,9 +2253,9 @@ export function createCaregiverAlertBubble(
   };
 }
 
-// =================================================================
-// 🟡 10. Case Accepted (มีเจ้าหน้าที่รับเคสแล้ว)
-// =================================================================
+
+
+
 export function createCaseAcceptedBubble(
   rescuerName: string,
   rescuerPhone: string
@@ -2265,15 +2265,15 @@ export function createCaseAcceptedBubble(
     body: {
       type: "box",
       layout: "vertical",
-      backgroundColor: "#FFF7ED", // ส้มอ่อน
+      backgroundColor: "#FFF7ED", 
       paddingAll: "xl",
       contents: [
         {
           type: "text",
-          text: "🚑 เจ้าหน้าที่รับเคสแล้ว",
+          text: " เจ้าหน้าที่รับเคสแล้ว",
           weight: "bold",
           size: "lg",
-          color: "#C2410C", // ส้มเข้ม
+          color: "#C2410C", 
           align: "center",
         },
         { type: "separator", margin: "md", color: "#FFEDD5" },
@@ -2313,12 +2313,12 @@ export function createCaseAcceptedBubble(
   };
 }
 
-// =================================================================
-// ✅ 11. Case Closed (ปิดเคสสมบูรณ์ + อาการ)
-// =================================================================
+
+
+
 export function createCaseClosedBubble(
   rescuerName: string,
-  details: string, // อาการ
+  details: string, 
   resolvedAt: Date
 ): FlexBubble {
   const timeStr = new Date(resolvedAt).toLocaleString("th-TH", {
@@ -2334,12 +2334,12 @@ export function createCaseClosedBubble(
     body: {
       type: "box",
       layout: "vertical",
-      backgroundColor: "#F0FDF4", // เขียวอ่อน
+      backgroundColor: "#F0FDF4", 
       paddingAll: "xl",
       contents: [
         {
           type: "text",
-          text: "✅ ปิดเคสเรียบร้อย",
+          text: " ปิดเคสเรียบร้อย",
           weight: "bold",
           size: "xl",
           color: "#15803D",
@@ -2347,7 +2347,7 @@ export function createCaseClosedBubble(
         },
         { type: "separator", margin: "md", color: "#BBF7D0" },
 
-        // ส่วนแสดงอาการ
+        
         {
           type: "box",
           layout: "vertical",
@@ -2358,7 +2358,7 @@ export function createCaseClosedBubble(
           contents: [
             {
               type: "text",
-              text: "📝 รายละเอียด/อาการ:",
+              text: " รายละเอียด/อาการ:",
               size: "xs",
               color: "#166534",
               weight: "bold",
@@ -2401,9 +2401,9 @@ export function createCaseClosedBubble(
   };
 }
 
-// =================================================================
-// ✅ 12. Rescue Request Success (แจ้งกลับคนกดว่าส่งเรื่องแล้ว)
-// =================================================================
+
+
+
 export function createRescueSuccessBubble(): FlexBubble {
   return {
     type: "bubble",
@@ -2411,11 +2411,11 @@ export function createRescueSuccessBubble(): FlexBubble {
       type: "box",
       layout: "vertical",
       paddingAll: "xl",
-      backgroundColor: "#F0FDF4", // พื้นหลังเขียวอ่อนสบายตา
+      backgroundColor: "#F0FDF4", 
       contents: [
         {
           type: "image",
-          url: "https://cdn-icons-png.flaticon.com/512/1032/1032989.png", // ไอคอนรถพยาบาล/SOS
+          url: "https://cdn-icons-png.flaticon.com/512/1032/1032989.png", 
           size: "sm",
           aspectMode: "fit",
           margin: "none",
@@ -2425,7 +2425,7 @@ export function createRescueSuccessBubble(): FlexBubble {
           text: "แจ้งเหตุสำเร็จ!",
           weight: "bold",
           size: "xl",
-          color: "#15803D", // เขียวเข้ม
+          color: "#15803D", 
           align: "center",
           margin: "md",
         },
@@ -2454,7 +2454,7 @@ export function createRescueSuccessBubble(): FlexBubble {
           contents: [
             {
               type: "text",
-              text: "🚑 เจ้าหน้าที่ได้รับข้อมูลพิกัดแล้ว และกำลังตรวจสอบเพื่อเข้าช่วยเหลือครับ",
+              text: " เจ้าหน้าที่ได้รับข้อมูลพิกัดแล้ว และกำลังตรวจสอบเพื่อเข้าช่วยเหลือครับ",
               size: "xs",
               color: "#15803D",
               wrap: true,
@@ -2468,9 +2468,9 @@ export function createRescueSuccessBubble(): FlexBubble {
   };
 }
 
-// =================================================================
-// 📝 13. Borrow Request Receipt (ใบรับเรื่องการยืม - สีเขียว)
-// =================================================================
+
+
+
 export const createBorrowSuccessBubble = (
   caregiverName: string,
   dependentName: string,
@@ -2485,18 +2485,18 @@ export const createBorrowSuccessBubble = (
       paddingAll: "xl",
       spacing: "md",
       contents: [
-        // Header
+        
         {
           type: "box",
           layout: "horizontal",
           contents: [
-            { type: "text", text: "✅", size: "xxl", flex: 1 },
+            { type: "text", text: "", size: "xxl", flex: 1 },
             {
               type: "text",
               text: "ได้รับคำขอยืมแล้ว",
               weight: "bold",
               size: "lg",
-              color: "#15803D", // เขียวเข้ม
+              color: "#15803D", 
               flex: 5,
               align: "start",
               gravity: "center",
@@ -2504,7 +2504,7 @@ export const createBorrowSuccessBubble = (
           ],
         },
         { type: "separator", margin: "md" },
-        // Info
+        
         {
           type: "box",
           layout: "vertical",
@@ -2572,7 +2572,7 @@ export const createBorrowSuccessBubble = (
                   flex: 4,
                   wrap: true,
                   weight: "bold",
-                }, // เน้นสีเขียว
+                }, 
               ],
             },
             {
@@ -2619,9 +2619,9 @@ export const createBorrowSuccessBubble = (
   };
 };
 
-// =================================================================
-// ↩️ 14. Return Request Receipt (ใบรับเรื่องการคืน - สีส้ม)
-// =================================================================
+
+
+
 export const createReturnSuccessBubble = (
   equipmentName: string,
   returnDate: Date
@@ -2638,13 +2638,13 @@ export const createReturnSuccessBubble = (
           type: "box",
           layout: "horizontal",
           contents: [
-            { type: "text", text: "📦", size: "xxl", flex: 1 },
+            { type: "text", text: "", size: "xxl", flex: 1 },
             {
               type: "text",
               text: "แจ้งคืนอุปกรณ์แล้ว",
               weight: "bold",
               size: "lg",
-              color: "#C2410C", // ส้มเข้ม
+              color: "#C2410C", 
               flex: 5,
               align: "start",
               gravity: "center",
@@ -2706,7 +2706,7 @@ export const createReturnSuccessBubble = (
           type: "box",
           layout: "vertical",
           margin: "lg",
-          backgroundColor: "#FFF7ED", // ส้มอ่อน
+          backgroundColor: "#FFF7ED", 
           cornerRadius: "md",
           paddingAll: "md",
           contents: [
@@ -2744,7 +2744,7 @@ export function createRegisterButtonBubble(registerUrl: string) {
           text: "ไม่พบข้อมูลลงทะเบียน",
           weight: "bold",
           size: "xl",
-          color: "#ef4444", // สีแดงเตือนใจ
+          color: "#ef4444", 
           align: "center",
         },
         {
@@ -2767,7 +2767,7 @@ export function createRegisterButtonBubble(registerUrl: string) {
           type: "button",
           style: "primary",
           height: "sm",
-          color: "#3b82f6", // สีน้ำเงินสวยๆ
+          color: "#3b82f6", 
           action: {
             type: "uri",
             label: "ลงทะเบียนใช้งาน",

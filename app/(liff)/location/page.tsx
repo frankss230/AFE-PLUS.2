@@ -13,7 +13,6 @@ const mapOptions: google.maps.MapOptions = {
   zoomControl: true,
 };
 
-// Icon ตามที่สั่ง
 const CAREGIVER_ICON_URL = "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
 const DEPENDENT_ICON_URL = "https://maps.google.com/mapfiles/kml/shapes/man.png";
 
@@ -45,23 +44,18 @@ export default function LocationPage() {
   const [showCaregiverInfo, setShowCaregiverInfo] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
-  // ✅ แก้ไขส่วนดึงข้อมูล (Fetch Logic)
   useEffect(() => {
     if (dependentId) {
       fetch(`/api/dependent/info?id=${dependentId}`)
         .then(res => res.json())
         .then(response => {
-            console.log("🔥 API Response:", response); // เช็คใน Console ได้เลยว่าส่งอะไรมา
+            console.log(" API Response:", response);
 
-            // 1. เช็คว่าข้อมูลถูกห่อไว้ใน 'data' หรือ 'result' หรือไม่ (Common API Pattern)
             const data = response.data || response.result || response;
 
-            // 2. เช็คว่าเป็น DependentProfile โดยตรง หรือถูกซ้อนอยู่ใน User
-            // ตาม Schema: model DependentProfile { firstName, lastName, phone }
             const profile = data.dependentProfile || data;
 
             if (profile) {
-                // ดึงข้อมูลให้ตรงกับ Schema เป๊ะๆ
                 const firstName = profile.firstName || '';
                 const lastName = profile.lastName || '';
                 const fullName = (firstName || lastName) 
@@ -70,19 +64,18 @@ export default function LocationPage() {
 
                 setDependentInfo({
                     name: fullName,
-                    phone: profile.phone || '1669', // Default ถ้าไม่มีเบอร์
+                    phone: profile.phone || '1669',
                     battery: (typeof profile.battery === 'number') ? profile.battery : 0
                 });
             }
         })
         .catch(err => {
-            console.error("❌ Fetch Error:", err);
+            console.error(" Fetch Error:", err);
             setDependentInfo(prev => ({ ...prev, name: 'ไม่สามารถโหลดข้อมูลได้' }));
         });
     }
   }, [dependentId]);
 
-  // หาตำแหน่ง Caregiver
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -95,7 +88,6 @@ export default function LocationPage() {
     }
   }, []);
 
-  // คำนวณเส้นทาง
   const directionsCallback = useCallback((result: google.maps.DirectionsResult | null, status: google.maps.DirectionsStatus) => {
     if (status === 'OK' && result) setDirections(prev => prev ? prev : result);
   }, []);
@@ -109,14 +101,12 @@ export default function LocationPage() {
   return (
     <div className="relative w-screen h-screen">
       
-      {/* Loading Banner */}
       {isNavigationMode && !myLocation && !gpsError && (
         <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 bg-white/90 px-4 py-2 rounded-full shadow-md text-sm font-bold animate-pulse">
           กำลังค้นหาตำแหน่งของคุณ...
         </div>
       )}
 
-      {/* Map Switch */}
       <button
         onClick={() => setMapType(prev => prev === 'roadmap' ? 'hybrid' : 'roadmap')}
         className="absolute top-4 right-4 z-50 bg-white px-4 py-2 rounded-full shadow-lg font-bold text-sm border border-gray-200"
@@ -142,7 +132,6 @@ export default function LocationPage() {
           <DirectionsRenderer options={{ directions: directions, suppressMarkers: true, polylineOptions: { strokeColor: "#0088FF", strokeWeight: 6 } }} />
         )}
 
-        {/* Marker Caregiver */}
         {isNavigationMode && myLocation && (
           <Marker position={myLocation} icon={CAREGIVER_ICON_URL} zIndex={1} onClick={() => setShowCaregiverInfo(!showCaregiverInfo)}>
              {showCaregiverInfo && (
@@ -153,7 +142,6 @@ export default function LocationPage() {
           </Marker>
         )}
 
-        {/* Marker Dependent */}
         <Marker
           position={targetLocation}
           animation={google.maps.Animation.DROP}
@@ -166,16 +154,16 @@ export default function LocationPage() {
             <InfoWindow position={targetLocation} onCloseClick={() => setShowDependentInfo(false)} options={{ pixelOffset: new google.maps.Size(0, -45) }}>
               <div style={{ padding: '8px', maxWidth: '220px' }}>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: '#111' }}>
-                  👤 {dependentInfo.name}
+                   {dependentInfo.name}
                 </h3>
                 <p style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
-                    🔋 แบตเตอรี่: <span style={{ color: dependentInfo.battery < 20 ? 'red' : 'green', fontWeight:'bold' }}>{dependentInfo.battery}%</span>
+                     แบตเตอรี่: <span style={{ color: dependentInfo.battery < 20 ? 'red' : 'green', fontWeight:'bold' }}>{dependentInfo.battery}%</span>
                 </p>
                 <a href={`tel:${dependentInfo.phone}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#28a745', color: 'white', padding: '8px 12px', borderRadius: '20px', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px', marginBottom: '8px' }}>
-                  📞 โทรหา
+                   โทรหา
                 </a>
                 <a href={googleMapsAppUrl} target="_blank" rel="noreferrer" style={{ display: 'block', textAlign:'center', fontSize: '12px', color: '#0088FF', fontWeight:'bold', textDecoration: 'none' }}>
-                  เปิดใน Google Maps App ↗
+                  เปิดใน Google Maps App 
                 </a>
               </div>
             </InfoWindow>

@@ -19,13 +19,11 @@ export default async function TransactionsPage({
   const searchText = params.search || "";
   const selectedStatus = params.status || "";
 
-  // สร้าง Key เพื่อให้ Suspense รู้ว่าข้อมูลเปลี่ยนแล้วนะ (ต้อง Reload ใหม่)
   const suspenseKey = `${currentView}-${searchText}-${selectedStatus}`;
 
   return (
     <div className="space-y-5">
       
-      {/* Header & View Switcher */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -38,12 +36,9 @@ export default async function TransactionsPage({
         <ViewSwitcher currentView={currentView} />
       </div>
 
-      {/* Filter */}
       <TransactionFilter view={currentView} />
 
-      {/* Table Section */}
       <Card className="border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
-        {/* ✅ หัวใจสำคัญ: Suspense จะแสดง fallback (AdminLoading) เฉพาะตรงตารางนี้ */}
         <Suspense key={suspenseKey} fallback={<TableLoading />}>
            <TransactionTableSection 
               view={currentView} 

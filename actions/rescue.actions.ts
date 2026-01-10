@@ -3,9 +3,6 @@
 import prisma from '@/lib/db/prisma';
 import { revalidatePath } from 'next/cache';
 
-// ==========================================
-// 📍 อัปเดตพิกัดเจ้าหน้าที่ (ยิงรัวๆ มาที่นี่)
-// ==========================================
 export async function updateRescuerLocation(alertId: number, lat: number, lng: number) {
   try {
     await prisma.extendedHelp.update({
@@ -13,10 +10,8 @@ export async function updateRescuerLocation(alertId: number, lat: number, lng: n
       data: {
         rescuerLat: lat,
         rescuerLng: lng,
-        // อัปเดต timestamp ล่าสุดด้วยก็ได้ ถ้าอยากรู้ว่าพิกัดไม่อัปเดตนานแค่ไหน
       }
     });
-    // ไม่ต้อง revalidatePath ก็ได้ถ้าอยากให้เบาเครื่อง Server เพราะ War Room มันดึง Auto อยู่แล้ว
     return { success: true };
   } catch (error) {
     console.error("Update Rescuer Location Error:", error);
@@ -24,17 +19,14 @@ export async function updateRescuerLocation(alertId: number, lat: number, lng: n
   }
 }
 
-// ==========================================
-// 🚨 กดรับเคส (เปลี่ยนสถานะ + เริ่มงาน)
-// ==========================================
 export async function acceptCase(alertId: number, rescuerUserId: number) {
   try {
     await prisma.extendedHelp.update({
       where: { id: alertId },
       data: {
-        status: 'ACKNOWLEDGED', // เปลี่ยนเป็นสีเหลือง
-        reporterId: rescuerUserId, // ผูกเจ้าหน้าที่กับเคสนี้
-        rescuerLat: null, // รีเซ็ตพิกัดเก่า (ถ้ามี)
+        status: 'ACKNOWLEDGED',
+        reporterId: rescuerUserId,
+        rescuerLat: null,
         rescuerLng: null
       }
     });
@@ -47,15 +39,12 @@ export async function acceptCase(alertId: number, rescuerUserId: number) {
   }
 }
 
-// ==========================================
-// ✅ ปิดงาน (เปลี่ยนสถานะเป็น RESOLVED)
-// ==========================================
 export async function closeCase(alertId: number) {
   try {
     await prisma.extendedHelp.update({
       where: { id: alertId },
       data: {
-        status: 'RESOLVED', // เปลี่ยนเป็นสีเขียว
+        status: 'RESOLVED',
       }
     });
     

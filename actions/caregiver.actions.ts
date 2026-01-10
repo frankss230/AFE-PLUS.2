@@ -8,17 +8,14 @@ export async function updateCaregiver(userId: number, data: any) {
     const {
       role,
       isActive,
-      // lineId, // ❌ ไม่ต้องเอามา update เพราะเรา disable ไว้หน้าบ้านแล้ว (หรือถ้าจะกันเหนียวก็เอาออก)
       
-      // Profile
       firstName,
       lastName,
       phone,
       birthday,
-      gender,         // ✅ เพศ
-      maritalStatus,  // ✅ สถานะสมรส (เพิ่มใหม่)
+      gender,
+      maritalStatus,
       
-      // Address
       houseNumber,
       village,
       road,
@@ -33,7 +30,6 @@ export async function updateCaregiver(userId: number, data: any) {
       data: {
         role: role,
         isActive: isActive,
-        // lineId: lineId, // ไม่ต้องอัปเดต LineID
         caregiverProfile: {
           update: {
             firstName,
@@ -41,7 +37,7 @@ export async function updateCaregiver(userId: number, data: any) {
             phone,
             birthday: birthday ? new Date(birthday) : undefined,
             gender,
-            marital: maritalStatus, // ✅ Map ค่าจาก form (maritalStatus) ไปลง db field (marital)
+            marital: maritalStatus,
             houseNumber,
             village,
             road,

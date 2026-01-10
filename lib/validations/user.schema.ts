@@ -1,21 +1,21 @@
 import { z } from 'zod';
 
 export const userFormSchema = z.object({
-  // ข้อมูลส่วนตัว
+  
   firstName: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
   lastName: z.string().min(2, "นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร"),
   phone: z.string().optional(),
   lineId: z.string().optional(),
 
-  // ข้อมูลเข้าระบบ
-  username: z.string().min(4, "Username ต้องมีอย่างน้อย 4 ตัวอักษร").optional(),
-  password: z.string().optional(), // Optional เพราะถ้าไม่แก้ก็ว่างไว้
   
-  // Role & Status
+  username: z.string().min(4, "Username ต้องมีอย่างน้อย 4 ตัวอักษร").optional(),
+  password: z.string().optional(), 
+  
+  
   role: z.enum(['ADMIN', 'CAREGIVER', 'DEPENDENT']),
   isActive: z.boolean().default(true),
 
-  // ที่อยู่ (Optional ทั้งหมด)
+  
   houseNumber: z.string().optional(),
   village: z.string().optional(),
   road: z.string().optional(),

@@ -26,13 +26,13 @@ import { Activity, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 
-// ชุดสีธีมน้ำเงิน
+
 const COLORS = {
-  falls: "#3B82F6",   // Blue 500
-  sos: "#DC2626",     // Red 600
-  heart: "#8B5CF6",   // Violet 500
-  temp: "#10B981",    // Emerald 500
-  zone: "#F59E0B",    // Amber 500
+  falls: "#3B82F6",   
+  sos: "#DC2626",     
+  heart: "#8B5CF6",   
+  temp: "#10B981",    
+  zone: "#F59E0B",    
 };
 
 interface ChartData {
@@ -51,7 +51,7 @@ interface OverviewChartProps {
   };
 }
 
-// Custom Tooltip with Percentage
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
@@ -97,15 +97,15 @@ export default function OverviewChart({ data }: OverviewChartProps) {
   const [chartType, setChartType] = useState("bar");
   const [range, setRange] = useState<"day" | "week" | "month">("week");
 
-  // ==========================================
-  // 🔥🔥🔥 แก้แบบลูกทุ่ง: บวกเวลาเพิ่ม 7 ชั่วโมง (25200000 ms) ไปเลย
-  // ==========================================
+  
+  
+  
   const now = new Date();
-  // ถ้าบน Vercel (UTC) เวลา 00:00 -> บวก 7 ชม -> เป็น 07:00 (เวลาไทย)
+  
   const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
   
   const currentMonth = format(thaiTime, "MMMM yyyy", { locale: th });
-  // ==========================================
+  
 
   const safeData = data || { day: [], week: [], month: [] };
   const currentData = safeData[range] || [];
@@ -126,10 +126,10 @@ export default function OverviewChart({ data }: OverviewChartProps) {
   return (
     <div className="w-full h-full p-6 bg-white rounded-[32px] border border-blue-100 shadow-[0_2px_40px_-10px_rgba(59,130,246,0.1)] flex flex-col relative overflow-hidden group">
       
-      {/* Blue Gradient Background */}
+      {}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-50/60 to-indigo-50/60 rounded-full blur-3xl opacity-70 pointer-events-none -translate-y-1/2 translate-x-1/3" />
       
-      {/* Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 shrink-0 z-20 relative">
         <div>
           <h3 className="text-slate-800 font-bold text-xl flex items-center gap-3 tracking-tight">
@@ -140,13 +140,13 @@ export default function OverviewChart({ data }: OverviewChartProps) {
           </h3>
           <div className="flex items-center gap-2 mt-2 ml-14">
             <p className="text-slate-400 text-sm font-medium bg-blue-50 px-3 py-1 rounded-full">
-              {/* ✅ แสดงตัวแปรตรงๆ เลย ไม่ต้องรอ useEffect */}
+              {}
               {currentMonth}
             </p>
           </div>
         </div>
 
-        {/* Controls */}
+        {}
         <div className="flex items-center gap-3">
           <div className="flex items-center bg-blue-50/80 p-1.5 rounded-full">
             {(["day", "week", "month"] as const).map((r) => (
@@ -177,7 +177,7 @@ export default function OverviewChart({ data }: OverviewChartProps) {
         </div>
       </div>
 
-      {/* Chart Area */}
+      {}
       <div className="flex-1 w-full min-h-0 relative z-10">
         <ResponsiveContainer width="100%" height="100%">
           {chartType === "pie" ? (
@@ -246,7 +246,7 @@ export default function OverviewChart({ data }: OverviewChartProps) {
         </ResponsiveContainer>
       </div>
 
-      {/* Legend */}
+      {}
       <div className="flex flex-wrap items-center justify-center gap-4 mt-6 pt-6 border-t border-blue-50 shrink-0 z-20">
         {[
           { label: "การล้ม", color: COLORS.falls },

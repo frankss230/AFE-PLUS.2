@@ -35,7 +35,7 @@ export default function StatsCard({
     <Card className="h-full rounded-2xl shadow-sm border border-slate-100 flex items-center overflow-hidden">
       <CardContent className="p-4 w-full flex items-center gap-3">
         
-        {/* Icon */}
+        {}
         {Icon && (
           <div
             className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-colors ${currentStyle.bg}`}
@@ -44,9 +44,9 @@ export default function StatsCard({
           </div>
         )}
 
-        {/* Text Area */}
+        {}
         <div className="flex flex-col min-w-0">
-          {/* ✅ leading-none -> leading-tight (เผื่อสระลอย) */}
+          {}
           <p className="text-2xl font-bold text-slate-800 tracking-tight leading-tight">
             {value}
           </p>

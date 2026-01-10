@@ -1,62 +1,55 @@
-// app/api/admin/route.ts
-
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { hash, genSalt } from 'bcryptjs';
 import { UserRole } from '@prisma/client';
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-    if (req.method !== "POST") {
-        return res.status(405).json({ message: "Method not allowed" });
-    }
-
-    const { username, password, status_id } = req.body;
-
-    if (!username || !password) {
-        return res.status(400).json({
-            message: 'กรุณาระบุ Username และ Password'
-        });
-    }
-
+export async function POST(req: Request) {
     try {
+        const body = await req.json();
+        const { username, password } = body;
+
+        if (!username || !password) {
+            return NextResponse.json(
+                { message: 'กรุณาระบุ Username และ Password' },
+                { status: 400 }
+            );
+        }
+
         const hashedPassword = await hash(password, await genSalt(10));
 
-        let assignedRole: UserRole = UserRole.CAREGIVER;
-        if (status_id === 1) {
-            assignedRole = UserRole.ADMIN;
-        }
+        const assignedRole = UserRole.CAREGIVER;
 
         const newUser = await prisma.user.create({
             data: {
                 username,
                 password: hashedPassword,
                 role: assignedRole,
-                isActive: true, // ค่า default
-                lineId: null,
-                token: null
+                isActive: true,
             }
         });
 
-        return res.status(201).json({
+        return NextResponse.json({
             message: "สร้างบัญชีผู้ใช้สำเร็จ",
-            user: newUser
-        });
+            user: { 
+                id: newUser.id, 
+                username: newUser.username, 
+                role: newUser.role 
+            }
+        }, { status: 201 });
 
-    } catch (err: unknown) {
+    } catch (err: any) {
         console.error("Error creating user:", err);
 
-        if (typeof err === "object" && err !== null && "code" in err) {
-            if ((err as any).code === "P2002") {
-                return res.status(409).json({
-                    message: "Username นี้ถูกใช้งานแล้ว"
-                });
-            }
+        if (err.code === "P2002") {
+            return NextResponse.json(
+                { message: "Username นี้ถูกใช้งานแล้ว" },
+                { status: 409 }
+            );
         }
 
-        return res.status(500).json({
-            message: "เกิดข้อผิดพลาดในการสร้างผู้ใช้"
-        });
+        return NextResponse.json(
+            { message: "เกิดข้อผิดพลาดในการสร้างผู้ใช้" },
+            { status: 500 }
+        );
     }
-};
-
-export default handler;
+}

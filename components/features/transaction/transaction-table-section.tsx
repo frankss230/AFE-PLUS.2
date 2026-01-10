@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import TransactionList from "./transaction-list";
 
-// --- Logic การดึงข้อมูล (ย้ายมาจากหน้า Page) ---
+
 async function getTransactions(
   view: "borrow" | "return",
   search?: string,
@@ -27,8 +27,8 @@ async function getTransactions(
     }
   }
 
-  // จำลอง Delay นิดนึงเพื่อให้เห็น Effect โหลด (ลบออกได้ตอนใช้จริง)
-  // await new Promise((resolve) => setTimeout(resolve, 500));
+  
+  
 
   const items = await prisma.borrowEquipment.findMany({
     where: {
@@ -59,7 +59,7 @@ interface TransactionTableSectionProps {
 }
 
 export default async function TransactionTableSection({ view, search, status }: TransactionTableSectionProps) {
-  // ดึงข้อมูลใน Server Component นี้เลย
+  
   const transactions = await getTransactions(view, search, status);
 
   return <TransactionList data={transactions} view={view} />;

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
-import DependentPageClient from '@/components/features/dependents/dependent-page-client'; // ✅ เรียกตัวใหม่มาใช้
+import DependentPageClient from '@/components/features/dependents/dependent-page-client'; 
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +48,7 @@ export default async function DependentsPage() {
         <p className="text-gray-600 mt-1">รายชื่อผู้ที่มีภาวะพึ่งพิงทั้งหมดในระบบ</p>
       </div>
 
-      {/* ✅ ส่งต่อให้ Client Component จัดการ Refresh */}
+      {}
       <DependentPageClient initialData={dependents} />
     </div>
   );

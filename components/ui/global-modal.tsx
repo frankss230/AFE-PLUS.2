@@ -32,14 +32,14 @@ export function GlobalModal() {
           </button>
         </div>
 
-        {/* Content */}
+        {}
         <div className="mb-8">
           <p className="text-gray-600 leading-relaxed">
             {content}
           </p>
         </div>
 
-        {/* Footer / Actions */}
+        {}
         <div className="flex gap-3 justify-end">
           {type === 'confirm' && (
             <button

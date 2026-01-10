@@ -19,14 +19,12 @@ import LiffGuard from "@/components/auth/liff-guard";
 export const dynamic = "force-dynamic";
 
 export default async function EquipmentMenuPage() {
-  // 2. ดึง User ID จาก Cookie (ระบบ Login ต้องฝัง cookie ชื่อ 'userId' มาให้แล้ว)
   const cookieStore = await cookies();
   const userIdStr = cookieStore.get("userId")?.value;
 
   if (!userIdStr) {
     return (
       <LiffGuard>
-         {/* ใส่ div ว่างๆ ไว้ เพราะเดี๋ยว LiffGuard จะสั่ง reload หน้าจอเองเมื่อ Login เสร็จ */}
          <div className="min-h-screen bg-white"></div> 
       </LiffGuard>
     );
@@ -34,7 +32,7 @@ export default async function EquipmentMenuPage() {
 
   const userId = parseInt(userIdStr);
 
-  // 3. ใช้ userId จริงในการ Query
+  
   const caregiver = await prisma.caregiverProfile.findFirst({
     where: { userId: userId }, 
     include: {
@@ -87,7 +85,6 @@ export default async function EquipmentMenuPage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       
-      {/* Header */}
       <div className="bg-white p-6 shadow-sm border-b sticky top-0 z-10 rounded-bl-3xl rounded-br-3xl">
         <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
           <PackageOpen className="w-6 h-6 text-blue-600" />
@@ -98,7 +95,6 @@ export default async function EquipmentMenuPage() {
 
       <div className="p-4 space-y-6">
         
-        {/* Section 1: รายชื่อผู้ที่มีภาวะพึ่งพิง */}
         <div className="space-y-4">
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">
             รายการผู้ที่มีภาวะพึ่งพิง ({caregiver.dependents.length})
@@ -193,7 +189,6 @@ export default async function EquipmentMenuPage() {
           })}
         </div>
 
-        {/* Section 2: ประวัติทั้งหมด */}
         <div className="space-y-4 pt-4 border-t border-dashed border-slate-300">
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2 ml-1">
             <History className="w-4 h-4" /> ประวัติการทำรายการ

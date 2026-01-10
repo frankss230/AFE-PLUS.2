@@ -2,7 +2,6 @@
 
 import prisma from '@/lib/db/prisma';
 
-// เช็คจำนวนแจ้งเตือนที่ยังไม่เคลียร์ (Active)
 export async function getUnreadAlertCount() {
   try {
     const falls = await prisma.fallRecord.count({ where: { status: 'DETECTED' } });

@@ -18,11 +18,9 @@ export default function ElderlyRegisterPage() {
         const profile = await liff.getProfile();
         const status = await checkLiffUserStatus(profile.userId);
 
-        // 🟢 ถ้ายังไม่มี User เลย ห้ามข้ามขั้น! ดีดกลับไป
         if (status === 'UNREGISTERED') {
             window.location.href = '/register/user'; 
         } else {
-            // อนุญาตให้เข้าได้หมด (ทั้ง NO_ELDERLY และ COMPLETE)
             setChecking(false);
         }
       } catch (e) { setChecking(false); }

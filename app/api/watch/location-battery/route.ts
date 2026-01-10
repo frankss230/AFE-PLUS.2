@@ -18,7 +18,7 @@ async function handleRequest(request: Request) {
   try {
     const body = await request.json();
 
-    // 1. รับค่า
+    
     const targetId = body.uId || body.lineId || body.users_id;
     const { battery, distance, status } = body;
     let rawLat = body.latitude ?? body.lat ?? 0;
@@ -32,7 +32,7 @@ async function handleRequest(request: Request) {
 
     if (!targetId) return NextResponse.json({ error: "Missing ID" }, { status: 400 });
 
-    // 2. ดึงข้อมูล
+    
     const user = await prisma.user.findUnique({
       where: { id: parseInt(targetId) },
       include: {
@@ -55,7 +55,7 @@ async function handleRequest(request: Request) {
     const safeZoneData = dependent.safeZones[0];
     const waitViewLocation = dependent.waitViewLocation ?? false;
     
-    // Flag สถานะ
+    
     let { isAlertZone1Sent, isAlertNearZone2Sent, isAlertZone2Sent } = dependent;
 
     const statusInt = parseInt(status);
@@ -68,7 +68,7 @@ async function handleRequest(request: Request) {
     const r1 = safeZoneData?.radiusLv1 || 100;
     const r2 = safeZoneData?.radiusLv2 || 500;
     
-    // Logic แยก SOS vs Zone
+    
     const isDistanceCritical = distInt >= r2; 
     const isManualSOS = (statusInt === 2) && !isDistanceCritical;
 
@@ -76,7 +76,7 @@ async function handleRequest(request: Request) {
     let shouldSendLine = false;
     let alertType = "NONE";
 
-    // 🕒 TIME LOCK
+    
     const lastLocation = dependent.locations[0];
     const now = new Date();
     let timeDiffSec = 9999; 
@@ -84,11 +84,11 @@ async function handleRequest(request: Request) {
         timeDiffSec = (now.getTime() - new Date(lastLocation.timestamp).getTime()) / 1000;
     }
 
-    // ==========================================
-    // 🚨 CASE 1: MANUAL SOS (กดปุ่ม)
-    // ==========================================
+    
+    
+    
     if (isManualSOS) {
-        console.log("🚨 Manual SOS Detected!");
+        console.log(" Manual SOS Detected!");
         currentDBStatus = "DANGER";
         const recentSOS = await prisma.extendedHelp.findFirst({
             where: { dependentId: dependent.id, type: "WATCH_SOS", requestedAt: { gte: new Date(Date.now() - 60000) } }
@@ -103,9 +103,9 @@ async function handleRequest(request: Request) {
             );
         }
     }
-    // ==========================================
-    // 🌍 CASE 2: ZONE LOGIC
-    // ==========================================
+    
+    
+    
     else {
       let currentStatus = 0; 
       if (safeZoneData) {
@@ -113,17 +113,17 @@ async function handleRequest(request: Request) {
         if (distInt <= r1) currentStatus = 0;      
         else if (distInt < nearR2) currentStatus = 1; 
         else if (distInt < r2) currentStatus = 3;     
-        else currentStatus = 2; // DANGER
+        else currentStatus = 2; 
       }
 
       const buffer = 20;
 
-      // 🟢 SAFE (0)
+      
       if (currentStatus === 0) {
         currentDBStatus = "SAFE";
         if (distInt <= (r1 - buffer)) {
             if (isAlertZone1Sent || isAlertNearZone2Sent || isAlertZone2Sent) {
-                // ต้องอยู่ในบ้านเกิน 10 วิ ถึงจะแจ้งว่ากลับบ้าน (กันเด้ง)
+                
                 if (timeDiffSec > 10) { 
                     shouldSendLine = true; alertType = "BACK_SAFE";
                     isAlertZone1Sent = false; 
@@ -133,17 +133,17 @@ async function handleRequest(request: Request) {
             }
         }
       } 
-      // 🟡 ZONE 1 (1)
+      
       else if (currentStatus === 1) {
         currentDBStatus = "WARNING";
-        // ขาออก
+        
         if (!isAlertZone1Sent) { 
             shouldSendLine = true; alertType = "ZONE_1"; isAlertZone1Sent = true; 
         }
-        // ขาเข้า (จาก Zone 2/Near)
+        
         else if (isAlertZone2Sent || isAlertNearZone2Sent) {
             if (distInt <= (Math.floor(r2 * 0.8) - buffer)) {
-                // ต้องกลับเข้ามานานเกิน 30 วิ ถึงจะแจ้ง
+                
                 if (timeDiffSec > 30) {
                     shouldSendLine = true; alertType = "BACK_TO_ZONE_1";
                     isAlertZone2Sent = false;
@@ -152,19 +152,19 @@ async function handleRequest(request: Request) {
             }
         }
       } 
-      // 🟠 NEAR ZONE 2 (3) - 80%
+      
       else if (currentStatus === 3) {
           currentDBStatus = "DANGER"; 
           
-          // ขาออก (เพิ่งแตะ 80%)
+          
           if (!isAlertNearZone2Sent) {
               shouldSendLine = true; alertType = "NEAR_ZONE_2";
               isAlertNearZone2Sent = true; isAlertZone1Sent = true; 
           }
-          // ขาเข้า (กลับมาจาก Zone 2)
+          
           else if (isAlertZone2Sent) {
              if (distInt <= (r2 - buffer)) {
-                 // ต้องกลับเข้ามานานเกิน 30 วิ ถึงจะแจ้ง
+                 
                  if (timeDiffSec > 30) {
                      shouldSendLine = true; alertType = "BACK_TO_NEAR_ZONE_2";
                      isAlertZone2Sent = false;
@@ -172,11 +172,11 @@ async function handleRequest(request: Request) {
              }
           }
       }
-      // 🔴 ZONE 2 DANGER (2)
+      
       else if (currentStatus === 2) {
         currentDBStatus = "DANGER"; 
         
-        // Logic: ถ้า Flag ยังไม่เปิด -> แจ้งเลย!
+        
         if (!isAlertZone2Sent) { 
           shouldSendLine = true; 
           alertType = "ZONE_2_DANGER"; 
@@ -188,9 +188,9 @@ async function handleRequest(request: Request) {
       }
     }
 
-    // ==========================================
-    // 📨 SEND LINE MESSAGES
-    // ==========================================
+    
+    
+    
     if (shouldSendLine && caregiver?.user.lineId && !isManualSOS) {
        const lineId = caregiver.user.lineId;
        const distText = `${distInt} ม.`;
@@ -206,7 +206,7 @@ async function handleRequest(request: Request) {
                   { latitude: lat, longitude: lng, timestamp: new Date(), id: 0 },
                   user, caregiver.phone || "", dependent as any, 
                   "ZONE", 
-                  `⚠️ แจ้งเตือน: ${dependent.firstName} ออกนอกเขตปลอดภัย! (ระยะ ${distText})`
+                  `️ แจ้งเตือน: ${dependent.firstName} ออกนอกเขตปลอดภัย! (ระยะ ${distText})`
                );
            }
            else if (alertType === "ZONE_1") {
@@ -226,20 +226,20 @@ async function handleRequest(request: Request) {
                await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าสู่ระยะ 80%", contents: msg });
            }
        } catch (lineError: any) {
-           console.error("❌ LINE Send Error:", lineError.statusCode);
+           console.error(" LINE Send Error:", lineError.statusCode);
        }
     }
 
-    // อัปเดต Flag
+    
     await prisma.dependentProfile.update({
       where: { id: dependent.id },
       data: { isAlertZone1Sent, isAlertNearZone2Sent, isAlertZone2Sent },
     });
 
-    // ==========================================
-    // 🔥 REALTIME SAVE: บันทึกทุกครั้ง (แก้ให้แล้ว)
-    // ==========================================
-    // ตัด Logic เช็ค 5 นาทีทิ้งไปเลย เพื่อให้แผนที่ขยับตลอด
+    
+    
+    
+    
     await prisma.location.create({
       data: {
         dependentId: dependent.id,
@@ -248,18 +248,18 @@ async function handleRequest(request: Request) {
       },
     });
 
-    // Sync Response
+    
     const activeAlert = await prisma.extendedHelp.findFirst({
       where: { dependentId: dependent.id, status: "DETECTED" },
     });
     let stop_em = !activeAlert;
     
-    // Check waitViewLocation
+    
     if (waitViewLocation) {
       stop_em = false;
       if (body.location_status) {
         await pushStatusMessage(caregiver?.user.lineId!, dependent.id);
-        // Reset Flag เมื่อส่งแล้ว
+        
         await prisma.dependentProfile.update({ where: { id: dependent.id }, data: { waitViewLocation: false } });
         stop_em = true;
       }
@@ -267,7 +267,7 @@ async function handleRequest(request: Request) {
 
     return NextResponse.json({
       success: true,
-      command_tracking: dependent.isGpsEnabled, // ส่งคำสั่งเปิด GPS
+      command_tracking: dependent.isGpsEnabled, 
       request_location: !!activeAlert,
       stop_emergency: stop_em,
       sync_settings: {
@@ -277,7 +277,7 @@ async function handleRequest(request: Request) {
         lng: safeZoneData?.longitude || 0.0,
       },
     }, { 
-      // 🔥 Headers แก้ 304 (Cache)
+      
       status: 200,
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
@@ -287,7 +287,7 @@ async function handleRequest(request: Request) {
     });
 
   } catch (error) {
-    console.error("💥 Server Error:", error);
+    console.error(" Server Error:", error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }

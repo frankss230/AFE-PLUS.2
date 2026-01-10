@@ -28,7 +28,7 @@ export async function getThaiAddressData(): Promise<ThaiProvince[]> {
     const rawData = await response.json();
 
     if (!Array.isArray(rawData)) {
-        console.error('❌ บ่แม่น array', rawData);
+        console.error(' บ่แม่น array', rawData);
         return [];
     }
 

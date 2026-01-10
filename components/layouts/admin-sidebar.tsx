@@ -131,7 +131,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       >
         <div className="flex flex-col h-full">
           
-          {/* ✅ ส่วน Header แบบใหม่: Logo เต็มๆ ไม่มีกรอบ ไม่มี Text */}
+          {}
           <div className="h-32 flex items-center justify-center p-6 border-b border-gray-800">
             <div className="relative w-full h-full">
                 <Image 

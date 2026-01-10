@@ -8,17 +8,17 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 
 interface CaregiverPageClientProps {
-  initialData: any[]; // รับข้อมูลจาก Server
+  initialData: any[]; 
 }
 
 export default function CaregiverPageClient({ initialData }: CaregiverPageClientProps) {
   const router = useRouter();
 
-  // ✅ Auto Refresh: สั่งโหลดข้อมูลใหม่ทุกๆ 10 วินาที (ถ้าต้องการ)
+  
   useEffect(() => {
     const interval = setInterval(() => {
-      router.refresh(); // สั่งให้ Server Component ดึงข้อมูลใหม่
-    }, 10000); // 10000ms = 10 วินาที
+      router.refresh(); 
+    }, 10000); 
 
     return () => clearInterval(interval);
   }, [router]);
@@ -27,7 +27,7 @@ export default function CaregiverPageClient({ initialData }: CaregiverPageClient
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>รายชื่อ ({initialData.length})</CardTitle>
-        {/* ปุ่มกด Refresh เอง ถ้าไม่อยากรอนาน */}
+        {}
         <Button 
             variant="outline" 
             size="sm" 
@@ -39,7 +39,7 @@ export default function CaregiverPageClient({ initialData }: CaregiverPageClient
         </Button>
       </CardHeader>
       <CardContent>
-        {/* ส่งข้อมูลลงตาราง */}
+        {}
         <CaregiverTable data={initialData} />
       </CardContent>
     </Card>

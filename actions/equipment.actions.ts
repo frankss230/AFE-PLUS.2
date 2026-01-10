@@ -6,10 +6,6 @@ import { messagingApi } from "@line/bot-sdk";
 import { createBorrowSuccessBubble, createReturnSuccessBubble } from '@/lib/line/flex-messages';
 import { getSession } from '@/lib/auth/session';
 
-// =================================================================
-// 🔧 ส่วนจัดการอุปกรณ์ (Admin CRUD)
-// =================================================================
-
 export async function getEquipments() {
   try {
     const equipments = await prisma.equipment.findMany({
@@ -112,10 +108,6 @@ export async function addBulkEquipment(items: { name: string; code: string }[]) 
   }
 }
 
-// =================================================================
-// 📦 ส่วนระบบยืม-คืน (Borrowing & Return System)
-// =================================================================
-
 export async function getAvailableEquipments() {
   try {
     const equipments = await prisma.equipment.findMany({
@@ -139,7 +131,6 @@ export async function createBorrowRequest(data: {
   equipmentIds: number[];
 }) {
   try {
-    // 1. เตรียมข้อมูล
     const caregiverUser = await prisma.user.findFirst({
         where: { caregiverProfile: { id: data.caregiverId } },
         include: { caregiverProfile: true }
@@ -156,7 +147,6 @@ export async function createBorrowRequest(data: {
 
     if (!caregiverUser) return { success: false, error: 'ไม่พบข้อมูลผู้ยืม' };
 
-    // 2. บันทึกลง DB
     await prisma.$transaction(async (tx) => {
       const request = await tx.borrowEquipment.create({
         data: {
@@ -178,7 +168,6 @@ export async function createBorrowRequest(data: {
       }
     });
 
-    // 3. ส่ง LINE
     const lineIdToSend = caregiverUser.lineId;
     if (lineIdToSend) {
         try {
@@ -197,7 +186,7 @@ export async function createBorrowRequest(data: {
                 messages: [{ type: "flex", altText: "ได้รับคำขอยืมแล้ว", contents: flexMsg as any }]
             });
         } catch (lineError) {
-            console.error("⚠️ บันทึกสำเร็จ แต่ส่ง LINE ไม่ผ่าน:", lineError);
+            console.error("️ บันทึกสำเร็จ แต่ส่ง LINE ไม่ผ่าน:", lineError);
         }
     }
 
@@ -269,7 +258,7 @@ export async function createReturnRequest(borrowId: number) {
                     messages: [{ type: "flex", altText: "แจ้งคืนอุปกรณ์เรียบร้อย", contents: flexMsg as any }]
                 });
             } catch (err) {
-                console.error("⚠️ แจ้งคืนสำเร็จ แต่ส่ง LINE ไม่ผ่าน:", err);
+                console.error("️ แจ้งคืนสำเร็จ แต่ส่ง LINE ไม่ผ่าน:", err);
             }
         }
 
@@ -281,10 +270,6 @@ export async function createReturnRequest(borrowId: number) {
     }
 }
 
-// =================================================================
-// 👑 ส่วน Admin จัดการคำขอ (Transaction Management)
-// =================================================================
-
 export async function getTransactionById(id: number) {
   try {
     const transaction = await prisma.borrowEquipment.findUnique({
@@ -293,11 +278,9 @@ export async function getTransactionById(id: number) {
         borrower: true,
         dependent: true,
         items: { include: { equipment: true } },
-        // ✅ ดึงคนอนุมัติล่าสุด (พร้อม Profile)
         approver: {
           include: { adminProfile: true } 
         },
-        // ✅ ดึงประวัติการแก้ไข (พร้อมคนทำรายการ)
         history: {
           include: { 
             actor: { include: { adminProfile: true } } 
@@ -330,12 +313,11 @@ export async function updateTransactionStatus(transactionId: number, status: str
 
     if (!transaction) return { success: false, error: "ไม่พบรายการ" };
 
-    // Update Data สำหรับ Table หลัก (เก็บสถานะล่าสุด)
     let updateData: any = { 
         status,
-        approverId: session.userId,   // คนอนุมัติล่าสุด
-        approvedAt: new Date(),       // เวลาล่าสุด
-        isEdited: transaction.status !== 'PENDING' && transaction.status !== 'RETURN_PENDING' // ถือว่าเป็นการแก้ไขถ้าไม่ใช่ Pending
+        approverId: session.userId,
+        approvedAt: new Date(),
+        isEdited: transaction.status !== 'PENDING' && transaction.status !== 'RETURN_PENDING'
     };
 
     let equipmentUpdateStatus = "";
@@ -351,23 +333,21 @@ export async function updateTransactionStatus(transactionId: number, status: str
     }
 
     await prisma.$transaction(async (tx) => {
-        // 1. อัปเดตตารางหลัก
+        
         await tx.borrowEquipment.update({
             where: { id: transactionId },
             data: updateData
         });
 
-        // 2. ✅ เพิ่มประวัติลง Table History (Audit Trail)
         await tx.transactionHistory.create({
             data: {
                 borrowId: transactionId,
-                actorId: session.userId as number, // คนทำรายการ (Admin)
-                action: status,                    // สถานะที่เปลี่ยน (APPROVED, REJECTED, etc.)
-                reason: reason || null             // เหตุผล
+                actorId: session.userId as number,
+                action: status,
+                reason: reason || null
             }
         });
 
-        // 3. อัปเดตสถานะอุปกรณ์ (Stock)
         if (equipmentUpdateStatus) {
             const equipmentIds = transaction.items.map(i => i.equipmentId);
             const isActive = equipmentUpdateStatus === 'AVAILABLE';

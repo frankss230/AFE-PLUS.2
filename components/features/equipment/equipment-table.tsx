@@ -60,7 +60,7 @@ export function EquipmentTable({ data }: { data: any[] }) {
       <div className="relative overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] rounded-xl border border-gray-200 shadow-sm scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
         <table className="w-full text-sm text-left">
           
-          {/* ✅ Sticky Header: หัวตารางจะลอยค้างไว้ตอนเลื่อนลง */}
+          {}
           <thead className="sticky top-0 z-10 bg-gray-50 text-gray-500 font-medium border-b border-gray-200 shadow-sm">
             <tr>
               <th className="px-6 py-3 w-[300px]">รหัสครุภัณฑ์</th>
@@ -132,7 +132,7 @@ export function EquipmentTable({ data }: { data: any[] }) {
         </table>
       </div>
 
-      {/* ✅ Modal แจ้งเตือนสวยๆ (เหมือนเดิม) */}
+      {}
       <AlertDialog open={!!targetDelete} onOpenChange={(open) => !open && setTargetDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -145,7 +145,7 @@ export function EquipmentTable({ data }: { data: any[] }) {
             <AlertDialogDescription className="text-gray-600 text-base">
               คุณต้องการลบอุปกรณ์ <b>"{targetDelete?.name}"</b> ออกจากคลังใช่หรือไม่? <br/>
               <span className="text-xs text-red-500 mt-3 block bg-red-50 p-2 rounded-lg border border-red-100">
-                ⚠️ การลบนี้ไม่สามารถย้อนกลับได้ และประวัติการยืมของอุปกรณ์นี้อาจได้รับผลกระทบ
+                ️ การลบนี้ไม่สามารถย้อนกลับได้ และประวัติการยืมของอุปกรณ์นี้อาจได้รับผลกระทบ
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>

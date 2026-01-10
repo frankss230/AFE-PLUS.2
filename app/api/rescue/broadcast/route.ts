@@ -12,14 +12,12 @@ const lineClient = new Client({
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        // ✅ 1. รับค่าต่างๆ
         const { userId, latitude: clientLat, longitude: clientLng, message, recordId, alertType } = body; 
 
-        console.log("🔍 SOS Request Incoming:", { userId, alertType, recordId });
+        console.log("SOS Request Incoming:", { userId, alertType, recordId });
 
         if (!userId) return NextResponse.json({ error: "User ID missing" }, { status: 400 });
 
-        // 2. หา User จาก Line ID
         const user = await prisma.user.findUnique({
             where: { lineId: userId }, 
         });
@@ -31,7 +29,6 @@ export async function POST(request: Request) {
         let dependentInfo = null;
         let caregiverInfo = null;
 
-        // --- Step 1: ระบุตัวตน (Dependent หรือ Caregiver) ---
         if (user.role === UserRole.DEPENDENT) {
             const depProfile = await prisma.dependentProfile.findUnique({
                 where: { userId: user.id },
@@ -60,7 +57,6 @@ export async function POST(request: Request) {
              return NextResponse.json({ error: "Unauthorized role" }, { status: 403 });
         }
 
-        // --- Step 2: 📍 จัดการพิกัด (Priority: นาฬิกา > มือถือคนแจ้ง) ---
         let finalLat = 0;
         let finalLng = 0;
 
@@ -70,22 +66,19 @@ export async function POST(request: Request) {
         });
 
         if (lastLocation) {
-            console.log("📍 ใช้พิกัดจากนาฬิกา (DB)");
+            console.log("ใช้พิกัดจากนาฬิกา (DB)");
             finalLat = lastLocation.latitude;
             finalLng = lastLocation.longitude;
         } else {
-            console.log("⚠️ ไม่พบพิกัดนาฬิกา ใช้พิกัดจากผู้แจ้ง");
+            console.log("ไม่พบพิกัดนาฬิกา ใช้พิกัดจากผู้แจ้ง");
             finalLat = clientLat || 0;
             finalLng = clientLng || 0;
         }
 
-        // --- Step 3: 📝 ข้อความรายละเอียด ---
         let detailsText = message || "ขอความช่วยเหลือ";
 
-        // --- Step 4: 🔀 Mapping Enum (เอา FALL_SOS ออกแล้ว) ---
-        let dbHelpType: HelpType = HelpType.ZONE; // Default
+        let dbHelpType: HelpType = HelpType.ZONE;
 
-        // แปลง String เป็น Enum ของ Prisma
         if (alertType === 'FALL' || alertType === 'FALL_CONSCIOUS') {
             dbHelpType = HelpType.FALL_CONSCIOUS;
         } else if (alertType === 'FALL_UNCONSCIOUS') {
@@ -98,7 +91,6 @@ export async function POST(request: Request) {
             dbHelpType = HelpType.ZONE;
         }
         
-        // --- Step 5: บันทึกลงฐานข้อมูล ---
         const newAlert = await prisma.extendedHelp.create({
             data: {
                 status: AlertStatus.DETECTED,
@@ -115,7 +107,6 @@ export async function POST(request: Request) {
             }
         });
 
-        // --- Step 6: 🔄 อัปเดตเคสต้นทาง (ถ้ามี) ---
         if (recordId) {
             const idToUpdate = parseInt(recordId);
             if (!isNaN(idToUpdate)) {
@@ -125,15 +116,14 @@ export async function POST(request: Request) {
                             where: { id: idToUpdate },
                             data: { status: 'ACKNOWLEDGED' }
                         });
-                        console.log(`✅ Updated FallRecord #${idToUpdate}`);
+                        console.log(`Updated FallRecord #${idToUpdate}`);
                     } catch (err) {
-                        console.warn("⚠️ FallRecord update failed:", err);
+                        console.warn("FallRecord update failed:", err);
                     }
                 }
             }
         }
 
-        // --- Step 7: 🚑 ส่ง LINE เข้ากลุ่มกู้ภัย ---
         const rescueGroup = await prisma.rescueGroup.findFirst({
             orderBy: { createdAt: 'desc' }
         });
@@ -162,10 +152,9 @@ export async function POST(request: Request) {
                 altText: `${alertTitle}: ${dependentInfo.user.username}`,
                 contents: flexMsg as any 
             });
-            console.log(`✅ Broadcast sent to Group: ${targetGroupId}`);
+            console.log(`Broadcast sent to Group: ${targetGroupId}`);
         }
 
-        // --- Step 8: ✅ แจ้งกลับคนกด ---
         const successBubble = createRescueSuccessBubble(); 
         
         await lineClient.pushMessage(userId, {
@@ -177,7 +166,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, alertId: newAlert.id });
 
     } catch (e) {
-        console.error("❌ BROADCAST ERROR:", e);
+        console.error("BROADCAST ERROR:", e);
         return NextResponse.json({ error: String(e) }, { status: 500 });
     }
 }

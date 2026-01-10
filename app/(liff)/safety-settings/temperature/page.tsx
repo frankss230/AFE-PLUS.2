@@ -15,13 +15,11 @@ function TemperatureContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
-  // State
   const [temp, setTemp] = useState(37.5);
   const [lineId, setLineId] = useState('');
 
-  // 🎨 Logic เลือกธีมแบบละเอียด (เพื่อความ Smooth)
   const getTheme = (t: number) => {
-    if (t >= 38.5) return { // ร้อนจัด
+    if (t >= 38.5) return {
         color: 'text-rose-600', 
         slider: 'accent-rose-500',
         gradient: 'from-red-500 via-rose-500 to-pink-600',
@@ -30,7 +28,7 @@ function TemperatureContent() {
         icon: <Flame className="w-20 h-20 text-white animate-[pulse_0.5s_ease-in-out_infinite]" />,
         label: 'มีไข้สูง (High Fever)',
     };
-    if (t >= 37.6) return { // เริ่มร้อน
+    if (t >= 37.6) return {
         color: 'text-orange-500', 
         slider: 'accent-orange-500',
         gradient: 'from-orange-400 via-amber-500 to-red-500',
@@ -39,7 +37,7 @@ function TemperatureContent() {
         icon: <Flame className="w-20 h-20 text-white animate-pulse" />,
         label: 'มีไข้ต่ำ (Mild Fever)',
     };
-    if (t >= 37.3) return { // เกือบไข้
+    if (t >= 37.3) return {
         color: 'text-yellow-500', 
         slider: 'accent-yellow-500',
         gradient: 'from-yellow-400 via-amber-400 to-orange-400',
@@ -48,7 +46,7 @@ function TemperatureContent() {
         icon: <AlertTriangle className="w-20 h-20 text-white" />,
         label: 'เฝ้าระวัง (Warning)',
     };
-    if (t >= 36.0) return { // ปกติ
+    if (t >= 36.0) return {
         color: 'text-emerald-600', 
         slider: 'accent-emerald-500',
         gradient: 'from-emerald-400 via-green-500 to-teal-500',
@@ -57,7 +55,7 @@ function TemperatureContent() {
         icon: <ThermometerSun className="w-20 h-20 text-white" />,
         label: 'อุณหภูมิปกติ (Normal)',
     };
-    return { // เย็น
+    return {
         color: 'text-cyan-600', 
         slider: 'accent-cyan-500',
         gradient: 'from-cyan-400 via-sky-500 to-blue-600',
@@ -103,13 +101,11 @@ function TemperatureContent() {
     });
   };
 
-  // Handle Manual Input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = parseFloat(e.target.value);
       if (!isNaN(val)) setTemp(val);
   };
 
-  // ตรวจสอบค่าเมื่อพิมพ์เสร็จ (Blur) กันค่าเพี้ยน
   const handleBlur = () => {
       if (temp < 34) setTemp(34);
       if (temp > 42) setTemp(42);
@@ -118,13 +114,10 @@ function TemperatureContent() {
   if (loading) return <div className="h-screen flex items-center justify-center bg-gray-50"><Loader2 className="animate-spin text-gray-400" /></div>;
 
   return (
-    // ✅ ใช้ duration-700 ease-in-out เพื่อให้สีเปลี่ยนแบบนุ่มนวล
     <div className={`h-screen flex flex-col overflow-hidden relative font-sans transition-colors duration-700 ease-in-out bg-gradient-to-b ${theme.gradient}`}>
       
-      {/* --- ส่วนแสดงผล (Visual Area) --- */}
       <div className="flex-1 relative flex flex-col items-center justify-center p-6">
 
-         {/* Animated Icon Circle */}
          <div className="relative mb-8">
             <div className="absolute inset-0 rounded-full blur-2xl opacity-30 scale-150 bg-white animate-pulse"></div>
             <div className="w-40 h-40 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl border-4 border-white/30 relative z-10 transition-all duration-500">
@@ -132,10 +125,8 @@ function TemperatureContent() {
             </div>
          </div>
 
-         {/* Status Label */}
          <div className="text-center text-white">
              <p className="text-sm font-medium opacity-80 mb-2">แจ้งเตือนเมื่อสูงกว่า</p>
-             {/* ตัวเลขใหญ่ๆ */}
              <div className="text-6xl font-black drop-shadow-lg tracking-tighter flex items-start justify-center">
                 {temp.toFixed(1)}
                 <span className="text-2xl mt-2 opacity-80">°C</span>
@@ -146,21 +137,18 @@ function TemperatureContent() {
          </div>
       </div>
 
-      {/* --- แผงควบคุม (Control Panel) --- */}
       <div className="bg-white rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] p-8 pb-8 relative z-30 shrink-0">
          
          <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8"></div>
 
          <div className="space-y-8">
             
-            {/* Input & Controls */}
             <div>
                 <div className="flex justify-between items-center mb-4">
                     <span className="text-sm font-bold text-gray-500 uppercase tracking-wide">กำหนดค่าเอง</span>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* ปุ่มลบ */}
                     <button 
                         onClick={() => adjustVal(-0.1)} 
                         className="w-14 h-14 flex items-center justify-center rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-600 active:scale-95 transition-all shadow-sm"
@@ -168,7 +156,6 @@ function TemperatureContent() {
                         <Minus className="w-6 h-6" />
                     </button>
                     
-                    {/* ช่องกรอกตัวเลข (Input Box) */}
                     <div className="flex-1 relative group">
                         <input 
                             type="number"
@@ -183,7 +170,6 @@ function TemperatureContent() {
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">°C</span>
                     </div>
 
-                    {/* ปุ่มบวก */}
                     <button 
                         onClick={() => adjustVal(0.1)} 
                         className="w-14 h-14 flex items-center justify-center rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-600 active:scale-95 transition-all shadow-sm"
@@ -192,7 +178,6 @@ function TemperatureContent() {
                     </button>
                 </div>
                 
-                {/* Slider (เอาไว้ข้างล่าง input เพื่อให้ปรับหยาบๆ ได้) */}
                 <div className="mt-6 px-2">
                     <input 
                         type="range" 
@@ -209,7 +194,6 @@ function TemperatureContent() {
                 </div>
             </div>
 
-            {/* Save Button */}
             <div className="pt-2">
                 <button 
                     onClick={handleSave} 

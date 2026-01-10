@@ -16,10 +16,10 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { unreadCount } = useAlertStore();
   const { openModal } = useModalStore();
 
-  // State พิเศษสำหรับเก็บรูปภาพใน Header เพื่อให้เปลี่ยนทันทีที่อัปโหลด
+  
   const [headerImage, setHeaderImage] = useState<string | null>(null);
 
-  // โหลดรูปครั้งแรกตอนเข้าเว็บ (เพราะใน authStore อาจจะไม่มีรูปเก็บไว้)
+  
   useEffect(() => {
     if (user?.id) {
         getAdminProfile(user.id).then(res => {
@@ -66,7 +66,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Notifications */}
+        {}
         <button className="relative p-2 hover:bg-gray-100 rounded-lg">
           <Bell className="w-6 h-6 text-gray-600" />
           {unreadCount > 0 && (
@@ -76,15 +76,15 @@ export function Header({ onMenuClick }: HeaderProps) {
           )}
         </button>
 
-        {/* ✅ User Menu & Profile Edit */}
+        {}
         <ProfileDialog 
             userId={user?.id || 0}
             onUpdateSuccess={(newData) => {
-                // 1. อัปเดตชื่อใน Store
+                
                 if (user) {
                     setUser({ ...user, firstName: newData.firstName, lastName: newData.lastName });
                 }
-                // 2. ✅ อัปเดตรูปใน Header ทันที (ถ้ามีการส่งรูปกลับมา)
+                
                 if (newData.image) {
                     setHeaderImage(newData.image);
                 }
@@ -101,7 +101,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                     </div>
                     
                     <div className="relative">
-                        {/* ✅ 3. เช็คว่ามีรูปไหม ถ้ามีให้โชว์รูป ถ้าไม่มีโชว์ไอคอนเดิม */}
+                        {}
                         <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center ring-2 ring-white shadow-sm group-hover:ring-blue-100 overflow-hidden">
                             {headerImage ? (
                                 <img src={headerImage} alt="Profile" className="w-full h-full object-cover" />

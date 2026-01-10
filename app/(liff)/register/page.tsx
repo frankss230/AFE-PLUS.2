@@ -6,33 +6,31 @@ import { Loader2, AlertTriangle, RefreshCcw } from 'lucide-react';
 import { checkLiffUserStatus } from '@/actions/liff-auth.actions';
 
 export default function RegisterRedirectPage() {
-  // เก็บ Log เพื่อแสดงบนหน้าจอมือถือ
+
   const [debugLog, setDebugLog] = useState<string>('กำลังเริ่มต้น...');
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     const redirectUser = async () => {
       try {
-        setDebugLog('1. Init LIFF...');
+        setDebugLog('Init LIFF...');
         await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID || '' });
         
-        setDebugLog('2. Checking Login...');
+        setDebugLog('Checking Login...');
         if (!liff.isLoggedIn()) {
-          setDebugLog('2.1 Need Login...');
+          setDebugLog('Need Login...');
           liff.login();
           return;
         }
 
-        setDebugLog('3. Get Profile...');
+        setDebugLog('Get Profile...');
         const profile = await liff.getProfile();
         
-        setDebugLog(`4. Checking DB for: ${profile.userId.substring(0, 5)}...`);
-        // ⚠️ จุดที่น่าจะพังคือบรรทัดนี้ (Server Action)
+        setDebugLog(`Checking DB for: ${profile.userId.substring(0, 5)}...`);
         const status = await checkLiffUserStatus(profile.userId);
         
-        setDebugLog(`5. Result: ${status}`);
+        setDebugLog(`Result: ${status}`);
 
-        // 🚦 Logic การเด้ง
         if (status === 'UNREGISTERED') {
             window.location.href = '/register/user';
         } else {
@@ -42,8 +40,7 @@ export default function RegisterRedirectPage() {
       } catch (error: any) {
         console.error(error);
         setIsError(true);
-        // แสดง Error ตัวเต็มบนหน้าจอ
-        setDebugLog(`❌ Error: ${error.message || JSON.stringify(error)}`);
+        setDebugLog(` Error: ${error.message || JSON.stringify(error)}`);
       }
     };
 
@@ -57,7 +54,6 @@ export default function RegisterRedirectPage() {
         <>
             <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
             <h2 className="text-gray-700 font-bold mb-2">กำลังตรวจสอบข้อมูล...</h2>
-            {/* แสดง Log เล็กๆ ไว้ดูความคืบหน้า */}
             <p className="text-xs text-gray-400 font-mono bg-gray-100 p-2 rounded max-w-xs break-all">
                 {debugLog}
             </p>

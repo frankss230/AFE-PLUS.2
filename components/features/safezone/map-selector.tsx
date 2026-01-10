@@ -15,7 +15,7 @@ interface MapSelectorProps {
 
 const containerStyle = { width: '100%', height: '100%' };
 
-// ใช้ Type Library ที่ถูกต้อง (ลบ localContext ออก)
+
 type Library = "places" | "drawing" | "geometry" | "visualization";
 const libraries: Library[] = ["places"];
 
@@ -53,12 +53,12 @@ export default function MapSelector({ apiKey, lat, lng, r1, r2, onChange }: MapS
     }
   }, [onChange]);
 
-  // ✅ แก้ไข: เพิ่มการเช็คว่า place.geometry มีอยู่จริงไหม ก่อนดึงค่า lat/lng
+  
   const onPlaceChanged = () => {
     if (searchResultRef.current) {
         const place = searchResultRef.current.getPlace();
         
-        // 🛡️ ดัก Error ตรงนี้
+        
         if (!place || !place.geometry || !place.geometry.location) {
             console.log("สถานที่นี้ไม่มีพิกัด GPS หรือยังไม่ได้เลือกสถานที่");
             return;
@@ -94,7 +94,7 @@ export default function MapSelector({ apiKey, lat, lng, r1, r2, onChange }: MapS
                 clickableIcons: false,
             }}
         >
-            {/* Search Bar */}
+            {}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[20]">
                 <Autocomplete onLoad={onLoadAutocomplete} onPlaceChanged={onPlaceChanged}>
                     <div className="relative shadow-xl rounded-full group">
@@ -108,7 +108,7 @@ export default function MapSelector({ apiKey, lat, lng, r1, r2, onChange }: MapS
                 </Autocomplete>
             </div>
 
-            {/* ✅ ปุ่มเปลี่ยนโหมดแผนที่ (แนวนอน ไม่มีขอบ ขนาดเล็ก พื้นหลังมัน) */}
+            {}
             <div className="absolute top-20 left-4 z-[10] flex flex-row gap-1.5 bg-white backdrop-blur-sm p-1.5 rounded-[50px] shadow-lg">
                 <button 
                     onClick={() => setMapType('roadmap' as unknown as google.maps.MapTypeId)}

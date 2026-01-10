@@ -6,7 +6,7 @@ datasource db {
   provider = "postgresql"
 }
 
-// =====================Edit Database======================
+
 
 enum UserRole {
     ADMIN
@@ -44,7 +44,7 @@ enum HelpType {
     ZONE
 }
 
-// ✅ เพิ่ม Enum
+
 enum EquipmentStatus {
   AVAILABLE
   BORROWED
@@ -61,9 +61,9 @@ enum BorrowStatus {
     RETURN_FAILED
 }
 
-// *************** FIX ***************
-// เพิ่ม NEAR_DANGER สำหรับระยะ 80%
-// **********************************
+
+
+
 enum ZoneStatus {
     SAFE
     WARNING
@@ -76,7 +76,7 @@ enum HealthStatus {
     ABNORMAL
 }
 
-// ======User (Core)======
+
 model User {
     id Int @id @default(autoincrement())
     username String @unique
@@ -86,7 +86,7 @@ model User {
     role UserRole @default(CAREGIVER)
     isActive Boolean @default(true)
 
-    // Relations: One to One
+    
     adminProfile AdminProfile?
     caregiverProfile CaregiverProfile?
     dependentProfile DependentProfile?
@@ -100,7 +100,7 @@ model User {
     @@map("users")
 }
 
-// ======Profiles======
+
 model AdminProfile {
     id Int @id @default(autoincrement())
     userId Int @unique
@@ -174,7 +174,7 @@ model DependentProfile {
     province String @db.VarChar(100)
     postalCode String @db.VarChar(5)
 
-    // Many to One
+    
     caregiverId Int?
     caregiver CaregiverProfile? @relation(fields: [caregiverId], references: [id])
 
@@ -193,18 +193,18 @@ model DependentProfile {
 
     isGpsEnabled Boolean @default(true)
 
-    // ************** FIX **************
-    // เพิ่มฟิลด์ waitViewLocation สำหรับระบุว่ารอการดูตำแหน่งหรือไม่
-    // *********************************
+    
+    
+    
     waitViewLocation Boolean @default(false)
-    // *********************************
+    
 
     isHeartRateAlertSent Boolean @default(false)
     isTemperatureAlertSent Boolean @default(false)
-    // ✅ เพิ่ม 3 ทหารเสือ (Alert State Flags)
-    isAlertZone1Sent      Boolean @default(false) // แจ้งเตือนออกชั้น 1 (Warning)
-    isAlertNearZone2Sent  Boolean @default(false) // แจ้งเตือน 80% (Near Danger)
-    isAlertZone2Sent      Boolean @default(false) // แจ้งเตือนหลุดชั้น 2 (Danger SOS)
+    
+    isAlertZone1Sent      Boolean @default(false) 
+    isAlertNearZone2Sent  Boolean @default(false) 
+    isAlertZone2Sent      Boolean @default(false) 
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -212,7 +212,7 @@ model DependentProfile {
     @@map("dependent_profiles")
 }
 
-// ======Data======
+
 model Location {
     id Int @id @default(autoincrement())
     dependentId Int
@@ -292,10 +292,10 @@ model ExtendedHelp {
   
     details String? @db.Text
     
-    // ⭐ เพิ่มข้อมูลผู้ช่วยเหลือ (Rescuer)
+    
     rescuerName  String?
     rescuerPhone String?
-    // ✅ เพิ่ม 2 ตัวนี้ครับ เอาไว้เก็บพิกัดคนรับเคส
+    
     rescuerLat  Float?   
     rescuerLng  Float?
 
@@ -305,7 +305,7 @@ model ExtendedHelp {
   @@map("extended_help")
 }
 
-// ======Setting======
+
 model SafeZone {
     id Int @id @default(autoincrement())
     dependentId Int
@@ -340,7 +340,7 @@ model TemperatureSettings {
     @@map("temperature_settings")
 }
 
-// ======Equipment======
+
 model Equipment {
     id Int @id @default(autoincrement())
     name String
@@ -411,16 +411,16 @@ model RescueGroup {
   @@map("rescue_groups")
 }
 
-// ✅ สร้าง Model ใหม่สำหรับเก็บประวัติ
+
 model TransactionHistory {
   id Int @id @default(autoincrement())
   borrowId Int
   borrowEquipment BorrowEquipment @relation(fields: [borrowId], references: [id], onDelete: Cascade)
   
-  actorId Int      // ID ของคนที่ทำรายการ (Admin)
+  actorId Int      
   actor User @relation(fields: [actorId], references: [id])
   
-  action String   // "APPROVE", "REJECT", "EDIT"
-  reason String?  // เหตุผล
+  action String   
+  reason String?  
   createdAt DateTime @default(now())
 }

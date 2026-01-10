@@ -9,7 +9,6 @@ import { AlertsAutoRefresh } from '@/components/features/alerts/alerts-auto-refr
 export const dynamic = 'force-dynamic';
 
 async function getAlerts() {
-  // ✅ 1. ดึงเฉพาะ SOS (ExtendedHelp) เท่านั้น
   const soss = await prisma.extendedHelp.findMany({
     orderBy: { requestedAt: 'desc' },
     include: { 
@@ -19,23 +18,21 @@ async function getAlerts() {
             user: { select: { id: true } }
         }
       },
-      reporter: true // คนแจ้ง (ถ้ามี)
+      reporter: true
     },
     take: 50,
   });
 
-  // 2. แปลงข้อมูล
   const combined = soss.map(s => {
-      // เพื่อชดเชยเวลา Server Vercel ที่เป็น UTC
       const thaiTime = new Date(new Date(s.requestedAt).getTime() + (7 * 60 * 60 * 1000));
 
       return {
           id: `sos-${s.id}`,
           type: 'SOS',
-          status: s.status, // DETECTED, ACKNOWLEDGED, RESOLVED
+          status: s.status,
           victimName: s.dependent ? `${s.dependent.firstName} ${s.dependent.lastName}` : 'ไม่ระบุชื่อ',
           userId: s.dependent?.user?.id,
-          time: thaiTime, // ✅ ใช้เวลาที่บวกแล้ว
+          time: thaiTime,
           lat: s.latitude || 0,
           lng: s.longitude || 0,
       };
@@ -52,7 +49,6 @@ export default async function AlertsPage() {
       
       <AlertsAutoRefresh />
 
-      {/* Header */}
       <div className="flex shrink-0 items-center justify-between">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">ศูนย์แจ้งเตือนเหตุ</h1>
@@ -63,7 +59,6 @@ export default async function AlertsPage() {
         </div>
       </div>
 
-      {/* Card Container */}
       <Card className="flex flex-1 flex-col overflow-hidden border-slate-200/60 shadow-sm">
         
         <CardHeader className="shrink-0 border-b border-slate-100 bg-slate-50/50 py-4">
@@ -73,7 +68,6 @@ export default async function AlertsPage() {
           </CardTitle>
         </CardHeader>
 
-        {/* Scroll Area */}
         <CardContent className="flex-1 overflow-y-auto p-0 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
           
           {alerts.length === 0 ? (
@@ -85,7 +79,6 @@ export default async function AlertsPage() {
             <div className="divide-y divide-slate-100">
               {alerts.map((alert) => {
                 
-                // 🧠 Logic สี 3 ระดับ (แดง / เหลือง / เขียว)
                 let statusConfig = {
                     color: 'text-slate-500',
                     bg: 'bg-white',
@@ -95,7 +88,6 @@ export default async function AlertsPage() {
                     active: false
                 };
 
-                // 🔴 แดง: SOS มาใหม่ (DETECTED)
                 if (alert.status === 'DETECTED') {
                     statusConfig = {
                         color: 'text-red-700',
@@ -106,10 +98,9 @@ export default async function AlertsPage() {
                         active: true
                     };
                 }
-                // 🟡 เหลือง: รับเรื่องแล้ว (ACKNOWLEDGED)
                 else if (alert.status === 'ACKNOWLEDGED') {
                     statusConfig = {
-                        color: 'text-amber-700', // สีเหลืองเข้ม/ส้ม
+                        color: 'text-amber-700',
                         bg: 'bg-amber-50/30',
                         border: 'border-l-amber-500',
                         iconBg: 'bg-amber-100 text-amber-600',
@@ -117,12 +108,11 @@ export default async function AlertsPage() {
                         active: true
                     };
                 }
-                // 🟢/⚪ เขียว/เทา: จบงาน (RESOLVED, FALSE_ALARM)
                 else {
                     statusConfig = {
                         color: 'text-slate-500',
                         bg: 'bg-white hover:bg-slate-50',
-                        border: 'border-l-green-500', // เขียวบอกว่าจบสวย
+                        border: 'border-l-green-500',
                         iconBg: 'bg-green-100 text-green-600',
                         label: 'ปิดเคสเรียบร้อย',
                         active: false
@@ -141,19 +131,16 @@ export default async function AlertsPage() {
                   >
                     
                     <div className="flex items-start gap-4">
-                      {/* Icon Box */}
                       <div className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${statusConfig.iconBg}`}>
                         <Siren className={`h-5 w-5 ${alert.status === 'DETECTED' ? 'animate-pulse' : ''}`} /> 
                       </div>
 
                       <div>
-                        {/* Title */}
                         <h3 className={`font-bold text-base flex items-center gap-2 ${statusConfig.color}`}>
                           SOS: ขอความช่วยเหลือ!
                           <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400" />
                         </h3>
                         
-                        {/* Details */}
                         <div className="mt-1 flex flex-wrap gap-3 text-sm text-slate-500">
                           <div className="flex items-center gap-1 font-medium text-slate-600">
                             <User className="h-3.5 w-3.5" />
@@ -161,7 +148,6 @@ export default async function AlertsPage() {
                           </div>
                           <div className="flex items-center gap-1 text-slate-400">
                             <Clock className="h-3.5 w-3.5" />
-                            {/* ✅ ตรงนี้จะแสดงเวลาไทยที่ถูกต้องแล้วครับ */}
                             <span>{format(new Date(alert.time), "d MMM HH:mm", { locale: th })} น.</span>
                           </div>
                         </div>
@@ -169,7 +155,6 @@ export default async function AlertsPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* Status Badge */}
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${
                             alert.status === 'DETECTED' ? 'bg-red-100 text-red-700 border-red-200' :
                             alert.status === 'ACKNOWLEDGED' ? 'bg-amber-100 text-amber-700 border-amber-200' :

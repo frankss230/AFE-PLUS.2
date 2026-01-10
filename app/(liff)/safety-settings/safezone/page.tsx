@@ -114,18 +114,17 @@ function SafezoneContent() {
       width: 24px; 
       border-radius: 50%;
       
-      /* ✅ แก้ตรงนี้: ใช้สีเดียวกับ Text (เขียว/แดง) และเอาขอบออก */
       background: currentColor; 
       border: none; 
       
       cursor: pointer; 
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* เพิ่มเงาหน่อย จะได้ดูเป็นปุ่มลอยๆ สวยๆ */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
       margin-top: -8px; 
   }
 
   input[type=range]:active::-webkit-slider-thumb { 
-      transform: scale(1.3); /* ขยายตอนกด */
+      transform: scale(1.3);
   }
 
   input[type=range]::-webkit-slider-runnable-track {
@@ -140,12 +139,10 @@ function SafezoneContent() {
   input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 `}</style>
 
-            {/* Map */}
             <div className="absolute inset-0 z-0">
                 <MapSelector apiKey={googleMapsApiKey} lat={lat} lng={lng} r1={lv1} r2={lv2} onChange={(l, n) => { setLat(l); setLng(n); }} />
             </div>
 
-            {/* ✅ Panel: ปรับความสูงเป็น auto หรือ fit-content เพื่อไม่ให้มีที่ว่าง */}
             <motion.div
                 animate={controls}
                 initial={{ y: 0 }}
@@ -156,7 +153,6 @@ function SafezoneContent() {
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className="absolute bottom-0 left-0 w-full bg-white rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-30 flex flex-col h-[50vh]"
             >
-                {/* Handle & Header */}
                 <div className="w-full pt-3 pb-2 px-6 bg-white rounded-t-[2rem] border-b border-gray-100 flex items-center justify-between shrink-0 cursor-grab active:cursor-grabbing" onClick={togglePanel}>
                     <div className="flex-1"></div>
 
@@ -181,10 +177,8 @@ function SafezoneContent() {
                     </div>
                 </div>
 
-                {/* ✅ แก้ไข: ลบ pb-24 ออก เหลือแค่ pb-6 เพื่อไม่ให้มีที่ว่างเยอะเกินไป */}
                 <div className="p-6 pb-6 overflow-y-auto h-full space-y-5">
 
-                    {/* Zone 1 */}
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
                             <span className="text-xs font-bold text-gray-500 flex items-center gap-2 uppercase tracking-wider">
@@ -208,7 +202,6 @@ function SafezoneContent() {
                         <input type="range" min="10" max="1000" step="10" value={lv1} onChange={(e) => setLv1(parseInt(e.target.value))} className="w-full accent-green-500 text-green-500" />
                     </div>
 
-                    {/* Zone 2 */}
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
                             <span className="text-xs font-bold text-gray-500 flex items-center gap-2 uppercase tracking-wider">
@@ -232,7 +225,6 @@ function SafezoneContent() {
                         <input type="range" min="100" max="2000" step="50" value={lv2} onChange={(e) => setLv2(parseInt(e.target.value))} className="w-full accent-red-500 text-red-500" />
                     </div>
 
-                    {/* Save Button */}
                     <div className="pt-1">
                         <button onClick={handleSave} disabled={saving} className="w-full py-3 bg-gray-900 text-white font-bold text-lg rounded-2xl shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-70">
                             {saving ? <Loader2 className="animate-spin w-5 h-5" /> : <Save className="w-5 h-5" />}

@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge"; // ✅ ใช้ Badge ของ Shadcn
+import { Badge } from "@/components/ui/badge"; 
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 import { AlertTriangle } from "lucide-react";
@@ -18,14 +18,14 @@ interface RecentAlertsTableProps {
   alerts: any[];
 }
 
-// ✅ เปลี่ยนเป็น export default เพื่อให้ import ง่าย
+
 export default function RecentAlertsTable({ alerts }: RecentAlertsTableProps) {
   
-  // ฟังก์ชันช่วยเลือกสีและข้อความตามประเภท Alert
+  
   const getAlertConfig = (type: string) => {
     switch (type) {
       case 'SOS':
-        return { label: 'ขอความช่วยเหลือ (SOS)', color: 'bg-red-100 text-red-700 border-red-200' };
+        return { label: 'ขอความช่วยเหลือ', color: 'bg-red-100 text-red-700 border-red-200' };
       case 'FALL':
         return { label: 'ตรวจพบการล้ม', color: 'bg-orange-100 text-orange-700 border-orange-200' };
       case 'HEART_RATE':
@@ -58,13 +58,13 @@ export default function RecentAlertsTable({ alerts }: RecentAlertsTableProps) {
           <TableBody>
             {alerts.length > 0 ? (
               alerts.map((alert) => {
-                // ✅ เรียกใช้ Logic สีตามประเภท
+                
                 const config = getAlertConfig(alert.type);
                 
                 return (
                   <TableRow key={alert.id} className="hover:bg-slate-50/60">
                     <TableCell className="font-medium text-slate-600">
-                      {/* ✅ กันเหนียว ใช้ createdAt หรือ timestamp */}
+                      {}
                       {format(new Date(alert.createdAt || alert.timestamp), "dd MMM HH:mm", {
                         locale: th,
                       })}
@@ -73,13 +73,13 @@ export default function RecentAlertsTable({ alerts }: RecentAlertsTableProps) {
                       {alert.dependent?.firstName} {alert.dependent?.lastName}
                     </TableCell>
                     <TableCell>
-                      {/* ✅ ใช้ Badge แทน span ธรรมดา และสี Dynamic */}
+                      {}
                       <Badge variant="default" className={`${config.color} border font-medium`}>
                         {config.label}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                       {/* ✅ สถานะมีสีด้วย */}
+                       {}
                       <span className={`text-xs font-bold ${alert.status === 'ACKNOWLEDGED' ? 'text-green-600' : 'text-red-500 animate-pulse'}`}>
                         {alert.status === 'ACKNOWLEDGED' ? 'รับเรื่องแล้ว' : 'รอการตรวจสอบ'}
                       </span>

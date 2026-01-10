@@ -14,28 +14,26 @@ export async function checkLiffUserStatus(lineId: string): Promise<UserStatus> {
     });
 
     if (!user) {
-      return 'UNREGISTERED'; // ยังไม่เคยลงทะเบียน
+      return 'UNREGISTERED';
     }
 
-    // 2. เช็คว่ามี Caregiver Profile ไหม
     if (!user.caregiverProfile) {
-        return 'UNREGISTERED'; // มีแต่ User ว่างเปล่า (แปลกๆ) ให้ลงทะเบียนใหม่
+        return 'UNREGISTERED';
     }
 
-    // 3. เช็คว่าดูแลใครอยู่ไหม (ในตาราง CaregiverProfile จะมี dependents array)
     const caregiverWithDependents = await prisma.caregiverProfile.findUnique({
         where: { id: user.caregiverProfile.id },
         include: { dependents: true }
     });
 
     if (!caregiverWithDependents || caregiverWithDependents.dependents.length === 0) {
-        return 'NO_ELDERLY'; // มีบัญชีผู้ดูแลแล้ว แต่ยังไม่มีคนแก่
+        return 'NO_ELDERLY';
     }
 
-    return 'COMPLETE'; // ครบหมดแล้ว
+    return 'COMPLETE';
 
   } catch (error) {
     console.error("Auth Check Error:", error);
-    return 'UNREGISTERED'; // กันตาย
+    return 'UNREGISTERED';
   }
 }

@@ -3,9 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/db/prisma';
 
-// ===============================================
-// 1. ดึงข้อมูลการตั้งค่า (Safezone, Temp, HR)
-// ===============================================
 export async function getElderlySafetySettings(lineId: string) {
   try {
     const caregiverUser = await prisma.user.findFirst({
@@ -48,9 +45,6 @@ export async function getElderlySafetySettings(lineId: string) {
   }
 }
 
-// ===============================================
-// 2. อัปเดต Safezone
-// ===============================================
 export async function updateSafezone(
     lineId: string, 
     lv1: number, 
@@ -105,9 +99,9 @@ export async function updateSafezone(
     } catch (e) { return { success: false, error: 'Update Failed' }; }
 }
 
-// ===============================================
-// 3. อัปเดต อุณหภูมิ
-// ===============================================
+
+
+
 export async function updateTemperature(lineId: string, maxTemp: number) {
     try {
         const caregiverUser = await prisma.user.findFirst({
@@ -128,9 +122,6 @@ export async function updateTemperature(lineId: string, maxTemp: number) {
     } catch (e) { return { success: false, error: 'Update Failed' }; }
 }
 
-// ===============================================
-// 4. อัปเดต ชีพจร
-// ===============================================
 export async function updateHeartrate(lineId: string, maxBpm: number) {
     try {
         const caregiverUser = await prisma.user.findFirst({
@@ -151,9 +142,6 @@ export async function updateHeartrate(lineId: string, maxBpm: number) {
     } catch (e) { return { success: false, error: 'Update Failed' }; }
 }
 
-// ===============================================
-// 5. Toggle GPS (สำหรับสวิตช์หน้าเว็บ)
-// ===============================================
 export async function toggleGpsMode(lineId: string, isEnabled: boolean) {
     try {
         const caregiverUser = await prisma.user.findFirst({
@@ -165,9 +153,7 @@ export async function toggleGpsMode(lineId: string, isEnabled: boolean) {
             return { success: false, error: 'User not found' };
         }
 
-        // *********** FIX ***********
         const updateData: any = { isGpsEnabled: isEnabled };
-        // *********************************
 
         await prisma.dependentProfile.update({
             where: { id: caregiverUser.caregiverProfile.dependents[0].id },

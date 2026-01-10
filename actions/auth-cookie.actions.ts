@@ -5,18 +5,16 @@ import { cookies } from "next/headers";
 
 export async function setAuthCookie(lineUserId: string) {
   try {
-    // หา User จาก Line ID
     const user = await prisma.user.findUnique({
       where: { lineId: lineUserId },
-      select: { id: true } // เอาแค่ ID (Int)
+      select: { id: true }
     });
 
     if (user) {
-      // ฝัง Cookie ชื่อ 'userId' เก็บค่า ID ที่เป็นตัวเลข (Int)
       (await cookies()).set('userId', user.id.toString(), {
         path: '/',
-        maxAge: 86400, // 1 วัน
-        httpOnly: true, // ปลอดภัยกว่า
+        maxAge: 86400,
+        httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
       });
       return true;

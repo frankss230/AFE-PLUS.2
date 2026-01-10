@@ -4,12 +4,9 @@ import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/db/prisma';
 import { hashPassword } from '@/lib/auth/password';
 import { UserRole } from '@prisma/client';
-
-// Import Schemas
 import { userFormSchema, UserFormInput } from '@/lib/validations/user.schema';
 import { caregiverRegisterSchema, CaregiverRegisterInput } from '@/lib/validations/caregiver-register.schema';
 
-// 1. เช็ค User
 export async function checkUserExists(lineId: string) {
   try {
     const user = await prisma.user.findFirst({
@@ -23,7 +20,6 @@ export async function checkUserExists(lineId: string) {
   }
 }
 
-// 2. ลงทะเบียนผู้ดูแล (Caregiver)
 export async function registerUser(data: CaregiverRegisterInput) {
   try {
     const validated = caregiverRegisterSchema.parse(data);
@@ -55,8 +51,6 @@ export async function registerUser(data: CaregiverRegisterInput) {
                 gender: validated.gender,
                 marital: validated.marital,
                 birthday: new Date(validated.birthday), 
-                
-                // ที่อยู่
                 houseNumber: validated.houseNumber || '',
                 village: validated.village || '',
                 road: validated.road || '',
@@ -77,7 +71,6 @@ export async function registerUser(data: CaregiverRegisterInput) {
   }
 }
 
-// 3. อัปเดตข้อมูล (Admin ใช้งาน)
 export async function updateUser(userId: number, data: UserFormInput) {
   try {
     const validated = userFormSchema.parse(data);
@@ -134,7 +127,6 @@ export async function updateUser(userId: number, data: UserFormInput) {
   }
 }
 
-// 4. ลบ User
 export async function deleteUser(userId: number) {
   try {
     const targetUser = await prisma.user.findUnique({
@@ -159,7 +151,6 @@ export async function deleteUser(userId: number) {
   }
 }
 
-// 5. สร้าง Admin
 export async function createAdmin(data: any) {
     try {
       const existing = await prisma.user.findUnique({ where: { username: data.username } });
@@ -191,15 +182,12 @@ export async function createAdmin(data: any) {
     }
 }
 
-// =================================================================
-// ✅ 6. ดึงข้อมูล Caregiver ด้วย LINE ID (สำหรับหน้าแก้ไข Profile)
-// =================================================================
 export async function getCaregiverByLineId(lineId: string) {
     try {
         const user = await prisma.user.findFirst({
             where: { lineId: lineId },
             include: {
-                caregiverProfile: true // ดึงข้อมูล Profile ทั้งหมด
+                caregiverProfile: true
             }
         });
 
@@ -215,15 +203,10 @@ export async function getCaregiverByLineId(lineId: string) {
     }
 }
 
-// =================================================================
-// ✅ 7. อัปเดตข้อมูล Caregiver Profile (สำหรับหน้าแก้ไข Profile)
-// =================================================================
 export async function updateCaregiverProfile(lineId: string, data: CaregiverRegisterInput) {
     try {
-        // ตรวจสอบข้อมูลด้วย Schema
         const validated = caregiverRegisterSchema.parse(data);
 
-        // หา User จาก Line ID เพื่อเอา ID
         const user = await prisma.user.findFirst({
             where: { lineId: lineId }
         });
@@ -232,9 +215,8 @@ export async function updateCaregiverProfile(lineId: string, data: CaregiverRegi
             return { success: false, error: 'ไม่พบผู้ใช้งาน' };
         }
 
-        // อัปเดตข้อมูลในตาราง CaregiverProfile
         await prisma.caregiverProfile.update({
-            where: { userId: user.id }, // ใช้ userId เป็นตัวเชื่อม
+            where: { userId: user.id },
             data: {
                 firstName: validated.firstName,
                 lastName: validated.lastName,
@@ -242,8 +224,6 @@ export async function updateCaregiverProfile(lineId: string, data: CaregiverRegi
                 gender: validated.gender,
                 marital: validated.marital,
                 birthday: new Date(validated.birthday),
-
-                // ที่อยู่
                 houseNumber: validated.houseNumber || '',
                 village: validated.village || '',
                 road: validated.road || '',

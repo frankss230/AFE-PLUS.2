@@ -14,7 +14,7 @@ import {
   Activity,
   ChevronDown,
   Calendar,
-  Phone, // ✅ เพิ่ม Import Phone Icon
+  Phone,
 } from "lucide-react";
 
 import {
@@ -39,7 +39,6 @@ export default function DependentEditPage() {
   const [profile, setProfile] = useState<any>(null);
   const [dependentId, setDependentId] = useState<number | null>(null);
 
-  // Address State
   const [allProvinces, setAllProvinces] = useState<ThaiProvince[]>([]);
   const [amphureOptions, setAmphureOptions] = useState<ThaiAmphure[]>([]);
   const [tambonOptions, setTambonOptions] = useState<ThaiTambon[]>([]);
@@ -82,7 +81,6 @@ export default function DependentEditPage() {
             const d = res.data[0];
             setDependentId(d.id);
 
-            // ✅ แก้ไข 1: Logic แสดงเบอร์โทร (แปลง +66 เป็น 0)
             let formattedPhone = d.phone || "";
             if (formattedPhone.startsWith("+66")) {
                 formattedPhone = "0" + formattedPhone.substring(3);
@@ -95,7 +93,7 @@ export default function DependentEditPage() {
               gender: d.gender as any,
               marital: d.marital as any,
               birthday: d.birthday ? new Date(d.birthday).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-              phone: formattedPhone, // ใช้เบอร์ที่แปลงแล้ว
+              phone: formattedPhone,
               diseases: d.diseases || "",
               medications: d.medications || "",
               houseNumber: d.houseNumber || "",
@@ -184,7 +182,6 @@ export default function DependentEditPage() {
     }
     setIsLoading(true);
     try {
-      // ✅ แก้ไข 2: ส่งเบอร์ไปตรงๆ ไม่ต้องเติม +66
       const submitData = {
         ...data,
       };
@@ -213,7 +210,6 @@ export default function DependentEditPage() {
 
   return (
     <div className="min-h-screen bg-orange-50 pb-10 font-sans">
-      {/* Header */}
       <div className="relative bg-white pb-10 rounded-b-[2.5rem] shadow-lg overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-orange-50 to-white pointer-events-none" />
 
@@ -238,7 +234,6 @@ export default function DependentEditPage() {
         onSubmit={form.handleSubmit(onSubmit)}
         className="px-5 -mt-6 relative z-20 max-w-lg mx-auto space-y-6"
       >
-        {/* ข้อมูลส่วนตัว */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-orange-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
@@ -343,7 +338,6 @@ export default function DependentEditPage() {
           </div>
         </div>
 
-        {/* Address */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-orange-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-2xl bg-green-50 flex items-center justify-center text-green-600">
@@ -459,7 +453,6 @@ export default function DependentEditPage() {
           </div>
         </div>
 
-        {/* Contact & Health */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-orange-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600">
@@ -470,7 +463,6 @@ export default function DependentEditPage() {
 
           <div className="space-y-4">
             <div className="space-y-1.5">
-              {/* ✅ แก้ไข 3: ปรับ UI Input ให้กรอก 0 ได้ปกติ (มีไอคอน Phone) */}
               <div className="relative">
                 <div className="absolute left-4 top-3.5 flex items-center gap-2 pointer-events-none">
                   <Phone className="w-5 h-5 text-slate-400" />
@@ -478,9 +470,8 @@ export default function DependentEditPage() {
                 <input
                   type="tel"
                   {...form.register("phone")}
-                  // ใช้ pl-12 เพื่อเว้นที่ให้ไอคอน Phone
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 rounded-2xl border-0 focus:ring-2 focus:ring-rose-500/20 transition-all font-bold text-slate-700 tracking-wide placeholder:text-slate-300"
-                  placeholder="ระบุเบอร์โทร" // placeholder 08...
+                  placeholder="ระบุเบอร์โทร"
                   maxLength={10}
                 />
               </div>
@@ -510,7 +501,6 @@ export default function DependentEditPage() {
           </div>
         </div>
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={isLoading}

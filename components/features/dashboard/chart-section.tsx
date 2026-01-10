@@ -5,7 +5,7 @@ import OverviewChart from "./overview-chart";
 import AlertComparison from "./alert-comparison";
 import { BarChart2, LineChart } from "lucide-react";
 
-// ✅ เพิ่ม adminName ใน interface
+
 interface ChartSectionProps {
   overviewData: any;
   comparisonData: any;
@@ -18,10 +18,10 @@ export default function ChartSection({ overviewData, comparisonData, adminName }
   return (
     <div className="w-full h-full flex flex-col gap-4">
       
-      {/* Header Bar: ใช้ justify-between เพื่อดันข้อความไปซ้าย ปุ่มไปขวา */}
+      {}
       <div className="flex items-center justify-between shrink-0">
         
-        {/* ✅ ส่วนข้อความต้อนรับ (ด้านซ้าย) */}
+        {}
         <div>
            <h2 className="text-lg font-bold text-slate-800 leading-tight">Dashboard Overview</h2>
            <p className="text-xs text-slate-500">
@@ -29,7 +29,7 @@ export default function ChartSection({ overviewData, comparisonData, adminName }
            </p>
         </div>
 
-        {/* ส่วนปุ่ม Switcher (ด้านขวา) */}
+        {}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMode("overview")}
@@ -57,7 +57,7 @@ export default function ChartSection({ overviewData, comparisonData, adminName }
 
       </div>
 
-      {/* Content Area */}
+      {}
       <div className="flex-1 min-h-0 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         {mode === "overview" ? (
           <OverviewChart data={overviewData} />

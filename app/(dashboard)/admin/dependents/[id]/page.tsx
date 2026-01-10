@@ -10,10 +10,10 @@ import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
 interface PageProps {
-  params: Promise<{ id: string }>; // Next.js 15
+  params: Promise<{ id: string }>; 
 }
 
-// Helper แปลง Enum เป็นไทย
+
 const translateGender = (g: string) => {
     switch(g) {
         case 'MALE': return 'ชาย';
@@ -33,7 +33,7 @@ const translateMarital = (m: string) => {
     }
 }
 
-// คำนวณอายุ
+
 function calculateAge(birthday: Date | null) {
   if (!birthday) return '-';
   const today = new Date();
@@ -49,7 +49,7 @@ function calculateAge(birthday: Date | null) {
 export default async function DependentDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  // 1. ดึงข้อมูล User (Role: DEPENDENT) พร้อม Profile และ Caregiver
+  
   const user = await prisma.user.findUnique({
     where: {
       id: parseInt(id),
@@ -75,7 +75,7 @@ export default async function DependentDetailPage({ params }: PageProps) {
   return (
     <div className="h-[calc(100vh-8.8rem)] flex flex-col gap-4 p-2 overflow-hidden bg-slate-50/50">
       
-      {/* --- Top Navigation & Actions --- */}
+      {}
       <div className="flex items-center justify-between shrink-0 px-2">
          <div className="flex items-center gap-3">
             <Link href="/admin/dependents" prefetch={true}>
@@ -95,7 +95,7 @@ export default async function DependentDetailPage({ params }: PageProps) {
             </div>
          </div>
 
-         {/* ✅ ปุ่มติดตามตำแหน่ง (ส่ง Query Param ?id=... ไปด้วย) */}
+         {}
          <Link href={`/admin/monitoring?focusUser=${user.id}`}>
             <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 rounded-full gap-2 transition-all hover:scale-105">
               <Navigation className="w-4 h-4 animate-pulse" />
@@ -104,13 +104,13 @@ export default async function DependentDetailPage({ params }: PageProps) {
          </Link>
       </div>
 
-      {/* --- Main Content Grid --- */}
+      {}
       <div className="grid grid-cols-12 gap-4 flex-1 min-h-0">
 
-        {/* 🟡 Left Column: Personal Info & Caregiver (4/12) */}
+        {}
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 overflow-y-auto pr-1 pb-2 custom-scrollbar">
             
-            {/* 1. Profile Summary Card */}
+            {}
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-bl-full -mr-8 -mt-8" />
                 
@@ -155,7 +155,7 @@ export default async function DependentDetailPage({ params }: PageProps) {
                 </div>
             </div>
 
-            {/* 2. Caregiver Info */}
+            {}
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -188,12 +188,12 @@ export default async function DependentDetailPage({ params }: PageProps) {
 
         </div>
 
-        {/* 🟡 Right Column: Health & Address (8/12) */}
+        {}
         <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 overflow-y-auto pr-1 pb-2 custom-scrollbar">
             
-            {/* 3. Health Information */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* โรคประจำตัว */}
+                {}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative group overflow-hidden">
                     <div className="absolute top-0 right-0 w-20 h-20 bg-rose-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
                     <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2 relative z-10">
@@ -211,7 +211,7 @@ export default async function DependentDetailPage({ params }: PageProps) {
                     </div>
                 </div>
 
-                {/* ยาที่แพ้ / ยาประจำ */}
+                {}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative group overflow-hidden">
                     <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
                     <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2 relative z-10">
@@ -230,7 +230,7 @@ export default async function DependentDetailPage({ params }: PageProps) {
                 </div>
             </div>
 
-            {/* 4. Address Information */}
+            {}
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex-1 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-orange-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
                 

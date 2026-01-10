@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import liff from '@line/liff';
 import { siteConfig } from '@/config/site';
-// ✅ เพิ่ม Activity, เอา ArrowRight, ShieldCheck กลับมา
 import { ShieldCheck, ArrowRight, Loader2, Activity } from 'lucide-react';
 import { checkLiffUserStatus } from '@/actions/liff-auth.actions';
 
@@ -59,34 +58,24 @@ export default function Home() {
   return (
     <main className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-slate-50 selection:bg-blue-500 selection:text-white">
       
-      {/* 1. Background Pattern */}
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]">
         <div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_800px_at_100%_200px,#d5c5ff,transparent)]"></div>
       </div>
 
-      {/* 2. Main Card */}
       <div className="relative w-full max-w-lg px-6">
         <div className="group relative overflow-hidden rounded-[2.5rem] border border-white/50 bg-white/60 p-10 shadow-2xl backdrop-blur-xl transition-all hover:shadow-blue-200/50">
           
-          {/* Decorative Blob */}
           <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl group-hover:bg-blue-500/20 transition-colors duration-500"></div>
           
           <div className="relative flex flex-col items-center text-center">
-            
-            {/* 3. Hero Icon (ตรงปกกับ Favicon) */}
-            {/* ✅ เปลี่ยนตรงนี้ครับ: สร้างวงแหวนหัวใจด้วย Tailwind */}
             <div className="mb-8 relative flex h-32 w-32 items-center justify-center rounded-full bg-white shadow-xl ring-8 ring-white select-none z-10">
               
-              {/* A. วงแหวน Spinner (จำลองจาก icon.tsx) */}
-              {/* ใช้ border หนาๆ สีเทา แล้ว override ด้านบนด้วยสีฟ้า แล้วหมุน 45 องศา */}
               <div className="absolute inset-0 h-full w-full rounded-full border-[12px] border-slate-100 border-t-blue-600 rotate-45 box-border"></div>
               
-              {/* B. ไอคอนหัวใจตรงกลาง */}
               <Activity className="h-14 w-14 text-blue-600 relative z-10" strokeWidth={2.5} />
               
             </div>
 
-            {/* 4. Text Content */}
             <h1 className="mb-4 text-4xl font-black tracking-tight text-slate-800 sm:text-5xl">
               {siteConfig.name}
             </h1>
@@ -99,7 +88,6 @@ export default function Home() {
               </span>
             </p>
 
-            {/* 5. The Button */}
             <Link
               href="/admin/login"
               className="group/btn relative w-full overflow-hidden rounded-2xl bg-slate-900 p-4 transition-all hover:bg-blue-600 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
@@ -114,7 +102,6 @@ export default function Home() {
               </div>
             </Link>
 
-            {/* Footer Text */}
             <div className="mt-8 flex items-center gap-2 text-xs font-medium text-slate-400">
               <ShieldCheck className="h-4 w-4" />
               <span>Secure Monitoring System</span>
@@ -124,7 +111,6 @@ export default function Home() {
         </div>
       </div>
       
-      {/* Footer Credit */}
       <footer className="absolute bottom-6 text-center text-xs text-slate-400">
         © 2025 {siteConfig.name}. All rights reserved.
       </footer>

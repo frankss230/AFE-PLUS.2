@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/store';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { User, Lock, Loader2 } from 'lucide-react'; // ✅ เพิ่มไอคอน
+import { User, Lock } from 'lucide-react';
 
 export function LoginForm() {
   const router = useRouter();
@@ -47,7 +47,6 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       
-      {/* 1. ช่อง Username */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-gray-600 pl-1">ชื่อผู้ใช้</label>
         <div className="relative">
@@ -66,7 +65,6 @@ export function LoginForm() {
         </div>
       </div>
 
-      {/* 2. ช่อง Password */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-gray-600 pl-1">รหัสผ่าน</label>
         <div className="relative">
@@ -85,7 +83,6 @@ export function LoginForm() {
         </div>
       </div>
 
-      {/* 3. ปุ่ม Login สวยๆ */}
       <Button 
         type="submit" 
         className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30 text-lg py-6 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98]" 

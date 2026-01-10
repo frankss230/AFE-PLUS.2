@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Loader2, Save, MapPin, User, Phone, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 
-// Import Action & Schema
+
 import { registerUser } from '@/actions/user.actions';
 import { caregiverRegisterSchema, CaregiverRegisterInput } from '@/lib/validations/caregiver-register.schema';
 import { getThaiAddressData, ThaiProvince, ThaiAmphure, ThaiTambon } from '@/services/thai-data.service';
@@ -18,7 +18,7 @@ export function CaregiverRegisterForm() {
   const [liffReady, setLiffReady] = useState(false);
   const [profile, setProfile] = useState<any>(null);
 
-  // Address State
+  
   const [isAddressLoading, setIsAddressLoading] = useState(true);
   const [allProvinces, setAllProvinces] = useState<ThaiProvince[]>([]);
   const [amphureOptions, setAmphureOptions] = useState<ThaiAmphure[]>([]);
@@ -44,7 +44,7 @@ export function CaregiverRegisterForm() {
     },
   });
 
-  // Init Data
+  
   useEffect(() => {
     const init = async () => {
       try {
@@ -87,7 +87,7 @@ export function CaregiverRegisterForm() {
     init();
   }, [form]);
 
-  // Address Handlers
+  
   const handleProvinceChange = (provinceName: string) => {
     form.setValue('province', provinceName);
     form.setValue('district', '');
@@ -112,7 +112,7 @@ export function CaregiverRegisterForm() {
     if (t) form.setValue('postalCode', t.zipCode);
   };
 
-  // Submit
+  
   const onSubmit = async (data: CaregiverRegisterInput) => {
     setIsLoading(true);
     try {
@@ -137,7 +137,7 @@ export function CaregiverRegisterForm() {
   return (
     <div className="min-h-screen bg-slate-50 pb-10 font-sans">
       
-      {/* Header */}
+      {}
       <div className="relative bg-white pb-10 rounded-b-[2.5rem] shadow-lg overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50 to-white pointer-events-none" />
         
@@ -150,7 +150,7 @@ export function CaregiverRegisterForm() {
                 {profile?.pictureUrl ? (
                     <Image src={profile.pictureUrl} alt="Profile" width={88} height={88} className="relative rounded-full border-4 border-white shadow-xl" />
                 ) : (
-                    <div className="relative w-24 h-24 bg-white rounded-full flex items-center justify-center text-3xl shadow-xl text-blue-200">👤</div>
+                    <div className="relative w-24 h-24 bg-white rounded-full flex items-center justify-center text-3xl shadow-xl text-blue-200"></div>
                 )}
                 <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-4 border-white rounded-full"></div>
             </div>
@@ -160,7 +160,7 @@ export function CaregiverRegisterForm() {
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="px-5 -mt-6 relative z-20 max-w-lg mx-auto space-y-6">
         
-        {/* 1. ข้อมูลส่วนตัว */}
+        {}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 border border-white/50">
             <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
@@ -190,7 +190,7 @@ export function CaregiverRegisterForm() {
                     {form.formState.errors.phone && <p className="text-xs text-red-500 ml-1">{form.formState.errors.phone.message}</p>}
                 </div>
 
-                {/* ✅ เพิ่ม: เพศ & วันเกิด */}
+                {}
                 <div className="grid grid-cols-2 gap-4 pt-2">
                     <div className="space-y-1.5">
                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">เพศ</label>
@@ -209,7 +209,7 @@ export function CaregiverRegisterForm() {
                     </div>
                 </div>
 
-                {/* ✅ เพิ่ม: สถานะสมรส */}
+                {}
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">สถานะสมรส</label>
                     <div className="relative">
@@ -227,7 +227,7 @@ export function CaregiverRegisterForm() {
             </div>
         </div>
 
-        {/* 2. ที่อยู่ */}
+        {}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 border border-white/50">
              <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-2xl bg-green-50 flex items-center justify-center text-green-600">

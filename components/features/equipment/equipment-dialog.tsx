@@ -20,12 +20,12 @@ export function EquipmentDialog({ mode = 'create', initialData, trigger }: Equip
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  // State สำหรับโหมด Create แบบ Vercel Style
+  
   const [entries, setEntries] = useState([{ name: '', code: '' }]);
   const [importMode, setImportMode] = useState<'manual' | 'json'>('manual');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- Logic สำหรับจัดการแถว (Vercel Style) ---
+  
   const handleAddRow = () => {
     setEntries([...entries, { name: '', code: '' }]);
   };
@@ -41,13 +41,13 @@ export function EquipmentDialog({ mode = 'create', initialData, trigger }: Equip
     newEntries[index][field] = value;
     setEntries(newEntries);
     
-    // Auto add row: ถ้ากรอกแถวสุดท้ายจนครบ ให้เพิ่มแถวใหม่ให้อัตโนมัติ (เหมือน Vercel)
+    
     if (index === entries.length - 1 && newEntries[index].name && newEntries[index].code) {
         handleAddRow();
     }
   };
 
-  // --- Logic สำหรับ JSON File ---
+  
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -57,15 +57,15 @@ export function EquipmentDialog({ mode = 'create', initialData, trigger }: Equip
         try {
             const json = JSON.parse(event.target?.result as string);
             if (Array.isArray(json)) {
-                // Map ข้อมูลให้ตรง structure
+                
                 const mappedEntries = json.map((item: any) => ({
                     name: item.name || item.equipmentName || '',
                     code: item.code || item.serialNumber || ''
-                })).filter(item => item.name && item.code); // เอาเฉพาะที่มีข้อมูลครบ
+                })).filter(item => item.name && item.code); 
 
                 if (mappedEntries.length > 0) {
                     setEntries(mappedEntries);
-                    setImportMode('manual'); // กลับไปหน้า Manual เพื่อให้ user ตรวจสอบก่อน save
+                    setImportMode('manual'); 
                     toast.success(`นำเข้าข้อมูล ${mappedEntries.length} รายการเรียบร้อย`);
                 } else {
                     toast.error("ไม่พบข้อมูลที่ถูกต้องในไฟล์ JSON");
@@ -76,18 +76,18 @@ export function EquipmentDialog({ mode = 'create', initialData, trigger }: Equip
         }
     };
     reader.readAsText(file);
-    // Reset file input value เพื่อให้เลือกไฟล์เดิมซ้ำได้ถ้าต้องการ
+    
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // --- Submit Logic ---
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
         if (mode === 'edit') {
-             // 1. Logic เดิมสำหรับ Edit (ทีละรายการ)
+             
              const formData = new FormData(e.target as HTMLFormElement);
              const data = {
                  name: formData.get('name') as string,
@@ -97,8 +97,8 @@ export function EquipmentDialog({ mode = 'create', initialData, trigger }: Equip
              const res = await updateEquipment(initialData.id, data);
              if (!res.success) throw new Error(res.error);
         } else {
-            // 2. Logic ใหม่สำหรับ Create (Bulk)
-            // กรองเอาแถวที่ว่างๆ ออก
+            
+            
             const validEntries = entries.filter(e => e.name.trim() !== '' && e.code.trim() !== '');
             
             if (validEntries.length === 0) {
@@ -107,21 +107,18 @@ export function EquipmentDialog({ mode = 'create', initialData, trigger }: Equip
                 return;
             }
 
-            // เรียก API ทีเดียว (แนะนำวิธีนี้)
+            
             const res = await addBulkEquipment(validEntries);
             
-            // หรือถ้านายน้อยยังไม่ได้แก้ Backend ให้ใช้วิธี Loop ยิง (แต่ช้ากว่านะ)
-            /* for (const entry of validEntries) {
-                await addEquipment({ ...entry, isActive: true });
-            } 
-            */
+            
+            
 
             if (!res.success) throw new Error(res.error);
         }
 
         toast.success(mode === 'create' ? "บันทึกข้อมูลเรียบร้อย" : "แก้ไขข้อมูลเรียบร้อย");
         setOpen(false);
-        setEntries([{ name: '', code: '' }]); // Reset form
+        setEntries([{ name: '', code: '' }]); 
 
     } catch (error: any) {
         toast.error(error.message || "เกิดข้อผิดพลาด");
@@ -144,10 +141,10 @@ export function EquipmentDialog({ mode = 'create', initialData, trigger }: Equip
           <DialogTitle>{mode === 'create' ? 'เพิ่มอุปกรณ์เข้าคลัง' : 'แก้ไขข้อมูลอุปกรณ์'}</DialogTitle>
         </DialogHeader>
 
-        {/* ---------------- CREATE MODE (VERCEL STYLE) ---------------- */}
+        {}
         {mode === 'create' ? (
             <div className="space-y-4">
-                {/* Tabs เปลี่ยนโหมด */}
+                {}
                 <div className="flex items-center gap-2 border-b pb-2">
                     <button 
                         onClick={() => setImportMode('manual')}
@@ -172,14 +169,14 @@ export function EquipmentDialog({ mode = 'create', initialData, trigger }: Equip
 
                 <form onSubmit={handleSubmit} className="mt-2">
                     <div className="rounded-lg border bg-gray-50/50 p-1">
-                        {/* Header ของตาราง */}
+                        {}
                         <div className="grid grid-cols-12 gap-3 px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
                             <div className="col-span-5">ชื่อรุ่น / อุปกรณ์</div>
                             <div className="col-span-6">รหัสครุภัณฑ์</div>
                             <div className="col-span-1"></div>
                         </div>
 
-                        {/* พื้นที่ Scrollable */}
+                        {}
                         <div className="max-h-[300px] overflow-y-auto space-y-2 px-1 pb-1 scrollbar-thin scrollbar-thumb-gray-200">
                             {entries.map((entry, index) => (
                                 <div key={index} className="grid grid-cols-12 gap-3 items-center group">
@@ -198,7 +195,7 @@ export function EquipmentDialog({ mode = 'create', initialData, trigger }: Equip
                                         />
                                     </div>
                                     <div className="col-span-1 flex justify-center">
-                                        {/* ปุ่มลบจะโชว์เฉพาะถ้ามีมากกว่า 1 แถว หรือไม่ใช่แถวสุดท้ายที่ว่างเปล่า */}
+                                        {}
                                         {(entries.length > 1) && (
                                             <Button
                                                 type="button"
@@ -228,7 +225,7 @@ export function EquipmentDialog({ mode = 'create', initialData, trigger }: Equip
                 </form>
             </div>
         ) : (
-        /* ---------------- EDIT MODE (แบบเดิม) ---------------- */
+        
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
             <div className="space-y-2">
                 <Label>ชื่อรุ่น / ชื่ออุปกรณ์ <span className="text-red-500">*</span></Label>

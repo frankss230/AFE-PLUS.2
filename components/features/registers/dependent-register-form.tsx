@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import liff from '@line/liff';
 import { toast } from 'sonner';
 import { registerElderly } from '@/actions/dependent.actions';
-import { dependentRegisterSchema, DependentRegisterInput } from '@/lib/validations/dependent-register.schema'; // ✅ ชื่อ Schema ที่ถูก
+import { dependentRegisterSchema, DependentRegisterInput } from '@/lib/validations/dependent-register.schema'; 
 import { getThaiAddressData, ThaiProvince, ThaiAmphure, ThaiTambon } from '@/services/thai-data.service';
 import { Loader2, Save, User, MapPin, Phone, Heart, Activity, ChevronDown, Calendar } from 'lucide-react';
 
@@ -32,7 +32,7 @@ export function RegisterElderlyForm() {
       district: '',
       subDistrict: '',
       postalCode: '',
-      // เพิ่มค่า default ให้ครบตาม Schema
+      
       firstName: '',
       lastName: '',
       phone: '',
@@ -44,7 +44,7 @@ export function RegisterElderlyForm() {
     },
   });
 
-  // ✅ Init Data (เหมือนเดิม)
+  
   useEffect(() => {
     const initData = async () => {
       try {
@@ -120,14 +120,14 @@ export function RegisterElderlyForm() {
     if (tambon) form.setValue('postalCode', tambon.zipCode);
   };
 
-  // --- Submit ---
+  
   const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
-        // แปลง Type
+        
         const inputData = data as DependentRegisterInput;
         
-        // เรียก Server Action
+        
         const res = await registerElderly(inputData);
         
         if (res.success) {
@@ -153,7 +153,7 @@ export function RegisterElderlyForm() {
   return (
     <div className="min-h-screen bg-orange-50 pb-10 font-sans">
       
-      {/* Header */}
+      {}
       <div className="relative bg-white pb-10 rounded-b-[2.5rem] shadow-lg overflow-hidden">
          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-orange-50 to-white pointer-events-none" />
          
@@ -168,7 +168,7 @@ export function RegisterElderlyForm() {
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="px-5 -mt-6 relative z-20 max-w-lg mx-auto space-y-6">
         
-        {/* 1. ข้อมูลส่วนตัว */}
+        {}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-orange-900/5 border border-white/50">
           <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
@@ -189,7 +189,7 @@ export function RegisterElderlyForm() {
                 </div>
               </div>
 
-              {/* 👇 ✅ เพิ่มช่อง PIN ตรงนี้ (ต่อจากชื่อ-นามสกุล หรือก่อนวันเกิดก็ได้) */}
+              {}
               <div className="space-y-1.5 mb-4">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">
                       รหัส PIN (สำหรับเชื่อมต่อนาฬิกา) <span className="text-red-500">*</span>
@@ -241,7 +241,7 @@ export function RegisterElderlyForm() {
           </div>
         </div>
 
-        {/* 2. Address */}
+        {}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-orange-900/5 border border-white/50">
             <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-2xl bg-green-50 flex items-center justify-center text-green-600">
@@ -317,7 +317,7 @@ export function RegisterElderlyForm() {
             </div>
         </div>
 
-        {/* 3. Contact & Health */}
+        {}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-orange-900/5 border border-white/50">
             <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600">
@@ -347,7 +347,7 @@ export function RegisterElderlyForm() {
             </div>
         </div>
 
-        {/* Submit Button */}
+        {}
         <button 
             type="submit" 
             disabled={isLoading}
