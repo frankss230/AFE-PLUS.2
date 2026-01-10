@@ -20,68 +20,68 @@ const lineClient = new Client(config);
 
 
 export const createAlertFlexMessage = (
-  record: any, 
-  user: User, 
-  dependentProfile: DependentProfile & { locations?: any[]; }, 
-  alertType: "FALL" | "FALL_CONSCIOUS" | "FALL_UNCONSCIOUS" | "SOS" | "HEALTH" | "ZONE" | "HEART" | "TEMP" = "FALL", 
+  record: any,
+  user: User,
+  dependentProfile: DependentProfile & { locations?: any[]; },
+  alertType: "FALL" | "FALL_CONSCIOUS" | "FALL_UNCONSCIOUS" | "SOS" | "HEALTH" | "ZONE" | "HEART" | "TEMP" = "FALL",
   notiText: string = ""
 ): FlexBubble => {
-  
+
   let headerText = "แจ้งเตือน";
   let startColor = "#FF416C";
   let endColor = "#FF4B2B";
 
-  
+
   if (alertType === "FALL_CONSCIOUS") {
-    headerText = "พบการล้ม"; 
-    startColor = "#FF416C"; 
+    headerText = "พบการล้ม";
+    startColor = "#FF416C";
     endColor = "#FF4B2B";
   } else if (alertType === "FALL_UNCONSCIOUS") {
-    headerText = "พบการล้มไม่ตอบสนอง"; 
-    startColor = "#991B1B"; 
-    endColor = "#7F1D1D";   
+    headerText = "พบการล้มไม่ตอบสนอง";
+    startColor = "#991B1B";
+    endColor = "#7F1D1D";
   } else if (alertType === "FALL") {
     headerText = "ตรวจพบการล้ม";
-    startColor = "#FF416C"; 
+    startColor = "#FF416C";
     endColor = "#FF4B2B";
-  } 
-  
+  }
+
   else if (alertType === "SOS") {
     headerText = "ขอความช่วยเหลือ";
-    startColor = "#FF8008"; 
+    startColor = "#FF8008";
     endColor = "#FFC837";
   } else if (alertType === "ZONE") {
     headerText = "ออกนอกเขตปลอดภัย";
-    startColor = "#D90429"; 
+    startColor = "#D90429";
     endColor = "#EF233C";
   } else if (alertType === "HEART") {
     headerText = "ชีพจรผิดปกติ";
-    startColor = "#DC2626"; 
-    endColor = "#991B1B"; 
+    startColor = "#DC2626";
+    endColor = "#991B1B";
   } else if (alertType === "TEMP") {
     headerText = "อุณหภูมิสูง";
-    startColor = "#F97316"; 
-    endColor = "#EA580C"; 
+    startColor = "#F97316";
+    endColor = "#EA580C";
   } else if (alertType === "HEALTH") {
     headerText = "สุขภาพผิดปกติ";
     startColor = "#F2994A";
     endColor = "#F2C94C";
   }
 
-  
+
   const eventTimeRaw = record.timestamp || record.requestedAt || new Date();
-  
+
   const serverDate = new Date(eventTimeRaw);
-  
-  
+
+
   const thaiDate = new Date(serverDate.getTime() + (7 * 60 * 60 * 1000));
   const time = format(thaiDate, "HH:mm น.", { locale: th });
   const date = format(thaiDate, "d MMM yyyy", { locale: th });
 
-  
-  
 
-  
+
+
+
   let lat = record.latitude ? parseFloat(record.latitude) : null;
   let lng = record.longitude ? parseFloat(record.longitude) : null;
 
@@ -96,40 +96,40 @@ export const createAlertFlexMessage = (
 
   const hasLocation = lat && lng;
   const mapKey = process.env.NEXT_PUBLIC_GOOGLE_MAP;
-  
-  
-  const liffBaseUrl = process.env.LIFF_BASE_URL; 
-  
-  
-  
+
+
+  const liffBaseUrl = process.env.LIFF_BASE_URL;
+
+
+
   const liffUrlBaseTrigger = process.env.NEXT_PUBLIC_LIFF_URL_TRIGGER || process.env.LIFF_BASE_URL_TRIGGER || "";
 
   const mapImageUrl = hasLocation && mapKey
-      ? `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=16&size=800x400&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=${mapKey}`
-      : "https://cdn-icons-png.flaticon.com/512/10337/10337160.png";
+    ? `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=16&size=800x400&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=${mapKey}`
+    : "https://cdn-icons-png.flaticon.com/512/10337/10337160.png";
 
-  
+
   let navigateUrl = "https://maps.google.com/";
   if (hasLocation) {
-      navigateUrl = (liffBaseUrl)
-          ? `${liffBaseUrl}/location?lat=${lat}&lng=${lng}&mode=navigate&id=${dependentProfile.id}`
-          : `https://www.google.com/maps?q=${lat},${lng}`;
+    navigateUrl = (liffBaseUrl)
+      ? `${liffBaseUrl}/location?lat=${lat}&lng=${lng}&mode=navigate&id=${dependentProfile.id}`
+      : `https://www.google.com/maps?q=${lat},${lng}`;
   }
 
   const elderlyName = `คุณ${dependentProfile.firstName} ${dependentProfile.lastName}`;
 
-  
+
   const buttonContents: any[] = [];
 
-  
+
   const safeTriggerUrl = (liffUrlBaseTrigger && liffUrlBaseTrigger.startsWith("http"))
-      ? `${liffUrlBaseTrigger}?id=${record.id || 0}&type=${alertType}`
-      : `https://www.google.com/maps?q=${lat},${lng}`; 
+    ? `${liffUrlBaseTrigger}?id=${record.id || 0}&type=${alertType}`
+    : `https://www.google.com/maps?q=${lat},${lng}`;
 
   buttonContents.push({
     type: "button",
     style: "primary",
-    color: "#EF4444", 
+    color: "#EF4444",
     margin: "sm",
     height: "md",
     action: {
@@ -148,7 +148,7 @@ export const createAlertFlexMessage = (
       spacing: "md",
       paddingAll: "xl",
       contents: [
-        
+
         {
           type: "box",
           layout: "horizontal",
@@ -173,7 +173,7 @@ export const createAlertFlexMessage = (
             },
           ],
         },
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -194,7 +194,7 @@ export const createAlertFlexMessage = (
             },
           ],
         },
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -220,7 +220,7 @@ export const createAlertFlexMessage = (
             },
           ],
         },
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -270,35 +270,35 @@ export const createAlertFlexMessage = (
                 },
               ],
             },
-            
+
             ...(notiText
               ? [
-                  { type: "separator", color: "#E2E8F0", margin: "md" } as any,
-                  {
-                    type: "text",
-                    text: notiText,
-                    weight: "bold",
-                    size: "sm",
-                    color: "#334155",
-                    align: "center",
-                    wrap: true,
-                    margin: "md",
-                  } as any,
-                ]
+                { type: "separator", color: "#E2E8F0", margin: "md" } as any,
+                {
+                  type: "text",
+                  text: notiText,
+                  weight: "bold",
+                  size: "sm",
+                  color: "#334155",
+                  align: "center",
+                  wrap: true,
+                  margin: "md",
+                } as any,
+              ]
               : []),
           ],
         },
-        
+
         ...(buttonContents.length > 0
           ? [
-              {
-                type: "box",
-                layout: "vertical",
-                spacing: "md",
-                margin: "lg",
-                contents: buttonContents,
-              } as any,
-            ]
+            {
+              type: "box",
+              layout: "vertical",
+              spacing: "md",
+              margin: "lg",
+              contents: buttonContents,
+            } as any,
+          ]
           : []),
       ],
     },
@@ -311,11 +311,11 @@ export async function sendCriticalAlertFlexMessage(
   user: User,
   caregiverPhone: string,
   dependentProfile: DependentProfile,
-  alertType: "FALL" | "FALL_CONSCIOUS" | "FALL_UNCONSCIOUS" | "SOS" | "HEALTH" | "ZONE" | "HEART" | "TEMP", 
-  notiText?: string 
+  alertType: "FALL" | "FALL_CONSCIOUS" | "FALL_UNCONSCIOUS" | "SOS" | "HEALTH" | "ZONE" | "HEART" | "TEMP",
+  notiText?: string
 ) {
   if (!config.channelAccessToken) return;
-  
+
   const flexMessageContent = createAlertFlexMessage(
     record,
     user,
@@ -335,8 +335,8 @@ export async function sendCriticalAlertFlexMessage(
   } catch (error: any) {
     console.error(" Failed to send LINE message:", error.message);
     if (error.response && error.response.data) {
-        
-        console.error(" Detail:", JSON.stringify(error.response.data, null, 2));
+
+      console.error(" Detail:", JSON.stringify(error.response.data, null, 2));
     }
   }
 }
@@ -384,7 +384,7 @@ export const createGeneralAlertBubble = (
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -417,7 +417,7 @@ export const createGeneralAlertBubble = (
             },
           ],
         },
-        
+
         {
           type: "text",
           text: message,
@@ -427,7 +427,7 @@ export const createGeneralAlertBubble = (
           align: "center",
           margin: "lg",
         },
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -459,25 +459,22 @@ export const createGeneralAlertBubble = (
             },
           ],
         },
-        
+
         ...(buttonContents.length > 0
           ? [
-              {
-                type: "box",
-                layout: "vertical",
-                spacing: "md",
-                margin: "lg",
-                contents: buttonContents,
-              } as any,
-            ]
+            {
+              type: "box",
+              layout: "vertical",
+              spacing: "md",
+              margin: "lg",
+              contents: buttonContents,
+            } as any,
+          ]
           : []),
       ],
     },
   };
 };
-
-
-
 
 export const createCurrentStatusBubble = (
   dependentProfile: DependentProfile,
@@ -522,7 +519,7 @@ export const createCurrentStatusBubble = (
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -562,7 +559,7 @@ export const createCurrentStatusBubble = (
             },
           ],
         },
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -579,7 +576,7 @@ export const createCurrentStatusBubble = (
             },
           ],
         },
-        
+
         {
           type: "box",
           layout: "horizontal",
@@ -600,7 +597,7 @@ export const createCurrentStatusBubble = (
               flex: 1,
               alignItems: "center",
               contents: [
-                { type: "text", text: "️", size: "xl" },
+                { type: "text", text: "♥", size: "xl", color: "#EF4444" },
                 {
                   type: "text",
                   text: "ชีพจร",
@@ -632,7 +629,7 @@ export const createCurrentStatusBubble = (
               flex: 1,
               alignItems: "center",
               contents: [
-                { type: "text", text: "️", size: "xl" },
+                { type: "text", text: "🌡", size: "xl", color: "#F59E0B" },
                 {
                   type: "text",
                   text: "อุณหภูมิ",
@@ -664,7 +661,7 @@ export const createCurrentStatusBubble = (
               flex: 1,
               alignItems: "center",
               contents: [
-                { type: "text", text: "", size: "xl" },
+                { type: "text", text: "🔋", size: "xl", color: "#10B981" },
                 {
                   type: "text",
                   text: "แบต",
@@ -684,7 +681,7 @@ export const createCurrentStatusBubble = (
             },
           ],
         },
-        
+
         {
           type: "button",
           style: "link",
@@ -1031,8 +1028,8 @@ export const createProfileFlexMessage = (
                   type: "text",
                   text: dependentProfile
                     ? `${val(dependentProfile.firstName)} ${val(
-                        dependentProfile.lastName
-                      )}`
+                      dependentProfile.lastName
+                    )}`
                     : "ยังไม่ระบุ",
                   color: "#334155",
                   size: "xs",
@@ -1244,7 +1241,7 @@ export const createProfileFlexMessage = (
                 },
               ],
             },
-            
+
             {
               type: "box",
               layout: "baseline",
@@ -1288,14 +1285,14 @@ export const createProfileFlexMessage = (
             },
           ],
         },
-        
+
         {
           type: "box",
           layout: "vertical",
           spacing: "sm",
           margin: "xl",
           contents: [
-            
+
             {
               type: "button",
               style: "secondary",
@@ -1323,9 +1320,6 @@ export const createProfileFlexMessage = (
   };
 };
 
-
-
-
 export const createWatchConnectionBubble = (
   caregiverProfile: CaregiverProfile,
   dependentProfile: DependentProfile,
@@ -1348,7 +1342,7 @@ export const createWatchConnectionBubble = (
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -1379,7 +1373,7 @@ export const createWatchConnectionBubble = (
             },
           ],
         },
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -1435,7 +1429,7 @@ export const createWatchConnectionBubble = (
             },
           ],
         },
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -1489,74 +1483,74 @@ export const createWatchConnectionBubble = (
 
 export const createBorrowReturnFlexMessage = (
   caregiverProfile: any,
-  activeBorrow: any 
+  activeBorrow: any
 ): FlexBubble => {
   const liffBase =
     process.env.LIFF_BASE_URL || "https://liff.line.me/YOUR_LIFF_ID";
 
-  
+
   const menuUrl = `${liffBase}/equipment`;
 
-  
+
   const status = activeBorrow?.status || "NONE";
   const equipmentName =
     activeBorrow?.items?.[0]?.equipment?.name || "อุปกรณ์ติดตาม";
 
-  
+
   let headerTitle = "ยืม-คืนครุภัณฑ์";
   let statusText = "ไม่มีรายการ";
   let statusDesc = "กดเพื่อเริ่มทำรายการยืมใหม่";
-  let statusColor = "#64748B"; 
-  let statusBgColor = "#F1F5F9"; 
+  let statusColor = "#64748B";
+  let statusBgColor = "#F1F5F9";
 
   switch (status) {
     case "PENDING":
       statusText = "รอการอนุมัติ";
       statusDesc = "อยู่ระหว่างตรวจสอบ กรุณารอเจ้าหน้าที่ดำเนินการ";
-      statusColor = "#D97706"; 
+      statusColor = "#D97706";
       statusBgColor = "#FEF3C7";
       break;
 
     case "APPROVED":
       statusText = "กำลังใช้งาน";
       statusDesc = `กำลังยืม: ${equipmentName}`;
-      statusColor = "#059669"; 
+      statusColor = "#059669";
       statusBgColor = "#D1FAE5";
       break;
 
     case "REJECTED":
       statusText = "ไม่ผ่านการอนุมัติ";
       statusDesc = "คำขอถูกปฏิเสธ กดเพื่อดูสาเหตุและประวัติ";
-      statusColor = "#DC2626"; 
+      statusColor = "#DC2626";
       statusBgColor = "#FEE2E2";
       break;
 
     case "RETURN_PENDING":
       statusText = "กำลังตรวจสอบการคืน";
       statusDesc = "แจ้งคืนอุปกรณ์แล้ว รอเจ้าหน้าที่ตรวจสอบสภาพ";
-      statusColor = "#EA580C"; 
+      statusColor = "#EA580C";
       statusBgColor = "#FFEDD5";
       break;
 
     case "RETURN_FAILED":
       statusText = "การคืนมีปัญหา";
       statusDesc = "ตรวจสอบไม่ผ่าน กรุณาติดต่อเจ้าหน้าที่";
-      statusColor = "#991B1B"; 
+      statusColor = "#991B1B";
       statusBgColor = "#FECACA";
       break;
 
     case "RETURNED":
       statusText = "คืนสำเร็จแล้ว";
       statusDesc = "ไม่มีรายการค้าง สามารถทำรายการยืมใหม่ได้";
-      statusColor = "#475569"; 
+      statusColor = "#475569";
       statusBgColor = "#E2E8F0";
       break;
 
-    default: 
+    default:
       statusText = "ยังไม่มีรายการยืม";
       statusDesc = "เริ่มทำรายการยืมอุปกรณ์ใหม่";
-      statusColor = "#64748B"; 
-      statusBgColor = "#F1F5F9"; 
+      statusColor = "#64748B";
+      statusBgColor = "#F1F5F9";
       break;
   }
 
@@ -1568,9 +1562,9 @@ export const createBorrowReturnFlexMessage = (
       layout: "vertical",
       paddingAll: "xl",
       spacing: "lg",
-      backgroundColor: "#FFFFFF", 
+      backgroundColor: "#FFFFFF",
       contents: [
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -1611,16 +1605,16 @@ export const createBorrowReturnFlexMessage = (
           ],
         },
 
-        
+
         {
           type: "box",
           layout: "vertical",
-          backgroundColor: statusBgColor, 
+          backgroundColor: statusBgColor,
           cornerRadius: "xl",
           paddingAll: "xl",
           margin: "lg",
           contents: [
-            
+
             {
               type: "text",
               text: statusText,
@@ -1629,7 +1623,7 @@ export const createBorrowReturnFlexMessage = (
               size: "lg",
               wrap: true,
             },
-            
+
             {
               type: "text",
               text: statusDesc,
@@ -1641,7 +1635,7 @@ export const createBorrowReturnFlexMessage = (
           ],
         },
 
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -1650,7 +1644,7 @@ export const createBorrowReturnFlexMessage = (
             {
               type: "button",
               style: "primary",
-              color: "#3B82F6", 
+              color: "#3B82F6",
               height: "md",
               action: {
                 type: "uri",
@@ -1692,7 +1686,7 @@ export const createSafetySettingsBubble = (
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -1723,7 +1717,7 @@ export const createSafetySettingsBubble = (
             },
           ],
         },
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -1817,7 +1811,7 @@ export const createSafetySettingsBubble = (
             },
           ],
         },
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -1888,28 +1882,28 @@ export function createRescueGroupFlexMessage(
 ): FlexBubble {
   const hasLocation = alertData.latitude && alertData.longitude;
 
-  
+
   const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAP || "";
   const liffBaseUrl = process.env.LIFF_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "";
 
-  
+
   let mapImageUrl = "https://cdn-icons-png.flaticon.com/512/854/854878.png";
   if (hasLocation && GOOGLE_KEY) {
     mapImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${alertData.latitude},${alertData.longitude}&zoom=16&size=400x260&maptype=roadmap&markers=color:red%7C${alertData.latitude},${alertData.longitude}&key=${GOOGLE_KEY}`;
   }
 
-  
-  const navigationUrl = hasLocation && liffBaseUrl
-      ? `${liffBaseUrl}/location?lat=${alertData.latitude}&lng=${alertData.longitude}&mode=navigate&id=${dependentInfo.id}`
-      : `https://www.google.com/maps/search/?api=1&query=${alertData.latitude},${alertData.longitude}`;
 
-  
+  const navigationUrl = hasLocation && liffBaseUrl
+    ? `${liffBaseUrl}/location?lat=${alertData.latitude}&lng=${alertData.longitude}&mode=navigate&id=${dependentInfo.id}`
+    : `https://www.google.com/maps/search/?api=1&query=${alertData.latitude},${alertData.longitude}`;
+
+
   const acknowledgeUrl = liffBaseUrl
     ? `${liffBaseUrl}/rescue/form?id=${alertId}`
     : `https://google.com?q=Error_No_LIFF_BASE_URL`;
 
-  
-  
+
+
   const rawDate = alertData.createdAt || alertData.requestedAt || new Date();
   const thaiTimeObj = new Date(new Date(rawDate).getTime() + (7 * 60 * 60 * 1000));
 
@@ -1924,23 +1918,23 @@ export function createRescueGroupFlexMessage(
     hour12: false,
   });
 
-  
-  let headerStartColor = "#DC2626"; 
+
+  let headerStartColor = "#DC2626";
   let headerEndColor = "#EF4444";
 
   if (title.includes("หัวใจ") || title.includes("HEART")) {
-       headerStartColor = "#9333EA"; 
-       headerEndColor = "#A855F7";
+    headerStartColor = "#9333EA";
+    headerEndColor = "#A855F7";
   } else if (title.includes("อุณหภูมิ") || title.includes("TEMP") || title.includes("พื้นที่") || title.includes("ZONE")) {
-       headerStartColor = "#EA580C"; 
-       headerEndColor = "#F97316";
+    headerStartColor = "#EA580C";
+    headerEndColor = "#F97316";
   } else {
-       
-       headerStartColor = "#DC2626";
-       headerEndColor = "#EF4444";
+
+    headerStartColor = "#DC2626";
+    headerEndColor = "#EF4444";
   }
 
-  
+
   const dependentPhone = dependentInfo?.phone || "-";
   const caregiverPhone = caregiverInfo?.phone || "-";
   const caregiverName = caregiverInfo
@@ -1959,7 +1953,7 @@ export function createRescueGroupFlexMessage(
       paddingAll: "xl",
       spacing: "lg",
       contents: [
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -1967,19 +1961,19 @@ export function createRescueGroupFlexMessage(
           background: {
             type: "linearGradient",
             angle: "135deg",
-            startColor: headerStartColor, 
-            endColor: headerEndColor,     
+            startColor: headerStartColor,
+            endColor: headerEndColor,
           },
           cornerRadius: "xxl",
           contents: [
             {
               type: "text",
-              text: title, 
+              text: title,
               weight: "bold",
               size: "xl",
               color: "#FFFFFF",
               align: "center",
-              wrap: true, 
+              wrap: true,
             },
             {
               type: "text",
@@ -1991,32 +1985,32 @@ export function createRescueGroupFlexMessage(
             }
           ],
         },
-        
+
         ...(hasLocation
           ? [
-              {
-                type: "box" as const,
-                layout: "vertical" as const,
-                cornerRadius: "xl" as const,
-                margin: "lg" as const,
-                contents: [
-                  {
-                    type: "image" as const,
-                    url: mapImageUrl,
-                    size: "full",
-                    aspectRatio: "20:13",
-                    aspectMode: "cover" as const,
-                    action: {
-                      type: "uri" as const,
-                      label: "Open Navigation",
-                      uri: navigationUrl,
-                    },
+            {
+              type: "box" as const,
+              layout: "vertical" as const,
+              cornerRadius: "xl" as const,
+              margin: "lg" as const,
+              contents: [
+                {
+                  type: "image" as const,
+                  url: mapImageUrl,
+                  size: "full",
+                  aspectRatio: "20:13",
+                  aspectMode: "cover" as const,
+                  action: {
+                    type: "uri" as const,
+                    label: "Open Navigation",
+                    uri: navigationUrl,
                   },
-                ],
-              },
-            ]
+                },
+              ],
+            },
+          ]
           : []),
-        
+
         {
           type: "text",
           text: "ผู้ประสบเหตุ",
@@ -2067,7 +2061,7 @@ export function createRescueGroupFlexMessage(
           alignItems: "center",
         },
         { type: "separator", margin: "xl" },
-        
+
         {
           type: "text",
           text: "ผู้ดูแล (ติดต่อฉุกเฉิน)",
@@ -2118,7 +2112,7 @@ export function createRescueGroupFlexMessage(
           alignItems: "center",
         },
         { type: "separator", margin: "xl" },
-        
+
         {
           type: "box",
           layout: "horizontal",
@@ -2157,11 +2151,11 @@ export function createRescueGroupFlexMessage(
             uri: navigationUrl
           }
         },
-        
+
         {
           type: "button",
           style: "primary",
-          color: headerStartColor, 
+          color: headerStartColor,
           height: "md",
           margin: "lg",
           action: {
@@ -2189,14 +2183,14 @@ export function createCaregiverAlertBubble(
       type: "box",
       layout: "vertical",
       paddingAll: "xl",
-      backgroundColor: "#FEF2F2", 
+      backgroundColor: "#FEF2F2",
       contents: [
         {
           type: "text",
           text: " แจ้งเหตุฉุกเฉิน!",
           weight: "bold",
           size: "xl",
-          color: "#DC2626", 
+          color: "#DC2626",
           align: "center",
         },
         {
@@ -2265,7 +2259,7 @@ export function createCaseAcceptedBubble(
     body: {
       type: "box",
       layout: "vertical",
-      backgroundColor: "#FFF7ED", 
+      backgroundColor: "#FFF7ED",
       paddingAll: "xl",
       contents: [
         {
@@ -2273,7 +2267,7 @@ export function createCaseAcceptedBubble(
           text: " เจ้าหน้าที่รับเคสแล้ว",
           weight: "bold",
           size: "lg",
-          color: "#C2410C", 
+          color: "#C2410C",
           align: "center",
         },
         { type: "separator", margin: "md", color: "#FFEDD5" },
@@ -2318,7 +2312,7 @@ export function createCaseAcceptedBubble(
 
 export function createCaseClosedBubble(
   rescuerName: string,
-  details: string, 
+  details: string,
   resolvedAt: Date
 ): FlexBubble {
   const timeStr = new Date(resolvedAt).toLocaleString("th-TH", {
@@ -2334,7 +2328,7 @@ export function createCaseClosedBubble(
     body: {
       type: "box",
       layout: "vertical",
-      backgroundColor: "#F0FDF4", 
+      backgroundColor: "#F0FDF4",
       paddingAll: "xl",
       contents: [
         {
@@ -2347,7 +2341,7 @@ export function createCaseClosedBubble(
         },
         { type: "separator", margin: "md", color: "#BBF7D0" },
 
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -2411,11 +2405,11 @@ export function createRescueSuccessBubble(): FlexBubble {
       type: "box",
       layout: "vertical",
       paddingAll: "xl",
-      backgroundColor: "#F0FDF4", 
+      backgroundColor: "#F0FDF4",
       contents: [
         {
           type: "image",
-          url: "https://cdn-icons-png.flaticon.com/512/1032/1032989.png", 
+          url: "https://cdn-icons-png.flaticon.com/512/1032/1032989.png",
           size: "sm",
           aspectMode: "fit",
           margin: "none",
@@ -2425,7 +2419,7 @@ export function createRescueSuccessBubble(): FlexBubble {
           text: "แจ้งเหตุสำเร็จ!",
           weight: "bold",
           size: "xl",
-          color: "#15803D", 
+          color: "#15803D",
           align: "center",
           margin: "md",
         },
@@ -2485,7 +2479,7 @@ export const createBorrowSuccessBubble = (
       paddingAll: "xl",
       spacing: "md",
       contents: [
-        
+
         {
           type: "box",
           layout: "horizontal",
@@ -2496,7 +2490,7 @@ export const createBorrowSuccessBubble = (
               text: "ได้รับคำขอยืมแล้ว",
               weight: "bold",
               size: "lg",
-              color: "#15803D", 
+              color: "#15803D",
               flex: 5,
               align: "start",
               gravity: "center",
@@ -2504,7 +2498,7 @@ export const createBorrowSuccessBubble = (
           ],
         },
         { type: "separator", margin: "md" },
-        
+
         {
           type: "box",
           layout: "vertical",
@@ -2572,7 +2566,7 @@ export const createBorrowSuccessBubble = (
                   flex: 4,
                   wrap: true,
                   weight: "bold",
-                }, 
+                },
               ],
             },
             {
@@ -2644,7 +2638,7 @@ export const createReturnSuccessBubble = (
               text: "แจ้งคืนอุปกรณ์แล้ว",
               weight: "bold",
               size: "lg",
-              color: "#C2410C", 
+              color: "#C2410C",
               flex: 5,
               align: "start",
               gravity: "center",
@@ -2706,7 +2700,7 @@ export const createReturnSuccessBubble = (
           type: "box",
           layout: "vertical",
           margin: "lg",
-          backgroundColor: "#FFF7ED", 
+          backgroundColor: "#FFF7ED",
           cornerRadius: "md",
           paddingAll: "md",
           contents: [
@@ -2744,7 +2738,7 @@ export function createRegisterButtonBubble(registerUrl: string) {
           text: "ไม่พบข้อมูลลงทะเบียน",
           weight: "bold",
           size: "xl",
-          color: "#ef4444", 
+          color: "#ef4444",
           align: "center",
         },
         {
@@ -2767,7 +2761,7 @@ export function createRegisterButtonBubble(registerUrl: string) {
           type: "button",
           style: "primary",
           height: "sm",
-          color: "#3b82f6", 
+          color: "#3b82f6",
           action: {
             type: "uri",
             label: "ลงทะเบียนใช้งาน",
