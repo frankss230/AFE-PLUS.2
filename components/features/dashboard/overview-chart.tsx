@@ -28,11 +28,11 @@ import { th } from "date-fns/locale";
 
 
 const COLORS = {
-  falls: "#3B82F6",   
-  sos: "#DC2626",     
-  heart: "#8B5CF6",   
-  temp: "#10B981",    
-  zone: "#F59E0B",    
+  falls: "#3B82F6",
+  sos: "#DC2626",
+  heart: "#8B5CF6",
+  temp: "#10B981",
+  zone: "#F59E0B",
 };
 
 interface ChartData {
@@ -55,7 +55,7 @@ interface OverviewChartProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
-    
+
     return (
       <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-blue-100/50 text-xs">
         <p className="font-bold mb-3 text-slate-700 text-sm border-b border-blue-100 pb-2 flex items-center gap-2">
@@ -97,15 +97,15 @@ export default function OverviewChart({ data }: OverviewChartProps) {
   const [chartType, setChartType] = useState("bar");
   const [range, setRange] = useState<"day" | "week" | "month">("week");
 
-  
-  
-  
+
+
+
   const now = new Date();
-  
+
   const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-  
+
   const currentMonth = format(thaiTime, "MMMM yyyy", { locale: th });
-  
+
 
   const safeData = data || { day: [], week: [], month: [] };
   const currentData = safeData[range] || [];
@@ -125,11 +125,11 @@ export default function OverviewChart({ data }: OverviewChartProps) {
 
   return (
     <div className="w-full h-full p-6 bg-white rounded-[32px] border border-blue-100 shadow-[0_2px_40px_-10px_rgba(59,130,246,0.1)] flex flex-col relative overflow-hidden group">
-      
-      {}
+
+      { }
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-50/60 to-indigo-50/60 rounded-full blur-3xl opacity-70 pointer-events-none -translate-y-1/2 translate-x-1/3" />
-      
-      {}
+
+      { }
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 shrink-0 z-20 relative">
         <div>
           <h3 className="text-slate-800 font-bold text-xl flex items-center gap-3 tracking-tight">
@@ -140,24 +140,23 @@ export default function OverviewChart({ data }: OverviewChartProps) {
           </h3>
           <div className="flex items-center gap-2 mt-2 ml-14">
             <p className="text-slate-400 text-sm font-medium bg-blue-50 px-3 py-1 rounded-full">
-              {}
+              { }
               {currentMonth}
             </p>
           </div>
         </div>
 
-        {}
+        { }
         <div className="flex items-center gap-3">
           <div className="flex items-center bg-blue-50/80 p-1.5 rounded-full">
             {(["day", "week", "month"] as const).map((r) => (
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={`px-5 py-2 text-xs font-bold rounded-full transition-all duration-300 ${
-                  range === r
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-200 scale-105"
-                    : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
-                }`}
+                className={`px-5 py-2 text-xs font-bold rounded-full transition-all duration-300 ${range === r
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-200 scale-105"
+                  : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                  }`}
               >
                 {r === "day" ? "วัน" : r === "week" ? "สัปดาห์" : "เดือน"}
               </button>
@@ -177,7 +176,7 @@ export default function OverviewChart({ data }: OverviewChartProps) {
         </div>
       </div>
 
-      {}
+      { }
       <div className="flex-1 w-full min-h-0 relative z-10">
         <ResponsiveContainer width="100%" height="100%">
           {chartType === "pie" ? (
@@ -188,7 +187,7 @@ export default function OverviewChart({ data }: OverviewChartProps) {
                 </filter>
               </defs>
               <Pie
-                data={pieData}
+                data={pieData.length > 0 ? pieData : [{ name: "ไม่มีข้อมูล", value: 1, color: "#E2E8F0" }]}
                 cx="50%"
                 cy="50%"
                 innerRadius={90}
@@ -198,10 +197,10 @@ export default function OverviewChart({ data }: OverviewChartProps) {
                 stroke="none"
                 filter="url(#pieShadow)"
               >
-                {pieData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.color} 
+                {(pieData.length > 0 ? pieData : [{ name: "ไม่มีข้อมูล", value: 1, color: "#E2E8F0" }]).map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color}
                     className="hover:opacity-90 transition-all duration-300 cursor-pointer hover:scale-105 origin-center"
                     stroke="none"
                   />
@@ -220,10 +219,10 @@ export default function OverviewChart({ data }: OverviewChartProps) {
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#DBEAFE" />
               <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} dy={15} />
-              <YAxis stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} allowDecimals={false} domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]} />
+              <YAxis stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} allowDecimals={false} domain={[0, (dataMax: number) => (dataMax <= 0 ? 5 : Math.ceil(dataMax * 1.2))]} />
 
               <Tooltip content={<CustomTooltip />} />
-              
+
               <Line type="monotone" dataKey="falls" name="การล้ม" stroke={COLORS.falls} strokeWidth={3} dot={{ fill: COLORS.falls, r: 4 }} activeDot={{ r: 6 }} filter="url(#lineShadow)" />
               <Line type="monotone" dataKey="heart" name="หัวใจ" stroke={COLORS.heart} strokeWidth={3} dot={{ fill: COLORS.heart, r: 4 }} activeDot={{ r: 6 }} filter="url(#lineShadow)" />
               <Line type="monotone" dataKey="temp" name="อุณหภูมิ" stroke={COLORS.temp} strokeWidth={3} dot={{ fill: COLORS.temp, r: 4 }} activeDot={{ r: 6 }} filter="url(#lineShadow)" />
@@ -233,10 +232,10 @@ export default function OverviewChart({ data }: OverviewChartProps) {
             <BarChart data={currentData} barGap={8}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#DBEAFE" />
               <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} dy={15} />
-              <YAxis stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} allowDecimals={false} domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]} />
-              
+              <YAxis stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} allowDecimals={false} domain={[0, (dataMax: number) => (dataMax <= 0 ? 5 : Math.ceil(dataMax * 1.2))]} />
+
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "#EFF6FF" }} />
-              
+
               <Bar name="การล้ม" dataKey="falls" fill={COLORS.falls} radius={[6, 6, 6, 6]} barSize={10} />
               <Bar name="หัวใจ" dataKey="heart" fill={COLORS.heart} radius={[6, 6, 6, 6]} barSize={10} />
               <Bar name="อุณหภูมิ" dataKey="temp" fill={COLORS.temp} radius={[6, 6, 6, 6]} barSize={10} />
@@ -246,7 +245,7 @@ export default function OverviewChart({ data }: OverviewChartProps) {
         </ResponsiveContainer>
       </div>
 
-      {}
+      { }
       <div className="flex flex-wrap items-center justify-center gap-4 mt-6 pt-6 border-t border-blue-50 shrink-0 z-20">
         {[
           { label: "การล้ม", color: COLORS.falls },
