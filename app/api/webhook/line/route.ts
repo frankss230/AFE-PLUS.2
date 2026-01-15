@@ -275,7 +275,7 @@ async function handleSosRequest(lineId: string, replyToken: string) {
 }
 
 async function sendNotRegisteredFlex(replyToken: string) {
-  const registerUrl = `${process.env.NEXT_PUBLIC_APP_URL}/register/user`;
+  const registerUrl = `${process.env.NEXT_PUBLIC_APP_URL}/register`;
   const flexMsg = createRegisterButtonBubble(registerUrl);
 
   await client.replyMessage(replyToken, {
