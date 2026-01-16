@@ -443,7 +443,7 @@ export const createGeneralAlertBubble = (
           contents: [
             {
               type: "text",
-              text: "สถานะ / ระยะทาง",
+              text: color === "#10B981" ? "สถานะ" : "ระยะทาง",
               size: "xs",
               color: "#94A3B8",
               align: "center",

@@ -105,7 +105,7 @@ async function handleRequest(request: Request) {
           caregiver.user.lineId,
           { latitude: lat, longitude: lng, timestamp: new Date(), id: 0 },
           user, caregiver.phone || "", dependent as any, "SOS",
-          `แจ้งเตือน: ${dependent.firstName} กดปุ่มขอความช่วยเหลือ!`
+          `มีการกดเรียกผู้ดูแล`
         );
 
         await prisma.extendedHelp.create({
@@ -210,11 +210,11 @@ async function handleRequest(request: Request) {
 
     if (shouldSendLine && caregiver?.user.lineId && !isManualSOS) {
       const lineId = caregiver.user.lineId;
-      const distText = `${distInt} ม.`;
+      const distText = `${distInt} เมตร`;
 
       try {
         if (alertType === "BACK_SAFE") {
-          const msg = createGeneralAlertBubble("กลับเข้าสู่พื้นที่ปลอดภัย", "ผู้ป่วยกลับเข้ามาในเขตบ้านเรียบร้อยแล้ว", "ปลอดภัย", "#10B981", false);
+          const msg = createGeneralAlertBubble("กลับเข้าบ้าน", "กลับเข้ามาในเขตบ้านเรียบร้อยแล้ว", "ปลอดภัย", "#10B981", false);
           await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าพื้นที่", contents: msg });
         }
         else if (alertType === "ZONE_2_DANGER") {
@@ -223,23 +223,23 @@ async function handleRequest(request: Request) {
             { latitude: lat, longitude: lng, timestamp: new Date(), id: 0 },
             user, caregiver.phone || "", dependent as any,
             "ZONE",
-            `️ แจ้งเตือน: ${dependent.firstName} ออกนอกเขตปลอดภัย! (ระยะ ${distText})`
+            `️ระยะจากเขตปลอดภัย ${distText}`
           );
         }
         else if (alertType === "ZONE_1") {
-          const msg = createGeneralAlertBubble("ออกนอกพื้นที่ชั้นใน", `ระยะ ${distText}`, distText, "#F59E0B", false);
+          const msg = createGeneralAlertBubble("ออกนอกบ้าน", `พบการออกนอกเขตบ้าน`, distText, "#F59E0B", false);
           await lineClient.pushMessage(lineId, { type: "flex", altText: "เตือนโซน 1", contents: msg });
         }
         else if (alertType === "BACK_TO_ZONE_1") {
-          const msg = createGeneralAlertBubble("กลับเข้าสู่เขตชั้น 1", `ระยะ ${distText}`, distText, "#FBBF24", false);
+          const msg = createGeneralAlertBubble("กลับเข้าเขตปลอดภัย", `กลับเข้ามาในเขตปลอดภัยเรียบร้อยแล้ว`, distText, "#FBBF24", false);
           await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าโซน 1", contents: msg });
         }
         else if (alertType === "NEAR_ZONE_2") {
-          const msg = createGeneralAlertBubble("ใกล้หลุดเขตปลอดภัย", `ระยะ ${distText}`, distText, "#F97316", false);
+          const msg = createGeneralAlertBubble("ใกล้ออกนอกเขตปลอดภัย", `พบความเสี่ยงที่จะออกนอกเขตปลอดภัย`, distText, "#F97316", false);
           await lineClient.pushMessage(lineId, { type: "flex", altText: "เตือนระยะ 80%", contents: msg });
         }
         else if (alertType === "BACK_TO_NEAR_ZONE_2") {
-          const msg = createGeneralAlertBubble("กลับเข้าสู่ระยะเฝ้าระวัง (80%)", `ระยะ ${distText}`, distText, "#FB923C", false);
+          const msg = createGeneralAlertBubble("กลับเข้าสู่ระยะเฝ้าระวัง", `กลับเข้ามาในระยะเฝ้าระวังเรียบร้อยแล้ว`, distText, "#FB923C", false);
           await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าสู่ระยะ 80%", contents: msg });
         }
       } catch (lineError: any) {
