@@ -110,6 +110,17 @@ async function handleRequest(request: Request) {
           user, caregiver.phone || "", dependent as any, "SOS",
           `แจ้งเตือน: ${dependent.firstName} กดปุ่มขอความช่วยเหลือ!`
         );
+
+        await prisma.extendedHelp.create({
+          data: {
+            dependentId: dependent.id,
+            type: "WATCH_SOS",
+            status: "DETECTED",
+            latitude: lat,
+            longitude: lng,
+            reporterId: caregiver.user.id,
+          }
+        });
       }
     }
 
