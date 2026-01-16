@@ -798,7 +798,7 @@ export const createProfileFlexMessage = (
                     { type: "text", text: "ที่อยู่:", color: "#94A3B8", size: "xs", flex: 2 },
                     {
                       type: "text",
-                      text: `${val(caregiverProfile.houseNumber)} ม.${val(caregiverProfile.village)} ${val(caregiverProfile.subDistrict)} ${val(caregiverProfile.district)} ${val(caregiverProfile.province)}`,
+                      text: `${val(caregiverProfile.houseNumber)} ม.${val(caregiverProfile.village)} ${val(caregiverProfile.subDistrict)} ${val(caregiverProfile.district)} ${val(caregiverProfile.province)} ${val(caregiverProfile.postalCode)}`,
                       color: "#334155",
                       size: "xs",
                       flex: 4,
@@ -908,6 +908,21 @@ export const createProfileFlexMessage = (
                   contents: [
                     { type: "text", text: "อายุ:", color: "#94A3B8", size: "xs", flex: 2 },
                     { type: "text", text: getAge(dependentProfile.birthday), color: "#334155", size: "xs", flex: 4 },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "baseline",
+                  contents: [
+                    { type: "text", text: "ที่อยู่:", color: "#94A3B8", size: "xs", flex: 2 },
+                    {
+                      type: "text",
+                      text: `${val(dependentProfile.houseNumber)} ม.${val(dependentProfile.village)} ${val(dependentProfile.subDistrict)} ${val(dependentProfile.district)} ${val(dependentProfile.province)} ${val(dependentProfile.postalCode)}`,
+                      color: "#334155",
+                      size: "xs",
+                      flex: 4,
+                      wrap: true
+                    },
                   ],
                 },
                 {

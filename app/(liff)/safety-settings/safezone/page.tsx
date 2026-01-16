@@ -140,7 +140,7 @@ function SafezoneContent() {
 `}</style>
 
             <div className="absolute inset-0 z-0">
-                <MapSelector apiKey={googleMapsApiKey} lat={lat} lng={lng} r1={lv1} r2={lv2} onChange={(l, n) => { setLat(l); setLng(n); }} />
+                <MapSelector apiKey={googleMapsApiKey} lat={lat} lng={lng} r1={lv1} r2={lv2} isPanelOpen={isPanelOpen} onChange={(l, n) => { setLat(l); setLng(n); }} />
             </div>
 
             <motion.div
