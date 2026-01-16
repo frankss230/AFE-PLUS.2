@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { sendCriticalAlertFlexMessage } from '@/lib/line/flex-messages';
+import { createNotification } from "@/lib/notifications";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,50 +17,57 @@ async function handleSOS(request: Request) {
 
     const user = await prisma.user.findUnique({
       where: { id: parseInt(targetId) },
-      include: { 
+      include: {
         dependentProfile: {
-            include: {
-                caregiver: { include: { user: true } },
-                locations: { take: 1, orderBy: { timestamp: 'desc' } }
-            }
+          include: {
+            caregiver: { include: { user: true } },
+            locations: { take: 1, orderBy: { timestamp: 'desc' } }
+          }
         }
       }
     });
 
     if (!user || !user.dependentProfile) {
-        return NextResponse.json({ success: false, message: `User not found` }, { status: 404 });
+      return NextResponse.json({ success: false, message: `User not found` }, { status: 404 });
     }
 
     const dependent = user.dependentProfile;
     const caregiverProfile = dependent.caregiver;
 
     if (!caregiverProfile) {
-         return NextResponse.json({ success: false, message: 'Caregiver not linked' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'Caregiver not linked' }, { status: 400 });
     }
 
     const temporaryHelpData = {
-        id: 0, 
-        latitude: parseFloat(latitude || 0),
-        longitude: parseFloat(longitude || 0),
-        timestamp: new Date()
+      id: 0,
+      latitude: parseFloat(latitude || 0),
+      longitude: parseFloat(longitude || 0),
+      timestamp: new Date()
     };
 
-    
+
     if (caregiverProfile.user.lineId) {
-        const recipientId = caregiverProfile.user.lineId;
-        const caregiverPhone = caregiverProfile.phone || '0000000000';
+      const recipientId = caregiverProfile.user.lineId;
+      const caregiverPhone = caregiverProfile.phone || '0000000000';
 
-        console.log(` Sending SOS Alert (Private) to: ${recipientId}`);
+      console.log(` Sending SOS Alert (Private) to: ${recipientId}`);
 
-        await sendCriticalAlertFlexMessage(
-            recipientId,
-            temporaryHelpData as any, 
-            user,
-            caregiverPhone,
-            dependent as any,
-            'SOS',
-            `มีการกดเรียกผู้ดูแล`
-        );
+      await sendCriticalAlertFlexMessage(
+        recipientId,
+        temporaryHelpData as any,
+        user,
+        caregiverPhone,
+        dependent as any,
+        'SOS',
+        `มีการกดเรียกผู้ดูแล`
+      );
+
+      await createNotification(
+        "HELP",
+        "SOS Detected",
+        `มีการกดเรียกผู้ดูแลจาก ${dependent.firstName} ${dependent.lastName}`,
+        `/admin/alerts`
+      );
     }
 
     return NextResponse.json({ success: true, message: 'Alert sent to caregiver' });

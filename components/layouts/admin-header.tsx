@@ -3,7 +3,6 @@
 import { useAuthStore, useAlertStore, useModalStore } from '@/store/store';
 import { Bell, Menu, User, LogOut, ChevronDown, Sun, Moon, Monitor } from 'lucide-react';
 import { toast } from 'sonner';
-import { ProfileDialog } from '@/components/features/admins/profile-dialog';
 import { useState, useEffect } from 'react';
 import { getAdminProfile } from '@/actions/admin.actions';
 import { useTheme } from '@/components/theme/theme-provider';

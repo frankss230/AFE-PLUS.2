@@ -52,11 +52,11 @@ export function AdminRegisterDialog() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>ชื่อจริง</Label>
-              <Input name="firstName" required placeholder="สมชาย" />
+              <Input name="firstName" required placeholder="กรอกชื่อ" />
             </div>
             <div className="space-y-2">
               <Label>นามสกุล</Label>
-              <Input name="lastName" required placeholder="ใจดี" />
+              <Input name="lastName" required placeholder="กรอกนามสกุล" />
             </div>
           </div>
 
@@ -72,7 +72,7 @@ export function AdminRegisterDialog() {
 
           <div className="space-y-2">
             <Label>ชื่อผู้ใช้</Label>
-            <Input name="username" required placeholder="admin_new" />
+            <Input name="username" required placeholder="กรอกชื่อผู้ใช้" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

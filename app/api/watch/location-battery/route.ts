@@ -4,6 +4,7 @@ import {
   sendCriticalAlertFlexMessage,
   createGeneralAlertBubble,
 } from "@/lib/line/flex-messages";
+import { createNotification } from "@/lib/notifications";
 import { Client } from "@line/bot-sdk";
 import { pushStatusMessage } from "@/app/api/webhook/line/route";
 import { calculateDistance } from "@/lib/utils";
@@ -118,6 +119,13 @@ async function handleRequest(request: Request) {
             reporterId: caregiver.id,
           }
         });
+
+        await createNotification(
+          "HELP",
+          "SOS Detected",
+          `มีการกดเรียกผู้ดูแลจาก ${dependent.firstName} ${dependent.lastName}`,
+          `/admin/alerts`
+        );
       }
     }
 
@@ -242,6 +250,15 @@ async function handleRequest(request: Request) {
           const msg = createGeneralAlertBubble("กลับเข้าสู่ระยะเฝ้าระวัง", `กลับเข้ามาในระยะเฝ้าระวังเรียบร้อยแล้ว`, distText, "#FB923C", false);
           await lineClient.pushMessage(lineId, { type: "flex", altText: "กลับเข้าสู่ระยะ 80%", contents: msg });
         }
+
+        if (alertType.includes("ZONE") || alertType.includes("DANGER")) {
+          await createNotification(
+            "HELP",
+            "Safe Zone Alert",
+            `แจ้งเตือนเขตปลอดภัย (${alertType}) - ${dependent.firstName} ${dependent.lastName}`,
+            `/admin/alerts`
+          );
+        }
       } catch (lineError: any) {
         console.error(" LINE Send Error:", lineError.statusCode);
       }
@@ -257,13 +274,32 @@ async function handleRequest(request: Request) {
 
 
 
-    await prisma.location.create({
-      data: {
-        dependentId: dependent.id,
-        latitude: lat, longitude: lng, battery: parseInt(battery || 0),
-        distance: distInt, status: currentDBStatus, timestamp: new Date(),
-      },
+    // OPTIMIZED: Update existing location record to save space (Single Row per Dependent)
+    const existingLocation = await prisma.location.findFirst({
+      where: { dependentId: dependent.id }
     });
+
+    if (existingLocation) {
+      await prisma.location.update({
+        where: { id: existingLocation.id },
+        data: {
+          latitude: lat,
+          longitude: lng,
+          battery: parseInt(battery || 0),
+          distance: distInt,
+          status: currentDBStatus,
+          timestamp: new Date(),
+        }
+      });
+    } else {
+      await prisma.location.create({
+        data: {
+          dependentId: dependent.id,
+          latitude: lat, longitude: lng, battery: parseInt(battery || 0),
+          distance: distInt, status: currentDBStatus, timestamp: new Date(),
+        },
+      });
+    }
 
 
     const activeAlert = await prisma.extendedHelp.findFirst({

@@ -5,72 +5,80 @@ import prisma from '@/lib/db/prisma';
 import { hashPassword } from '@/lib/auth/password';
 import { UserRole } from '@prisma/client';
 import { dependentRegisterSchema, DependentRegisterInput } from '@/lib/validations/dependent-register.schema';
+import { createNotification } from "@/lib/notifications";
 
 export async function registerElderly(data: DependentRegisterInput) {
-  try {
-    const validated = dependentRegisterSchema.parse(data);
+    try {
+        const validated = dependentRegisterSchema.parse(data);
 
-    const caregiverUser = await prisma.user.findFirst({
-      where: { lineId: validated.lineId },
-      include: { caregiverProfile: true }
-    });
+        const caregiverUser = await prisma.user.findFirst({
+            where: { lineId: validated.lineId },
+            include: { caregiverProfile: true }
+        });
 
-    if (!caregiverUser || !caregiverUser.caregiverProfile) {
-      return { success: false, error: 'ไม่พบข้อมูลผู้ดูแล' };
-    }
-
-    const randomUsername = `watch_${Date.now()}`; 
-    const randomPassword = Math.random().toString(36).slice(-10);
-    const hashedPassword = await hashPassword(randomPassword);
-
-    await prisma.user.create({
-      data: {
-        username: randomUsername,
-        password: hashedPassword,
-        role: UserRole.DEPENDENT,
-        isActive: true,
-
-        dependentProfile: {
-            create: {
-                firstName: validated.firstName,
-                lastName: validated.lastName,
-                gender: validated.gender,
-                marital: validated.marital, 
-                birthday: new Date(validated.birthday),
-                phone: validated.phone || '',
-                diseases: validated.diseases || '',
-                medications: validated.medications || '',
-                houseNumber: validated.houseNumber,
-                village: validated.village,
-                road: validated.road || '',
-                subDistrict: validated.subDistrict,
-                district: validated.district,
-                province: validated.province,
-                postalCode: validated.postalCode,
-                
-                pin: validated.pin, 
-
-                caregiver: {
-                    connect: { id: caregiverUser.caregiverProfile.id }
-                },
-
-                safeZones: {
-                    create: { radiusLv1: 100, radiusLv2: 500, latitude: 13.7563, longitude: 100.5018 }
-                },
-                heartRateSetting: { create: { maxBpm: 120, minBpm: 50 } },
-                tempSetting: { create: { maxTemperature: 37.5 } }
-            }
+        if (!caregiverUser || !caregiverUser.caregiverProfile) {
+            return { success: false, error: 'ไม่พบข้อมูลผู้ดูแล' };
         }
-      },
-    });
 
-    revalidatePath('/admin/dependents');
-    return { success: true };
+        const randomUsername = `watch_${Date.now()}`;
+        const randomPassword = Math.random().toString(36).slice(-10);
+        const hashedPassword = await hashPassword(randomPassword);
 
-  } catch (error) {
-    console.error('Register Elderly Error:', error);
-    return { success: false, error: 'เกิดข้อผิดพลาด' };
-  }
+        await prisma.user.create({
+            data: {
+                username: randomUsername,
+                password: hashedPassword,
+                role: UserRole.DEPENDENT,
+                isActive: true,
+
+                dependentProfile: {
+                    create: {
+                        firstName: validated.firstName,
+                        lastName: validated.lastName,
+                        gender: validated.gender,
+                        marital: validated.marital,
+                        birthday: new Date(validated.birthday),
+                        phone: validated.phone || '',
+                        diseases: validated.diseases || '',
+                        medications: validated.medications || '',
+                        houseNumber: validated.houseNumber,
+                        village: validated.village,
+                        road: validated.road || '',
+                        subDistrict: validated.subDistrict,
+                        district: validated.district,
+                        province: validated.province,
+                        postalCode: validated.postalCode,
+
+                        pin: validated.pin,
+
+                        caregiver: {
+                            connect: { id: caregiverUser.caregiverProfile.id }
+                        },
+
+                        safeZones: {
+                            create: { radiusLv1: 100, radiusLv2: 500, latitude: 13.7563, longitude: 100.5018 }
+                        },
+                        heartRateSetting: { create: { maxBpm: 120, minBpm: 50 } },
+                        tempSetting: { create: { maxTemperature: 37.5 } }
+                    }
+                }
+            },
+        });
+
+        await createNotification(
+            "REGISTER",
+            "New Dependent",
+            `ผู้สูงอายุคนใหม่: ${validated.firstName} ${validated.lastName} (ผู้ดูแล: ${caregiverUser.caregiverProfile.firstName})`,
+            `/admin/dependents`
+        );
+
+        revalidatePath('/admin/dependents');
+        return { success: true };
+
+    } catch (error) {
+        console.error('Register Elderly Error:', error);
+        return { success: false, error: 'เกิดข้อผิดพลาด' };
+    }
 }
 
 export async function getDependentsByCaregiverLineId(lineId: string) {
@@ -112,7 +120,7 @@ export async function updateDependentProfile(dependentId: number, data: Dependen
                 marital: validated.marital,
                 birthday: new Date(validated.birthday),
                 phone: validated.phone || '',
-                
+
                 diseases: validated.diseases || '',
                 medications: validated.medications || '',
 
@@ -125,7 +133,7 @@ export async function updateDependentProfile(dependentId: number, data: Dependen
                 postalCode: validated.postalCode || '',
             }
         });
-        
+
         revalidatePath('/admin/dependents');
         return { success: true };
 

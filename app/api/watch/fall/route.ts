@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { sendCriticalAlertFlexMessage } from '@/lib/line/flex-messages';
+import { createNotification } from "@/lib/notifications";
 
 async function handleFall(request: Request) {
   try {
     const body = await request.json();
-    
-    
+
+
     const targetId = body.users_id || body.lineId;
     const fallStat = String(body.fall_status || body.status);
     const x = body.x_axis || body.xAxis || 0;
@@ -16,11 +17,11 @@ async function handleFall(request: Request) {
 
     const user = await prisma.user.findUnique({
       where: { id: parseInt(targetId) },
-      include: { 
+      include: {
         dependentProfile: {
-            include: { 
-                caregiver: { include: { user: true } },
-            }
+          include: {
+            caregiver: { include: { user: true } },
+          }
         }
       }
     });
@@ -30,11 +31,11 @@ async function handleFall(request: Request) {
     const dependent = user.dependentProfile;
     const caregiver = dependent.caregiver;
 
-    
+
     const isCritical = fallStat === "0" || fallStat === "1";
     const dbStatus = isCritical ? 'DETECTED' : 'RESOLVED';
 
-    
+
     const fallRecord = await prisma.fallRecord.create({
       data: {
         dependentId: dependent.id,
@@ -48,36 +49,43 @@ async function handleFall(request: Request) {
       },
     });
 
-    
+
     if (isCritical && caregiver?.user.lineId) {
-        let notiText = "";
-        let specificAlertType = "FALL"; 
+      let notiText = "";
+      let specificAlertType = "FALL";
 
-        if (fallStat === "0") {
-            
-            specificAlertType = "FALL_SOS"; 
-            notiText = `แจ้งเตือน: คุณ ${dependent.firstName} ล้มและกดปุ่มขอความช่วยเหลือ (รู้สึกตัว)`;
-        } else {
-            
-            specificAlertType = "FALL_UNCONSCIOUS";
-            notiText = `ด่วน!: คุณ ${dependent.firstName} ล้มและไม่มีการตอบสนอง (อาจหมดสติ)`;
-        }
+      if (fallStat === "0") {
 
-        await sendCriticalAlertFlexMessage(
-            caregiver.user.lineId,
-            fallRecord,
-            user,
-            caregiver.phone || "",
-            dependent as any,
-            specificAlertType as any,
-            notiText
-        );
+        specificAlertType = "FALL_SOS";
+        notiText = `แจ้งเตือน: คุณ ${dependent.firstName} ล้มและกดปุ่มขอความช่วยเหลือ (รู้สึกตัว)`;
+      } else {
+
+        specificAlertType = "FALL_UNCONSCIOUS";
+        notiText = `ด่วน!: คุณ ${dependent.firstName} ล้มและไม่มีการตอบสนอง (อาจหมดสติ)`;
+      }
+
+      await sendCriticalAlertFlexMessage(
+        caregiver.user.lineId,
+        fallRecord,
+        user,
+        caregiver.phone || "",
+        dependent as any,
+        specificAlertType as any,
+        notiText
+      );
+
+      await createNotification(
+        "HELP",
+        "Fall Detected",
+        notiText,
+        "/admin/alerts"
+      );
     }
 
     return NextResponse.json({ success: true });
-  } catch (e) { 
-      console.error(e);
-      return NextResponse.json({ error: 'Error' }, { status: 500 }); 
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: 'Error' }, { status: 500 });
   }
 }
 
