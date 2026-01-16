@@ -10,6 +10,7 @@ import {
   createBorrowReturnFlexMessage,
   createRegisterButtonBubble,
   sendCriticalAlertFlexMessage,
+  createLocationNotFoundBubble,
 } from "@/lib/line/flex-messages";
 
 const config = {
@@ -381,6 +382,7 @@ async function handleStatusRequest(lineId: string, replyToken: string) {
 
 
 
+
   const healthData = {
     bpm: latestHr?.bpm || 0,
     temp: latestTemp?.value || 0,
@@ -389,6 +391,17 @@ async function handleStatusRequest(lineId: string, replyToken: string) {
     lng: latestLoc?.longitude || 0,
     updatedAt: latestLoc?.timestamp || new Date(),
   };
+
+  // Check if location is invalid (0,0 or null)
+  if (!healthData.lat && !healthData.lng) {
+    const flexMessage = createLocationNotFoundBubble();
+    await client.replyMessage(replyToken, {
+      type: "flex",
+      altText: "ไม่พบตำแหน่งปัจจุบัน",
+      contents: flexMessage as any,
+    });
+    return;
+  }
 
   const flexMessage = createCurrentStatusBubble(dependent, healthData);
   await client.replyMessage(replyToken, {

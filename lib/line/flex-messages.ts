@@ -1,4 +1,4 @@
-import { Client, FlexBubble, FlexComponent } from "@line/bot-sdk";
+import { Client, FlexBubble, FlexComponent, FlexCarousel } from "@line/bot-sdk";
 import {
   FallRecord,
   User,
@@ -704,7 +704,7 @@ export const createCurrentStatusBubble = (
 export const createProfileFlexMessage = (
   caregiverProfile: CaregiverProfile,
   dependentProfile: DependentProfile
-): FlexBubble => {
+): FlexCarousel => {
   const liffUrl =
     process.env.LIFF_BASE_URL || "https://liff.line.me/YOUR_LIFF_ID";
   const val = (v: any) => (v ? v : "-");
@@ -717,596 +717,230 @@ export const createProfileFlexMessage = (
   };
 
   return {
-    type: "bubble",
-    size: "mega",
-    body: {
-      type: "box",
-      layout: "vertical",
-      paddingAll: "xl",
-      spacing: "lg",
-      contents: [
-        {
+    type: "carousel",
+    contents: [
+      // Bubble 1: Caregiver
+      {
+        type: "bubble",
+        size: "mega",
+        body: {
           type: "box",
           layout: "vertical",
           paddingAll: "xl",
-          background: {
-            type: "linearGradient",
-            angle: "135deg",
-            startColor: "#1E293B",
-            endColor: "#334155",
-          },
-          cornerRadius: "xxl",
+          spacing: "lg",
           contents: [
             {
-              type: "text",
-              text: "ข้อมูลผู้ใช้งาน",
-              weight: "bold",
-              size: "xl",
-              color: "#FFFFFF",
-              align: "center",
-            },
-            {
-              type: "text",
-              text: "รายละเอียดการลงทะเบียน",
-              size: "xs",
-              color: "#DBEAFE",
-              align: "center",
-              margin: "sm",
-            },
-          ],
-        },
-        {
-          type: "box",
-          layout: "vertical",
-          spacing: "sm",
-          margin: "lg",
-          paddingAll: "md",
-          contents: [
-            {
-              type: "text",
-              text: "ข้อมูลผู้ดูแล",
-              weight: "bold",
-              size: "sm",
-              color: "#3B82F6",
-            },
-            {
               type: "box",
-              layout: "baseline",
-              margin: "md",
+              layout: "vertical",
+              paddingAll: "xl",
+              background: {
+                type: "linearGradient",
+                angle: "135deg",
+                startColor: "#1E293B", // Slate-800
+                endColor: "#334155",   // Slate-700
+              },
+              cornerRadius: "xxl",
               contents: [
                 {
                   type: "text",
-                  text: "ชื่อ:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
+                  text: "ข้อมูลผู้ดูแล",
+                  weight: "bold",
+                  size: "xl",
+                  color: "#FFFFFF", // White
+                  align: "center",
                 },
                 {
                   type: "text",
-                  text: `${val(caregiverProfile.firstName)} ${val(
-                    caregiverProfile.lastName
-                  )}`,
-                  color: "#334155",
+                  text: "Caregiver Profile",
                   size: "xs",
-                  flex: 4,
-                  wrap: true,
+                  color: "#DBEAFE", // Blue-100
+                  align: "center",
+                  margin: "sm",
                 },
               ],
             },
             {
               type: "box",
-              layout: "baseline",
+              layout: "vertical",
+              spacing: "sm",
+              margin: "lg",
+              paddingAll: "md",
               contents: [
                 {
-                  type: "text",
-                  text: "เพศ:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
+                  type: "box",
+                  layout: "baseline",
+                  margin: "md",
+                  contents: [
+                    { type: "text", text: "ชื่อ:", color: "#94A3B8", size: "xs", flex: 2 },
+                    { type: "text", text: `${val(caregiverProfile.firstName)} ${val(caregiverProfile.lastName)}`, color: "#334155", size: "xs", flex: 4, wrap: true },
+                  ],
                 },
                 {
-                  type: "text",
-                  text: val(
-                    caregiverProfile.gender === "MALE" ? "ชาย" : "หญิง"
-                  ),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
+                  type: "box",
+                  layout: "baseline",
+                  contents: [
+                    { type: "text", text: "เพศ:", color: "#94A3B8", size: "xs", flex: 2 },
+                    { type: "text", text: val(caregiverProfile.gender === "MALE" ? "ชาย" : "หญิง"), color: "#334155", size: "xs", flex: 4 },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "baseline",
+                  contents: [
+                    { type: "text", text: "อายุ:", color: "#94A3B8", size: "xs", flex: 2 },
+                    { type: "text", text: getAge(caregiverProfile.birthday), color: "#334155", size: "xs", flex: 4 },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "baseline",
+                  contents: [
+                    { type: "text", text: "ที่อยู่:", color: "#94A3B8", size: "xs", flex: 2 },
+                    {
+                      type: "text",
+                      text: `${val(caregiverProfile.houseNumber)} ม.${val(caregiverProfile.village)} ${val(caregiverProfile.subDistrict)} ${val(caregiverProfile.district)} ${val(caregiverProfile.province)}`,
+                      color: "#334155",
+                      size: "xs",
+                      flex: 4,
+                      wrap: true
+                    },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "baseline",
+                  contents: [
+                    { type: "text", text: "เบอร์โทร:", color: "#94A3B8", size: "xs", flex: 2 },
+                    { type: "text", text: val(caregiverProfile.phone), color: "#334155", size: "xs", flex: 4 },
+                  ],
                 },
               ],
             },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "อายุ:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: getAge(caregiverProfile.birthday),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "บ้านเลขที่:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(caregiverProfile.houseNumber),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "หมู่ที่:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(caregiverProfile.village),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "ถนน:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(caregiverProfile.road),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "ตำบล:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(caregiverProfile.subDistrict),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "อำเภอ:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(caregiverProfile.district),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "จังหวัด:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(caregiverProfile.province),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "รหัสไปรษณีย์:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(caregiverProfile.postalCode),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "เบอร์โทร:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(caregiverProfile.phone),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-          ],
-        },
-        { type: "separator", color: "#E2E8F0", margin: "lg" },
-        {
-          type: "box",
-          layout: "vertical",
-          spacing: "sm",
-          margin: "lg",
-          paddingAll: "md",
-          contents: [
-            {
-              type: "text",
-              text: "ข้อมูลผู้ที่มีภาวะพึ่งพิง",
-              weight: "bold",
-              size: "sm",
-              color: "#EF4444",
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              margin: "md",
-              contents: [
-                {
-                  type: "text",
-                  text: "ชื่อ:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: dependentProfile
-                    ? `${val(dependentProfile.firstName)} ${val(
-                      dependentProfile.lastName
-                    )}`
-                    : "ยังไม่ระบุ",
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                  wrap: true,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "เพศ:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(
-                    dependentProfile.gender === "MALE" ? "ชาย" : "หญิง"
-                  ),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "อายุ:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: getAge(dependentProfile.birthday),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "บ้านเลขที่:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(dependentProfile.houseNumber),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "หมู่ที่:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(dependentProfile.village),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "ถนน:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(dependentProfile.road),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "ตำบล:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(dependentProfile.subDistrict),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "อำเภอ:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(dependentProfile.district),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "จังหวัด:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(dependentProfile.province),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "รหัสไปรษณีย์:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(dependentProfile.postalCode),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "โรคประจำตัว:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: dependentProfile ? val(dependentProfile.diseases) : "-",
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                  wrap: true,
-                },
-              ],
-            },
-
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "ยาที่ใช้ประจำ:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(dependentProfile.medications),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                  wrap: true,
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "baseline",
-              contents: [
-                {
-                  type: "text",
-                  text: "เบอร์โทร:",
-                  color: "#94A3B8",
-                  size: "xs",
-                  flex: 2,
-                },
-                {
-                  type: "text",
-                  text: val(dependentProfile.phone),
-                  color: "#334155",
-                  size: "xs",
-                  flex: 4,
-                },
-              ],
-            },
-          ],
-        },
-
-        {
-          type: "box",
-          layout: "vertical",
-          spacing: "sm",
-          margin: "xl",
-          contents: [
-
             {
               type: "button",
               style: "secondary",
               height: "sm",
+              margin: "xl",
               action: {
                 type: "uri",
                 label: "แก้ไขข้อมูลผู้ดูแล",
                 uri: `${liffUrl}/edit-informations/caregiver`,
               },
             },
+          ],
+        },
+      },
+
+      // Bubble 2: Dependent
+      {
+        type: "bubble",
+        size: "mega",
+        body: {
+          type: "box",
+          layout: "vertical",
+          paddingAll: "xl",
+          spacing: "lg",
+          contents: [
+            {
+              type: "box",
+              layout: "vertical",
+              paddingAll: "xl",
+              background: {
+                type: "linearGradient",
+                angle: "135deg",
+                startColor: "#EF4444", // Red-500
+                endColor: "#B91C1C",   // Red-700
+              },
+              cornerRadius: "xxl",
+              contents: [
+                {
+                  type: "text",
+                  text: "ผู้มีภาวะพึ่งพิง",
+                  weight: "bold",
+                  size: "xl",
+                  color: "#FFFFFF",
+                  align: "center",
+                },
+                {
+                  type: "text",
+                  text: "Dependent Profile",
+                  size: "xs",
+                  color: "#FEE2E2", // Red-100
+                  align: "center",
+                  margin: "sm",
+                },
+              ],
+            },
+            {
+              type: "box",
+              layout: "vertical",
+              spacing: "sm",
+              margin: "lg",
+              paddingAll: "md",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  margin: "md",
+                  contents: [
+                    { type: "text", text: "ชื่อ:", color: "#94A3B8", size: "xs", flex: 2 },
+                    {
+                      type: "text",
+                      text: dependentProfile ? `${val(dependentProfile.firstName)} ${val(dependentProfile.lastName)}` : "ยังไม่ระบุ",
+                      color: "#334155",
+                      size: "xs",
+                      flex: 4,
+                      wrap: true
+                    },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "baseline",
+                  contents: [
+                    { type: "text", text: "เพศ:", color: "#94A3B8", size: "xs", flex: 2 },
+                    { type: "text", text: val(dependentProfile.gender === "MALE" ? "ชาย" : "หญิง"), color: "#334155", size: "xs", flex: 4 },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "baseline",
+                  contents: [
+                    { type: "text", text: "อายุ:", color: "#94A3B8", size: "xs", flex: 2 },
+                    { type: "text", text: getAge(dependentProfile.birthday), color: "#334155", size: "xs", flex: 4 },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "baseline",
+                  contents: [
+                    { type: "text", text: "โรคประจำตัว:", color: "#94A3B8", size: "xs", flex: 2 },
+                    { type: "text", text: dependentProfile ? val(dependentProfile.diseases) : "-", color: "#334155", size: "xs", flex: 4, wrap: true },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "baseline",
+                  contents: [
+                    { type: "text", text: "ยาที่ใช้:", color: "#94A3B8", size: "xs", flex: 2 },
+                    { type: "text", text: val(dependentProfile.medications), color: "#334155", size: "xs", flex: 4, wrap: true },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "baseline",
+                  contents: [
+                    { type: "text", text: "เบอร์โทร:", color: "#94A3B8", size: "xs", flex: 2 },
+                    { type: "text", text: val(dependentProfile.phone), color: "#334155", size: "xs", flex: 4 },
+                  ],
+                },
+              ],
+            },
             {
               type: "button",
               style: "secondary",
               height: "sm",
+              margin: "xl",
               action: {
                 type: "uri",
                 label: "แก้ไขข้อมูลผู้สูงอายุ",
@@ -1315,8 +949,8 @@ export const createProfileFlexMessage = (
             },
           ],
         },
-      ],
-    },
+      },
+    ],
   };
 };
 
@@ -2718,6 +2352,7 @@ export const createReturnSuccessBubble = (
   };
 };
 
+
 export function createRegisterButtonBubble(registerUrl: string) {
   const imageUrl = `${process.env.NEXT_PUBLIC_APP_URL}/images/AFE_PLUS.png`;
   return {
@@ -2770,6 +2405,66 @@ export function createRegisterButtonBubble(registerUrl: string) {
         },
       ],
       flex: 0,
+    },
+  };
+}
+
+export function createLocationNotFoundBubble(): FlexBubble {
+  return {
+    type: "bubble",
+    body: {
+      type: "box",
+      layout: "vertical",
+      paddingAll: "xl",
+      backgroundColor: "#FEF2F2",
+      contents: [
+        {
+          type: "text",
+          text: "ไม่พบตำแหน่งปัจจุบัน",
+          weight: "bold",
+          size: "xl",
+          color: "#EF4444",
+          align: "center",
+        },
+        {
+          type: "text",
+          text: "ระบบไม่ได้รับข้อมูลพิกัดจากนาฬิกา",
+          size: "sm",
+          color: "#7F1D1D",
+          align: "center",
+          margin: "md",
+        },
+        {
+          type: "separator",
+          margin: "lg",
+          color: "#FECACA",
+        },
+        {
+          type: "box",
+          layout: "vertical",
+          margin: "lg",
+          backgroundColor: "#FFFFFF",
+          cornerRadius: "md",
+          paddingAll: "md",
+          contents: [
+            {
+              type: "text",
+              text: "คำแนะนำ:",
+              weight: "bold",
+              size: "sm",
+              color: "#7F1D1D",
+            },
+            {
+              type: "text",
+              text: "1. กรุณาตรวจสอบว่านาฬิกาเปิดอยู่\n2. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของนาฬิกา\n3. นาฬิกาอาจอยู่ในจุดอับสัญญาณ GPS",
+              size: "xs",
+              color: "#991B1B",
+              wrap: true,
+              margin: "sm",
+            },
+          ],
+        },
+      ],
     },
   };
 }

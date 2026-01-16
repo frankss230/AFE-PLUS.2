@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Sarabun } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { GlobalModal } from '@/components/ui/global-modal';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '@/components/theme/theme-provider';
 import '../styles/globals.css';
 
 const sarabun = Sarabun({

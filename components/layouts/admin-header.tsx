@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { ProfileDialog } from '@/components/features/admins/profile-dialog';
 import { useState, useEffect } from 'react';
 import { getAdminProfile } from '@/actions/admin.actions';
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/theme/theme-provider';
 
 interface HeaderProps {
   onMenuClick: () => void;
