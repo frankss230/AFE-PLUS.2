@@ -19,7 +19,6 @@ async function handleRequest(request: Request) {
   try {
     const body = await request.json();
 
-
     const targetId = body.uId || body.lineId || body.users_id;
     const { battery, distance, status } = body;
     let rawLat = body.latitude ?? body.lat ?? 0;
@@ -79,7 +78,8 @@ async function handleRequest(request: Request) {
 
 
     const isDistanceCritical = distInt >= r2;
-    const isManualSOS = (statusInt === 2) && !isDistanceCritical;
+    // SOS button sends NO status field. Status 2 is just "Out of Safe Zone" (ignored in favor of server calc).
+    const isManualSOS = (status === undefined || status === null);
 
     let currentDBStatus: "SAFE" | "WARNING" | "DANGER" = "SAFE";
     let shouldSendLine = false;
@@ -92,9 +92,6 @@ async function handleRequest(request: Request) {
     if (lastLocation) {
       timeDiffSec = (now.getTime() - new Date(lastLocation.timestamp).getTime()) / 1000;
     }
-
-
-
 
     if (isManualSOS) {
       console.log(" Manual SOS Detected!");
