@@ -223,7 +223,7 @@ async function handleRequest(request: Request) {
             { latitude: lat, longitude: lng, timestamp: new Date(), id: 0 },
             user, caregiver.phone || "", dependent as any,
             "ZONE",
-            `️ระยะจากเขตปลอดภัย ${distText}`
+            `️ระยะห่างจากเขตปลอดภัย ${distText}`
           );
         }
         else if (alertType === "ZONE_1") {
