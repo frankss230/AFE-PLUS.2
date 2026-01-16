@@ -130,7 +130,7 @@ async function handleRequest(request: Request) {
                     dependent.caregiver.phone || '',
                     dependent as any,
                     'TEMP', 
-                    `️ แจ้งเตือน: อุณหภูมิร่างกายสูง (${currentTemp.toFixed(1)} °C)` 
+                    `️อุณหภูมิร่างกายสูง ${currentTemp.toFixed(1)} °C` 
                 );
             } 
             else if (messageType === 'RECOVERY') {

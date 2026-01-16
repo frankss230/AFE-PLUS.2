@@ -443,7 +443,7 @@ export const createGeneralAlertBubble = (
           contents: [
             {
               type: "text",
-              text: color === "#10B981" ? "สถานะ" : "ระยะทาง",
+              text: value.includes("bpm") ? "อัตราการเต้นของหัวใจ" : value.includes("°C") ? "อุณหภูมิ" : color === "#10B981" ? "สถานะ" : "ระยะทาง",
               size: "xs",
               color: "#94A3B8",
               align: "center",
@@ -1121,7 +1121,7 @@ export const createWatchConnectionBubble = (
               type: "text",
               text: `PIN: ${dependentProfile.pin}`,
               size: "lg",
-              color: "#EF4444",
+              color: "#1E293B",
               align: "center",
               weight: "bold",
               margin: "md",
@@ -1250,7 +1250,8 @@ export const createBorrowReturnFlexMessage = (
             },
             {
               type: "text",
-              text: `ผู้ดูแล: คุณ${caregiverProfile?.firstName || "-"}`,
+              text: `คุณ${caregiverProfile?.firstName || "ไม่พบข้อมูลผู้ดูแล"} ${caregiverProfile?.lastName || ""
+                }`,
               color: "#FFFFFF",
               size: "xs",
               align: "center",

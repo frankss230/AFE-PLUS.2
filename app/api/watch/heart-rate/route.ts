@@ -132,18 +132,18 @@ async function handleRequest(request: Request) {
                     dependent.caregiver.phone || '',
                     dependent as any,
                     'HEART', 
-                    `️ แจ้งเตือน: ชีพจรผิดปกติ (${bpm} bpm)` 
+                    `️ชีพจรผิดปกติ ${bpm} bpm` 
                 );
             } 
             else if (messageType === 'RECOVERY') {
                 const msg = createGeneralAlertBubble(
                     " อัตราการเต้นหัวใจปกติ",
-                    `ค่ากลับมาอยู่ในเกณฑ์ปกติแล้ว (${minVal}-${maxVal})`,
+                    `กลับมาอยู่ในเกณฑ์ปกติแล้ว`,
                     `${bpm} bpm`,
                     "#10B981", 
                     false
                 );
-                await lineClient.pushMessage(lineId, { type: 'flex', altText: 'หัวใจปกติแล้ว', contents: msg });
+                await lineClient.pushMessage(lineId, { type: 'flex', altText: 'อัตราการเต้นหัวใจปกติแล้ว', contents: msg });
             }
         } catch (err) {
             console.error("LINE Send Error:", err);
