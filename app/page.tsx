@@ -39,7 +39,15 @@ export default function Home() {
 
       } catch (error) {
         console.error("LIFF/Dispatch Error:", error);
-        setIsCheckingLiff(false);
+        try {
+          if (liff.isLoggedIn()) {
+            liff.logout();
+          }
+          liff.login();
+        } catch (e) {
+          // If everything fails, stop loading
+          setIsCheckingLiff(false);
+        }
       }
     };
 
