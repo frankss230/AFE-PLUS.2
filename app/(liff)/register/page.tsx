@@ -12,8 +12,8 @@ export default function RegisterRedirectPage() {
   useEffect(() => {
     const redirectUser = async () => {
       try {
-        await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID || '' });
-
+        await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID || '' });   
+        
         if (!liff.isLoggedIn()) {
           liff.login();
           return;
@@ -24,8 +24,10 @@ export default function RegisterRedirectPage() {
 
         if (status === 'UNREGISTERED') {
           window.location.href = '/register/caregiver';
+         
         } else {
           window.location.href = '/register/dependent';
+        
         }
 
       } catch (error: any) {

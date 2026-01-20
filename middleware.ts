@@ -11,8 +11,6 @@ export async function middleware(request: NextRequest) {
   const isLoginPage = pathname === '/admin/login';
 
   
-  
-  
   if (isProtectedRoute && !isLoginPage) {
     if (!token) {
       return redirectToLogin(request);
@@ -41,7 +39,7 @@ export async function middleware(request: NextRequest) {
     const payload = await verifyToken(token);
     
     if (payload && payload.role === 'ADMIN') {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url)); 
+       return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
   }
 

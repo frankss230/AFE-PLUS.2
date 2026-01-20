@@ -17,7 +17,7 @@ export default function Home() {
       try {
         await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID || '' });
 
-        if (liff.isInClient()) {
+        if (liff.isInClient() || liff.isLoggedIn()) {
             if (!liff.isLoggedIn()) {
                 liff.login();
                 return;
@@ -26,11 +26,11 @@ export default function Home() {
             const status = await checkLiffUserStatus(profile.userId);
 
             if (status === 'UNREGISTERED') {
-                router.replace('/register/caregiver');
+                window.location.replace('/register/caregiver');
             } else if (status === 'NO_ELDERLY') {
-                router.replace('/register/dependent');
+                window.location.replace('/register/dependent');
             } else {
-                router.replace('/safety-settings');
+                window.location.replace('/safety-settings');
             }
             return; 
         } 
