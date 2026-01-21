@@ -32,14 +32,7 @@ export default function RegisterRedirectPage() {
 
       } catch (error: any) {
         console.error(error);
-        try {
-          if (liff.isLoggedIn()) {
-            liff.logout();
-          }
-          liff.login();
-        } catch (e) {
-          setIsError(true);
-        }  
+        setIsError(true);
       }
     };
 
